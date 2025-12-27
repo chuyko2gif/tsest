@@ -78,7 +78,7 @@ export default function AdminPage() {
 
         console.log('🔍 Проверка прав доступа:', { user: user?.email, userError });
 
-        if (userError || !user) {
+        if (userError || !user || !user.email) {
           console.warn('⛔ Пользователь не авторизован:', userError);
           alert("⛔ Доступ запрещен. Необходима авторизация.");
           router.push('/auth');
@@ -93,18 +93,18 @@ export default function AdminPage() {
 
         console.log('[Профиль] Из БД по email:', { email: user.email, profile, profileError });
 
-        if (profileError || !profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
-          const roleInfo = profile ? profile.role : 'не найдена';
+        if (profileError || !profile || typeof profile !== 'object' || !('role' in profile) || ((profile as any).role !== 'admin' && (profile as any).role !== 'owner')) {
+          const roleInfo = (profile && typeof profile === 'object' && 'role' in profile) ? (profile as any).role : 'не найдена';
           console.error('⛔ Доступ запрещен. Роль:', roleInfo);
           alert(`⛔ Доступ запрещен. Вы не являетесь администратором.\n\nВаш email: ${user.email}\nВаша роль: ${roleInfo}\n\n💡 Для получения прав администратора обратитесь к владельцу системы.`);
           router.push('/');
           return;
         }
 
-        console.log('✅ Доступ разрешен. Роль:', profile.role);
+        console.log('✅ Доступ разрешен. Роль:', (profile as any).role);
         setUserEmail(user.email || null);
-        setCurrentUser({ id: user.id, ...profile, email: user.email });
-        setCurrentUserRole(profile.role as 'admin' | 'owner');
+        setCurrentUser({ id: user.id, ...(profile as any), email: user.email });
+        setCurrentUserRole((profile as any).role as 'admin' | 'owner');
         setCheckingAuth(false);
       } catch (e) {
         console.error('❌ Ошибка проверки прав доступа:', e);
