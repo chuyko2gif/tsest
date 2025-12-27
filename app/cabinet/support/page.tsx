@@ -135,8 +135,7 @@ export default function SupportPage() {
     if (user?.id) {
       loadTickets();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, loadTickets]);
 
   // Скролл при новых сообщениях
   useEffect(() => {

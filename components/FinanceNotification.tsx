@@ -19,6 +19,13 @@ const FinanceNotificationToast: React.FC<FinanceNotificationToastProps> = ({ not
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  const handleClose = () => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose(notification.id);
+    }, 300); // Время анимации
+  };
+
   useEffect(() => {
     // Появление
     setTimeout(() => setIsVisible(true), 10);
@@ -29,14 +36,8 @@ const FinanceNotificationToast: React.FC<FinanceNotificationToastProps> = ({ not
     }, 5000);
 
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleClose = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose(notification.id);
-    }, 300); // Время анимации
-  };
 
   const config = {
     payout: {

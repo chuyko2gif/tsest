@@ -43,14 +43,14 @@ export function useConfirmDialog() {
       state.resolve(true);
     }
     setState((prev) => ({ ...prev, show: false, resolve: null }));
-  }, [state.resolve]);
+  }, [state]);
 
   const handleCancel = useCallback(() => {
     if (state.resolve) {
       state.resolve(false);
     }
     setState((prev) => ({ ...prev, show: false, resolve: null }));
-  }, [state.resolve]);
+  }, [state]);
 
   return {
     confirm,

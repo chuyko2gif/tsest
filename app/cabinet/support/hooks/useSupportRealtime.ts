@@ -108,6 +108,5 @@ export function useSupportRealtime({
       messageSubscription.unsubscribe();
       ticketSubscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, setSelectedTicket, setMessages, setIsTyping]);
 }

@@ -214,9 +214,6 @@ const FloatingReleaseCard = memo(({ release, index, isMobile }: { release: any; 
     return isMobile ? positionsMobile : positionsDesktop;
   }, [isMobile]);
   
-  // Показываем все 8 релизов на мобилке
-  if (isMobile && index >= 8) return null;
-  
   const pos = positions[index % positions.length];
   
   // Статический transform без mousemove для оптимизации
@@ -226,6 +223,9 @@ const FloatingReleaseCard = memo(({ release, index, isMobile }: { release: any; 
     transform: `perspective(1000px) rotateY(${pos.rotate}deg) translateZ(0)`,
     zIndex: isMobile ? -1 : 10,
   }), [pos, isMobile]);
+
+  // Показываем все 8 релизов на мобилке
+  if (isMobile && index >= 8) return null;
 
   return (
     <div

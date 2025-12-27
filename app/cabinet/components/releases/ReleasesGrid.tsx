@@ -41,19 +41,6 @@ export default function ReleasesGrid({
   dropTargetId,
   onDrop
 }: ReleasesGridProps) {
-  // Пустое состояние
-  if (releases.length === 0) {
-    return <EmptyState 
-      showArchive={showArchive}
-      totalCount={totalCount}
-      userRole={userRole}
-      hasFilters={hasFilters}
-      onAddRelease={onAddRelease}
-      onShowPaymentModal={onShowPaymentModal}
-      onResetFilters={onResetFilters}
-    />;
-  }
-
   // Вычисляем количество колонок для разных экранов
   const getColumns = () => {
     if (typeof window === 'undefined') return 5;
@@ -71,6 +58,19 @@ export default function ReleasesGrid({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Пустое состояние
+  if (releases.length === 0) {
+    return <EmptyState 
+      showArchive={showArchive}
+      totalCount={totalCount}
+      userRole={userRole}
+      hasFilters={hasFilters}
+      onAddRelease={onAddRelease}
+      onShowPaymentModal={onShowPaymentModal}
+      onResetFilters={onResetFilters}
+    />;
+  }
 
   return (
     <div 

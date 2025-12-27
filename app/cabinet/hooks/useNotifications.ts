@@ -68,14 +68,14 @@ export function useNotifications() {
       confirmDialog.resolve(true);
     }
     setConfirmDialog(prev => ({ ...prev, show: false, resolve: null }));
-  }, [confirmDialog.resolve]);
+  }, [confirmDialog]);
   
   const handleCancel = useCallback(() => {
     if (confirmDialog.resolve) {
       confirmDialog.resolve(false);
     }
     setConfirmDialog(prev => ({ ...prev, show: false, resolve: null }));
-  }, [confirmDialog.resolve]);
+  }, [confirmDialog]);
   
   return {
     notification,

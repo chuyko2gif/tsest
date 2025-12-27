@@ -54,7 +54,6 @@ export function useTicketActions({
     }
     
     setTickets(data || []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, setTickets]);
   
   // Выбор тикета
