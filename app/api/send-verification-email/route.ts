@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
     });
 
     const mailOptions = {
-      from: `"THQ Label" <maksbroska@gmail.com>`,
+      from: `"thqlabel" <maksbroska@gmail.com>`,
       to: email,
       replyTo: 'maksbroska@gmail.com',
-      subject: 'Подтвердите email для THQ Label',
+      subject: 'Подтвердите email для thqlabel',
       html: `
         <!DOCTYPE html>
         <html lang="ru">
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
                             <tr>
                                 <td style="background: linear-gradient(135deg, #6050ba 0%, #9d8df1 100%); padding: 40px 20px; text-align: center;">
                                     <h1 style="margin: 0; color: white; font-size: 32px; font-weight: 900; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); letter-spacing: -1px;">
-                                        THQ Label
+                                        thqlabel
                                     </h1>
                                     <p style="margin: 10px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;">
                                         Music Label
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
                                     </h2>
                                     
                                     <p style="margin: 0 0 20px 0; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">
-                                        Спасибо за регистрацию в THQ Label!
+                                        Спасибо за регистрацию в thqlabel!
                                     </p>
                                     
                                     <p style="margin: 0 0 30px 0; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
                             <tr>
                                 <td style="background: rgba(255, 255, 255, 0.02); padding: 30px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                                     <p style="margin: 0 0 10px 0; color: rgba(255, 255, 255, 0.4); font-size: 12px;">
-                                        © 2025 THQ Label. Все права защищены.
+                                        © 2025 thqlabel. Все права защищены.
                                     </p>
                                     <p style="margin: 0; color: rgba(255, 255, 255, 0.3); font-size: 11px;">
                                         Это автоматическое письмо, пожалуйста, не отвечайте на него.
