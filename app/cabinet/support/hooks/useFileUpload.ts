@@ -6,7 +6,7 @@ interface UseFileUploadProps {
   user: SupportUser | null;
   selectedTicket: Ticket | null;
   setUploadingFile: (uploading: boolean) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const ALLOWED_TYPES = [

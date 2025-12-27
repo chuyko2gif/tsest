@@ -8,7 +8,7 @@ interface MessageInputProps {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   sending: boolean;
   uploadingFile: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   disabled?: boolean;
 }
 

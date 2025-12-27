@@ -14,8 +14,8 @@ interface ChatViewProps {
   sending: boolean;
   uploadingFile: boolean;
   isTyping: boolean;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onMessageChange: (value: string) => void;
   onSendMessage: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;

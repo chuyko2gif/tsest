@@ -54,8 +54,8 @@ export interface UseSupportStateReturn {
   setSearchQuery: (query: string) => void;
   
   // Refs
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   typingTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
   
   // Computed
