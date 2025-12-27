@@ -14,6 +14,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.89.0",
+    "critters": "^0.0.23",
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.26",
     "next": "15.3.8",
