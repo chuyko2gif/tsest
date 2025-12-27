@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verificationTokens } from '../send-verification-email/route';
+
+// Доступ к глобальному хранилищу токенов верификации
+declare global {
+  var verificationTokensStore: Map<string, { email: string, password: string, nickname: string, expiresAt: number }> | undefined;
+}
+
+const verificationTokens = globalThis.verificationTokensStore ?? new Map<string, { email: string, password: string, nickname: string, expiresAt: number }>();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.verificationTokensStore = verificationTokens;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;

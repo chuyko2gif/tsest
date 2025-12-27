@@ -10,7 +10,7 @@ declare global {
   var verificationTokensStore: Map<string, { email: string, password: string, nickname: string, expiresAt: number }> | undefined;
 }
 
-export const verificationTokens = globalThis.verificationTokensStore ?? new Map<string, { email: string, password: string, nickname: string, expiresAt: number }>();
+const verificationTokens = globalThis.verificationTokensStore ?? new Map<string, { email: string, password: string, nickname: string, expiresAt: number }>();
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.verificationTokensStore = verificationTokens;
