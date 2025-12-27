@@ -10,7 +10,7 @@ declare global {
   var resetTokensStore: Map<string, { email: string, expiresAt: number }> | undefined;
 }
 
-export const resetTokens = globalThis.resetTokensStore ?? new Map<string, { email: string, expiresAt: number }>();
+const resetTokens = globalThis.resetTokensStore ?? new Map<string, { email: string, expiresAt: number }>();
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.resetTokensStore = resetTokens;

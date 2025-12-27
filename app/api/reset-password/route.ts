@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { resetTokens } from '../send-password-reset/route';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Доступ к глобальному хранилищу токенов
+declare global {
+  var resetTokensStore: Map<string, { email: string, expiresAt: number }> | undefined;
+}
+
+const resetTokens = globalThis.resetTokensStore ?? new Map<string, { email: string, expiresAt: number }>();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.resetTokensStore = resetTokens;
+}
 
 export async function POST(request: NextRequest) {
   try {
