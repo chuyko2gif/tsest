@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { fetchWithAuth } from '@/app/cabinet/lib/fetchWithAuth';
+import TicketAvatar, { preloadAvatars } from '@/components/TicketAvatar';
 
 interface Ticket {
   id: string;
@@ -109,8 +110,21 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
     }
   }, [userTyping]);
 
-  const loadTickets = async () => {
+  // Предзагружаем аватарки при загрузке тикетов
+  useEffect(() => {
+    if (tickets.length > 0) {
+      const avatarUrls = tickets
+        .map(t => t.user_avatar)
+        .filter((url): url is string => !!url);
+      preloadAvatars(avatarUrls);
+    }
+  }, [tickets]);
+
+  const loadTickets = async (forceRefresh = false) => {
     try {
+      if (forceRefresh) {
+        setLoading(true);
+      }
       const response = await fetchWithAuth('/api/support/tickets');
       
       // Проверяем, что ответ не является редиректом или ошибкой авторизации
@@ -502,7 +516,7 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
         <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
           <p className="text-red-400 text-sm font-medium">{error}</p>
           <button 
-            onClick={loadTickets}
+            onClick={() => loadTickets()}
             className="mt-2 text-xs text-red-300 hover:text-red-200 underline"
           >
             Попробовать снова
@@ -519,9 +533,9 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
           </p>
         </div>
 
-        {/* Поиск */}
+        {/* Поиск и кнопка обновления */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-80">
+          <div className="relative flex-1 sm:flex-initial sm:w-80">
             <input
               type="text"
               value={searchQuery}
@@ -543,6 +557,17 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
               </button>
             )}
           </div>
+          
+          <button
+            onClick={() => loadTickets(true)}
+            disabled={loading}
+            className="p-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            title="Обновить тикеты"
+          >
+            <svg className={`w-5 h-5 text-zinc-400 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -677,18 +702,13 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
 
                   {/* Информация о пользователе */}
                   <div className="flex items-center gap-2 mb-2">
-                    {ticket.user_avatar ? (
-                      <div 
-                        className="w-7 h-7 rounded-full bg-cover bg-center flex-shrink-0 border border-zinc-700"
-                        style={{ backgroundImage: `url(${ticket.user_avatar})` }}
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-sm">
-                          {(ticket.user_nickname || ticket.user_email || 'U').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <TicketAvatar
+                      src={ticket.user_avatar}
+                      name={ticket.user_nickname}
+                      email={ticket.user_email}
+                      size="sm"
+                      role={ticket.user_role}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs text-white font-medium truncate ${
                         searchQuery && (ticket.user_nickname?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -780,18 +800,14 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                     
                     {/* Информация о пользователе */}
                     <div className="flex items-center gap-3 mb-2">
-                      {selectedTicket.user_avatar ? (
-                        <div 
-                          className="w-10 h-10 rounded-full bg-cover bg-center flex-shrink-0 border-2 border-zinc-700"
-                          style={{ backgroundImage: `url(${selectedTicket.user_avatar})` }}
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-700 flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-lg">
-                            {(selectedTicket.user_nickname || selectedTicket.user_email || 'U').charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
+                      <TicketAvatar
+                        src={selectedTicket.user_avatar}
+                        name={selectedTicket.user_nickname}
+                        email={selectedTicket.user_email}
+                        size="md"
+                        role={selectedTicket.user_role}
+                        showRing
+                      />
                       <div className="flex-1">
                         <p className="text-sm text-white font-medium">
                           {selectedTicket.user_nickname || selectedTicket.user_email?.split('@')[0] || 'Пользователь'}
@@ -912,7 +928,12 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900
                 hover:scrollbar-thumb-zinc-600">
                 {selectedTicket.ticket_messages.map((msg, idx) => {
-                  const displayName = msg.sender_nickname || msg.sender_username || msg.sender_email?.split('@')[0] || 'Пользователь';
+                  // Системное сообщение (автоответ) - специальный ID
+                  const isSystemMessage = msg.sender_id === '00000000-0000-0000-0000-000000000000';
+                  
+                  const displayName = isSystemMessage 
+                    ? 'THQ Support' 
+                    : (msg.sender_nickname || msg.sender_username || msg.sender_email?.split('@')[0] || (msg.is_admin ? 'Администратор' : 'Пользователь'));
                   const displayEmail = msg.sender_email;
                   const displayAvatar = msg.sender_avatar;
                   
@@ -927,35 +948,25 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                       <div className={`max-w-[80%] ${msg.is_admin ? '' : 'flex flex-col items-end'}`}>
                         {/* Метка отправителя */}
                         <div className={`flex items-center gap-2 mb-1 ${msg.is_admin ? '' : 'flex-row-reverse'}`}>
-                          <div 
-                            className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              displayAvatar ? 'bg-cover bg-center' : msg.is_admin 
-                                ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                                : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                            }`}
-                            style={displayAvatar ? { backgroundImage: `url(${displayAvatar})` } : {}}
-                          >
-                            {!displayAvatar && (
-                              msg.is_admin ? (
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                              ) : (
-                                <span className="text-white font-bold text-sm">
-                                  {displayName.charAt(0).toUpperCase()}
-                                </span>
-                              )
-                            )}
-                          </div>
+                          <TicketAvatar
+                            src={displayAvatar}
+                            name={displayName}
+                            email={displayEmail}
+                            size="sm"
+                            isAdmin={msg.is_admin}
+                          />
                           <div className={`flex flex-col ${msg.is_admin ? 'items-start' : 'items-end'}`}>
                             <span className={`text-xs font-medium ${
                               msg.is_admin 
                                 ? 'bg-gradient-to-r from-green-400 to-emerald-400 text-transparent bg-clip-text' 
                                 : 'text-blue-300'
                             }`}>
-                              {msg.is_admin ? 'Администратор' : displayName}
+                              {displayName}
                             </span>
                             {!msg.is_admin && displayEmail && (
+                              <span className="text-[10px] text-zinc-500">{displayEmail}</span>
+                            )}
+                            {msg.is_admin && !isSystemMessage && displayEmail && (
                               <span className="text-[10px] text-zinc-500">{displayEmail}</span>
                             )}
                           </div>
@@ -1175,12 +1186,15 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
             {/* Шапка профиля */}
             <div className="sticky top-0 bg-[#1a1a1f]/95 backdrop-blur border-b border-white/10 p-6 flex items-center justify-between z-10">
               <div className="flex items-center gap-4">
-                <div 
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black border-2 overflow-hidden ${viewingUser.avatar ? 'bg-cover bg-center' : 'bg-gradient-to-br from-[#6050ba] to-[#4a3d8f]'} border-[#6050ba]/50`}
-                  style={{ backgroundImage: viewingUser.avatar ? `url(${viewingUser.avatar})` : 'none' }}
-                >
-                  {!viewingUser.avatar && (viewingUser.nickname?.charAt(0)?.toUpperCase() || '?')}
-                </div>
+                <TicketAvatar
+                  src={viewingUser.avatar}
+                  name={viewingUser.nickname}
+                  email={viewingUser.email}
+                  size="xl"
+                  role={viewingUser.role}
+                  showRing
+                  className="rounded-2xl"
+                />
                 <div>
                   <h2 className="text-xl font-black">{viewingUser.nickname || 'Без никнейма'}</h2>
                   <p className="text-sm text-zinc-400">{viewingUser.email}</p>

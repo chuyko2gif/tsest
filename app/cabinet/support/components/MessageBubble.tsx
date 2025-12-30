@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { Message, Attachment } from '../types';
+import TicketAvatar from '@/components/TicketAvatar';
 
 interface MessageBubbleProps {
   message: Message;
@@ -51,17 +52,31 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     );
   };
 
+  // Системное сообщение (автоответ) - специальный ID
+  const isSystemMessage = (message as any).sender_id === '00000000-0000-0000-0000-000000000000';
+  
+  // Определяем имя и email отправителя
+  const senderName = isSystemMessage 
+    ? 'THQ Support' 
+    : (message.sender_nickname || message.user_nickname || message.sender_email || message.user_email || (message.is_admin ? 'Поддержка' : 'Пользователь'));
+  const senderEmail = message.sender_email || message.user_email;
+  const senderAvatar = message.sender_avatar || message.user_avatar;
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
         {/* Avatar для чужих сообщений */}
         {!isOwn && (
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-6 h-6 rounded-full bg-[#6050ba]/20 flex items-center justify-center text-xs font-bold text-[#9d8df1]">
-              {message.user_nickname?.[0]?.toUpperCase() || message.user_email?.[0]?.toUpperCase() || 'S'}
-            </div>
+            <TicketAvatar
+              src={senderAvatar}
+              name={senderName}
+              email={senderEmail}
+              size="xs"
+              isAdmin={message.is_admin}
+            />
             <span className="text-xs text-zinc-500">
-              {message.is_admin ? 'Поддержка' : message.user_nickname || 'Пользователь'}
+              {senderName}
             </span>
           </div>
         )}

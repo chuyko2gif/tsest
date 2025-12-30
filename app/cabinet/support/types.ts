@@ -4,6 +4,7 @@ export interface Message {
   id: string;
   ticket_id: string;
   user_id: string;
+  sender_id?: string;
   message: string;
   is_admin: boolean;
   is_read: boolean;

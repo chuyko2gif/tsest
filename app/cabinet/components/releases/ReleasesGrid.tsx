@@ -78,14 +78,8 @@ export default function ReleasesGrid({
       onDrop={onDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-      {/* Карточка добавления релиза */}
-      {!showArchive && (
-        <>
-          {userRole === 'exclusive' && <AddReleaseCard onClick={onAddRelease} />}
-          {userRole === 'basic' && <AddReleaseCard onClick={onAddRelease} />}
-          {(userRole === 'admin' || userRole === 'owner') && <AddReleaseCard onClick={onAddRelease} />}
-        </>
-      )}
+      {/* Карточка добавления релиза - скрыта в архиве черновиков */}
+      {userRole && !showArchive && <AddReleaseCard onClick={onAddRelease} />}
 
       {/* Карточки релизов */}
       {releases.map((release, index) => {

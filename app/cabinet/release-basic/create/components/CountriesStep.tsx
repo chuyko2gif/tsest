@@ -10,6 +10,17 @@ interface CountriesStepProps {
 export default function CountriesStep({ selectedCountries, setSelectedCountries, onNext, onBack }: CountriesStepProps) {
   const countryCodes: { [key: string]: string } = {
     'Россия': 'RU',
+    'Беларусь': 'BY',
+    'Казахстан': 'KZ',
+    'Украина': 'UA',
+    'Узбекистан': 'UZ',
+    'Азербайджан': 'AZ',
+    'Армения': 'AM',
+    'Грузия': 'GE',
+    'Молдова': 'MD',
+    'Кыргызстан': 'KG',
+    'Таджикистан': 'TJ',
+    'Туркменистан': 'TM',
     'США': 'US',
     'Великобритания': 'GB',
     'Германия': 'DE',
@@ -28,15 +39,48 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
     'Нидерланды': 'NL',
     'Швеция': 'SE',
     'Норвегия': 'NO',
-    'Финляндия': 'FI'
+    'Финляндия': 'FI',
+    'Чехия': 'CZ',
+    'Австрия': 'AT',
+    'Бельгия': 'BE',
+    'Швейцария': 'CH',
+    'Дания': 'DK',
+    'Португалия': 'PT',
+    'Греция': 'GR',
+    'Ирландия': 'IE',
+    'Китай': 'CN',
+    'Индия': 'IN',
+    'Индонезия': 'ID',
+    'Таиланд': 'TH',
+    'Вьетнам': 'VN',
+    'Малайзия': 'MY',
+    'Сингапур': 'SG',
+    'Филиппины': 'PH',
+    'ОАЭ': 'AE',
+    'Саудовская Аравия': 'SA',
+    'Израиль': 'IL',
+    'Египет': 'EG',
+    'ЮАР': 'ZA',
+    'Нигерия': 'NG',
+    'Чили': 'CL',
+    'Колумбия': 'CO',
+    'Перу': 'PE',
+    'Венесуэла': 'VE'
+  };
+
+  // Регионы стран
+  const regions: { [key: string]: string[] } = {
+    'СНГ': ['Россия', 'Беларусь', 'Казахстан', 'Украина', 'Узбекистан', 'Азербайджан', 'Армения', 'Грузия', 'Молдова', 'Кыргызстан', 'Таджикистан', 'Туркменистан'],
+    'Европа': ['Великобритания', 'Германия', 'Франция', 'Италия', 'Испания', 'Польша', 'Нидерланды', 'Швеция', 'Норвегия', 'Финляндия', 'Чехия', 'Австрия', 'Бельгия', 'Швейцария', 'Дания', 'Португалия', 'Греция', 'Ирландия'],
+    'Северная Америка': ['США', 'Канада', 'Мексика'],
+    'Южная Америка': ['Бразилия', 'Аргентина', 'Чили', 'Колумбия', 'Перу', 'Венесуэла'],
+    'Азия': ['Япония', 'Южная Корея', 'Китай', 'Индия', 'Индонезия', 'Таиланд', 'Вьетнам', 'Малайзия', 'Сингапур', 'Филиппины'],
+    'Ближний Восток': ['Турция', 'ОАЭ', 'Саудовская Аравия', 'Израиль'],
+    'Океания': ['Австралия'],
+    'Африка': ['Египет', 'ЮАР', 'Нигерия']
   };
   
-  const allCountries = [
-    'Россия', 'США', 'Великобритания', 'Германия', 'Франция', 
-    'Италия', 'Испания', 'Канада', 'Австралия', 'Япония',
-    'Южная Корея', 'Бразилия', 'Мексика', 'Аргентина', 'Польша',
-    'Турция', 'Нидерланды', 'Швеция', 'Норвегия', 'Финляндия'
-  ];
+  const allCountries = Object.keys(countryCodes);
   
   // excludedCountries = страны которые НЕ выбраны (исключены из дистрибуции)
   const [excludedCountries, setExcludedCountries] = useState<string[]>(() => {
@@ -102,7 +146,7 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
         </div>
         
         <div className="mt-4">
-          <div className="flex gap-2 mb-3">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               type="button"
               onClick={selectAll}
@@ -118,7 +162,47 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
               Снять все
             </button>
             <div className="ml-auto text-sm text-zinc-400 flex items-center">
-              Исключенные страны: <span className="ml-1 font-bold text-white">{excludedCountries.length}/{allCountries.length}</span>
+              Выбрано стран: <span className="ml-1 font-bold text-white">{selectedCountries.length}/{allCountries.length}</span>
+            </div>
+          </div>
+          
+          {/* Кнопки регионов */}
+          <div className="mb-4">
+            <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2 font-semibold">Быстрый выбор по регионам:</div>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(regions).map(([regionName, regionCountries]) => {
+                const selectedInRegion = regionCountries.filter(c => selectedCountries.includes(c)).length;
+                const allInRegion = regionCountries.length;
+                const isFullySelected = selectedInRegion === allInRegion;
+                const isPartiallySelected = selectedInRegion > 0 && selectedInRegion < allInRegion;
+                
+                return (
+                  <button
+                    key={regionName}
+                    type="button"
+                    onClick={() => {
+                      if (isFullySelected) {
+                        // Убираем все страны региона
+                        setExcludedCountries([...excludedCountries, ...regionCountries.filter(c => !excludedCountries.includes(c))]);
+                      } else {
+                        // Добавляем все страны региона
+                        setExcludedCountries(excludedCountries.filter(c => !regionCountries.includes(c)));
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      isFullySelected 
+                        ? 'bg-gradient-to-r from-emerald-500/30 to-green-500/30 border border-emerald-500/50 text-emerald-300' 
+                        : isPartiallySelected
+                          ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-300'
+                          : 'bg-white/5 border border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                    title={`${regionName}: ${selectedInRegion}/${allInRegion} стран выбрано`}
+                  >
+                    {regionName}
+                    <span className="ml-1.5 opacity-60">({selectedInRegion}/{allInRegion})</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">

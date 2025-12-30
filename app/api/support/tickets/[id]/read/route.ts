@@ -47,7 +47,7 @@ export async function POST(
       .eq('id', user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
 
     // Вызываем нужную функцию в зависимости от роли
     if (isAdmin) {

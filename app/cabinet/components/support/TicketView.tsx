@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../lib/fetchWithAuth';
 import { statusColors, statusLabels, categoryLabels } from './TicketCard';
+import TicketAvatar from '@/components/TicketAvatar';
 
 interface TicketViewProps {
   ticket: any;
@@ -207,32 +208,36 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
-        <button
-          onClick={onBack}
-          className="mb-3 px-3 py-2 flex items-center gap-2 text-zinc-300 bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 group"
-        >
-          <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          <span className="font-medium">Назад</span>
-        </button>
-
-        <h3 className="text-base font-bold text-white mb-2">{ticket.subject}</h3>
-        
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-xs px-2 py-1 rounded-full border ${
-            statusColors[ticket.status as keyof typeof statusColors] || 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
-          }`}>
-            {statusLabels[ticket.status as keyof typeof statusLabels] || ticket.status}
-          </span>
+      <div className="p-3 border-b border-white/10 bg-white/5 backdrop-blur-md">
+        <div className="flex items-start justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="px-3 py-1.5 flex items-center gap-1.5 text-sm text-white bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/20 hover:border-white/30 rounded-lg transition-all duration-200 group flex-shrink-0 shadow-lg"
+            title="Назад к списку тикетов"
+          >
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="font-semibold">Назад</span>
+          </button>
           
-          {ticket.category && (
-            <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
-              {categoryLabels[ticket.category] || ticket.category}
-            </span>
-          )}
-          <span className="text-xs text-zinc-500">#{ticket.id.slice(0, 8)}</span>
+          <div className="flex-1 min-w-0 text-right">
+            <h3 className="text-sm font-bold text-white mb-1 truncate">{ticket.subject}</h3>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                statusColors[ticket.status as keyof typeof statusColors] || 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
+              }`}>
+                {statusLabels[ticket.status as keyof typeof statusLabels] || ticket.status}
+              </span>
+              
+              {ticket.category && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                  {categoryLabels[ticket.category] || ticket.category}
+                </span>
+              )}
+              <span className="text-[10px] text-zinc-500">#{ticket.id.slice(0, 8)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -240,32 +245,27 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg: any, idx: number) => {
           const isFromAdmin = msg.is_admin === true;
-          const displayName = msg.sender_nickname || msg.sender_username || msg.sender_email?.split('@')[0] || (isFromAdmin ? 'Администратор' : 'Пользователь');
+          // Системное сообщение (автоответ) - специальный ID
+          const isSystemMessage = msg.sender_id === '00000000-0000-0000-0000-000000000000';
+          
+          const displayName = isSystemMessage 
+            ? 'THQ Support' 
+            : (msg.sender_nickname || msg.sender_username || msg.sender_email?.split('@')[0] || (isFromAdmin ? 'Поддержка' : 'Пользователь'));
           const displayAvatar = msg.sender_avatar;
+          const displayEmail = msg.sender_email;
           const isFirstUserMessage = idx === 0 && !isFromAdmin && ticket?.release_id && ticket?.release;
           
           return (
             <div key={msg.id} className={`flex ${isFromAdmin ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[85%] ${isFromAdmin ? '' : 'flex flex-col items-end'}`}>
                 <div className={`flex items-center gap-2 mb-1 ${isFromAdmin ? '' : 'flex-row-reverse'}`}>
-                  <div 
-                    className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      displayAvatar ? 'bg-cover bg-center' : isFromAdmin 
-                        ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                        : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                    }`}
-                    style={displayAvatar ? { backgroundImage: `url(${displayAvatar})` } : {}}
-                  >
-                    {!displayAvatar && (
-                      isFromAdmin ? (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                      ) : (
-                        <span className="text-white font-bold text-xs">{displayName.charAt(0).toUpperCase()}</span>
-                      )
-                    )}
-                  </div>
+                  <TicketAvatar
+                    src={displayAvatar}
+                    name={displayName}
+                    email={displayEmail}
+                    size="xs"
+                    isAdmin={isFromAdmin}
+                  />
                   <div className={`flex flex-col ${isFromAdmin ? 'items-start' : 'items-end'}`}>
                     <span className={`text-xs font-medium ${isFromAdmin ? 'bg-gradient-to-r from-green-400 to-emerald-400 text-transparent bg-clip-text' : 'text-blue-300'}`}>
                       {displayName}

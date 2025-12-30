@@ -128,11 +128,53 @@ export async function GET(request: Request) {
       messagesByTicket.get(msg.ticket_id).push(msg);
     });
 
-    // Форматируем тикеты (используем кешированные данные)
+    // Собираем ВСЕ уникальные ID пользователей (владельцы тикетов + отправители сообщений)
+    // Исключаем системные ID (нулевой UUID для автоответов)
+    const SYSTEM_ID = '00000000-0000-0000-0000-000000000000';
+    const ticketUserIds = tickets.map(t => t.user_id).filter(id => id && id !== SYSTEM_ID);
+    const messageSenderIds = (allMessages?.map(m => m.sender_id) || []).filter(id => id && id !== SYSTEM_ID);
+    const allUserIds = [...new Set([...ticketUserIds, ...messageSenderIds])];
+    
+    const profilesMap = new Map();
+    
+    if (allUserIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, nickname, username, telegram, avatar, role')
+        .in('id', allUserIds);
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+      
+      profiles?.forEach(p => profilesMap.set(p.id, p));
+    }
+
+    // Форматируем тикеты с СВЕЖИМИ данными профилей
     const formattedTickets = tickets.map((ticket) => {
+      const profile = profilesMap.get(ticket.user_id);
+      
+      // Форматируем сообщения со свежими данными отправителей
+      const messages = (messagesByTicket.get(ticket.id) || []).map((msg: any) => {
+        const senderProfile = profilesMap.get(msg.sender_id);
+        return {
+          ...msg,
+          sender_email: senderProfile?.email || msg.sender_email,
+          sender_nickname: senderProfile?.nickname || msg.sender_nickname,
+          sender_username: senderProfile?.username || msg.sender_username,
+          sender_avatar: senderProfile?.avatar || msg.sender_avatar
+        };
+      });
+      
       return {
         ...ticket,
-        ticket_messages: messagesByTicket.get(ticket.id) || [],
+        // Подставляем свежие данные из профиля
+        user_email: profile?.email || ticket.user_email,
+        user_nickname: profile?.nickname || ticket.user_nickname,
+        user_telegram: profile?.telegram || ticket.user_telegram,
+        user_avatar: profile?.avatar || ticket.user_avatar,
+        user_role: profile?.role || ticket.user_role,
+        ticket_messages: messages,
         release: ticket.release_id ? releasesMap.get(ticket.release_id) : null
       };
     });
@@ -224,6 +266,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Определяем, является ли пользователь админом/овнером
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
+
     // Создаем первое сообщение (триггер автоматически заполнит sender_email, sender_nickname, sender_avatar)
     const { data: ticketMessage, error: messageError } = await supabase
       .from('ticket_messages')
@@ -231,7 +276,7 @@ export async function POST(request: Request) {
         ticket_id: ticket.id,
         sender_id: user.id,
         message,
-        is_admin: false,
+        is_admin: isAdmin,
         images: images || []
       })
       .select()

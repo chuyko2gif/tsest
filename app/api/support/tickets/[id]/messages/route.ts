@@ -79,22 +79,34 @@ export async function GET(
       return NextResponse.json({ messages: [] });
     }
 
-    // Получаем профили отправителей ОТДЕЛЬНО
-    const senderIds = [...new Set(messages.map(m => m.sender_id))];
-    const { data: senders } = await supabase
-      .from('profiles')
-      .select('id, email, username')
-      .in('id', senderIds);
+    // Получаем профили отправителей ОТДЕЛЬНО с аватарками
+    // Исключаем системный ID (для автоответов)
+    const SYSTEM_ID = '00000000-0000-0000-0000-000000000000';
+    const senderIds = [...new Set(messages.map(m => m.sender_id).filter(id => id && id !== SYSTEM_ID))];
+    
+    const sendersMap = new Map();
+    if (senderIds.length > 0) {
+      const { data: senders, error: sendersError } = await supabase
+        .from('profiles')
+        .select('id, email, username, nickname, avatar')
+        .in('id', senderIds);
+      
+      if (sendersError) {
+        console.error('Error fetching sender profiles:', sendersError);
+      }
+      
+      senders?.forEach(s => sendersMap.set(s.id, s));
+    }
 
-    const sendersMap = new Map(senders?.map(s => [s.id, s]) || []);
-
-    // Форматируем сообщения
+    // Форматируем сообщения со свежими данными из профилей
     const formattedMessages = messages.map(msg => {
       const sender = sendersMap.get(msg.sender_id);
       return {
         ...msg,
-        sender_email: sender?.email || null,
-        sender_username: sender?.username || null
+        sender_email: sender?.email || msg.sender_email || null,
+        sender_username: sender?.username || msg.sender_username || null,
+        sender_nickname: sender?.nickname || msg.sender_nickname || null,
+        sender_avatar: sender?.avatar || msg.sender_avatar || null
       };
     });
 
@@ -158,18 +170,29 @@ export async function POST(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
-    // Получаем роль
+    // Получаем роль и все данные профиля для аватарки
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role, email, nickname')
+      .select('role, email, nickname, avatar')
       .eq('id', user.id)
       .single();
 
-    console.log('Profile data:', profile, 'Error:', profileError);
+    // Если профиль не найден, попробуем найти по email
+    let finalProfile = profile;
+    if (!profile && user.email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles')
+        .select('role, email, nickname, avatar')
+        .eq('email', user.email)
+        .single();
+      finalProfile = profileByEmail;
+    }
 
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
+    console.log('Profile data:', finalProfile, 'Error:', profileError);
+
+    const isAdmin = finalProfile?.role === 'admin' || finalProfile?.role === 'owner';
     
-    console.log('User role:', profile?.role, 'isAdmin:', isAdmin, 'user.id:', user.id);
+    console.log('User role:', finalProfile?.role, 'isAdmin:', isAdmin, 'user.id:', user.id, 'user.email:', user.email);
 
     // Создаём сообщение
     const { data: newMessage, error } = await supabase
@@ -210,11 +233,12 @@ export async function POST(
       .update(updateData)
       .eq('id', ticketId);
 
-    // Форматируем ответ с профилем
+    // Форматируем ответ с полными данными профиля
     const formattedMessage = {
       ...newMessage,
-      sender_email: profile?.email || null,
-      sender_username: profile?.nickname || null
+      sender_email: finalProfile?.email || null,
+      sender_nickname: finalProfile?.nickname || null,
+      sender_avatar: finalProfile?.avatar || null
     };
 
     return NextResponse.json({ message: formattedMessage });

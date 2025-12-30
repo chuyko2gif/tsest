@@ -23,13 +23,20 @@ export default function SupportContent({ onClose, onUpdateUnreadCount }: Support
     return () => clearInterval(interval);
   }, []);
 
-  const loadTickets = async () => {
+  const loadTickets = async (forceRefresh = false) => {
     try {
+      if (forceRefresh) {
+        setLoading(true);
+      }
       const response = await fetchWithAuth('/api/support/tickets');
       const data = await response.json();
       
       if (data.success) {
-        setTickets(data.tickets || []);
+        // Сортируем тикеты: новые первыми
+        const sortedTickets = (data.tickets || []).sort((a: any, b: any) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        setTickets(sortedTickets);
         setError('');
       } else {
         setError(data.error || 'Не удалось загрузить тикеты');
@@ -90,11 +97,12 @@ export default function SupportContent({ onClose, onUpdateUnreadCount }: Support
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Ваши тикеты</h3>
         <button
-          onClick={loadTickets}
-          className="p-2 bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+          onClick={() => loadTickets(true)}
+          disabled={loading}
+          className="p-2 bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title="Обновить"
         >
-          <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 text-zinc-400 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>

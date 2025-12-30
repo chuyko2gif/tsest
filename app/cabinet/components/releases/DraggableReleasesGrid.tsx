@@ -186,14 +186,8 @@ export function DraggableReleasesGrid({
         {/* Сетка с релизами */}
         <SortableContext items={draftIds} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-5 gap-3 sm:gap-4 pb-32 auto-rows-fr">
-            {/* Карточка добавления релиза */}
-            {!showArchive && (
-              <>
-                {userRole === 'exclusive' && <AddReleaseCard onClick={onAddRelease} />}
-                {userRole === 'basic' && <AddReleaseCard onClick={onAddRelease} />}
-                {(userRole === 'admin' || userRole === 'owner') && <AddReleaseCard onClick={onAddRelease} />}
-              </>
-            )}
+            {/* Карточка добавления релиза - скрыта в архиве черновиков */}
+            {userRole && !showArchive && <AddReleaseCard onClick={onAddRelease} />}
 
             {/* Карточки релизов */}
             {localReleases.map((release) => (
