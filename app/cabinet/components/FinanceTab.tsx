@@ -21,8 +21,10 @@ export default function FinanceTab({ userId, balance, onWithdraw }: FinanceTabPr
            style={{ boxShadow: '0 0 40px rgba(16, 185, 129, 0.15)' }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-3xl">
-              💰
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
             </div>
             <div>
               <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Ваш баланс</div>
@@ -65,9 +67,17 @@ export default function FinanceTab({ userId, balance, onWithdraw }: FinanceTabPr
       </div>
       
       <div className="p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-xl">
-        <p className="text-xs text-zinc-500">
-          💡 Отчёты загружаются автоматически каждый квартал. По вопросам — создайте тикет в разделе Поддержка
-        </p>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+            </svg>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Отчёты загружаются автоматически каждый квартал. По вопросам — создайте тикет в разделе Поддержка
+          </p>
+        </div>
+      </div>
       </div>
     </div>
   );

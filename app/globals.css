@@ -5,6 +5,22 @@
   --color-brand-light: #9d8df1;
 }
 
+/* Анимации для главной страницы */
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 50px rgba(96,80,186,0.9)); }
+  50% { filter: drop-shadow(0 0 70px rgba(157,141,241,1)); }
+}
+
+@keyframes logo-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+
 /* Glass Morphism Styles - Enhanced */
 .glass-morphism {
   background: rgba(255, 255, 255, 0.02);

@@ -96,10 +96,10 @@ export default function WithdrawalForm({
     !recipientName.trim();
 
   const getButtonText = () => {
-    if (balance === 0) return '❌ Нет средств';
-    if (!withdrawalAmount || Number(withdrawalAmount) < 1000) return '⚠️ Минимум 1000 ₽';
-    if (Number(withdrawalAmount) > balance) return '❌ Недостаточно средств';
-    if (!bankName.trim() || !cardNumber.trim() || !recipientName.trim()) return '📝 Заполните поля';
+    if (balance === 0) return 'Нет средств';
+    if (!withdrawalAmount || Number(withdrawalAmount) < 1000) return 'Минимум 1000 ₽';
+    if (Number(withdrawalAmount) > balance) return 'Недостаточно средств';
+    if (!bankName.trim() || !cardNumber.trim() || !recipientName.trim()) return 'Заполните поля';
     return 'Отправить заявку';
   };
 

@@ -86,7 +86,8 @@ export async function GET(request: NextRequest) {
     }
 
     const track = tracks[trackIdx];
-    const audioUrl = track.link;
+    // Поддержка разных полей URL аудио
+    const audioUrl = track.link || track.audio_url || track.audioFile;
 
     if (!audioUrl) {
       return NextResponse.json(

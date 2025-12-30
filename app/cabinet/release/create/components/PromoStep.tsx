@@ -38,7 +38,7 @@ export default function PromoStep({
 }: PromoStepProps) {
   const [localPromoPhotos, setLocalPromoPhotos] = useState<string[]>(externalPromoPhotos || []);
   const [photoInput, setPhotoInput] = useState('');
-  const [errors, setErrors] = useState<{focusTrackPromo?: string; albumDescription?: string}>({});
+  const [showSkipModal, setShowSkipModal] = useState(false);
 
   // Используем внешние props если есть, иначе локальное состояние
   const promoPhotos = externalPromoPhotos ?? localPromoPhotos;
@@ -47,30 +47,18 @@ export default function PromoStep({
   const isSingleTrack = tracks.length === 1;
   const isAlbum = tracks.length > 1;
   
-  const validateAndNext = () => {
-    const newErrors: {focusTrackPromo?: string; albumDescription?: string} = {};
-    
-    // Если один трек - требуем промо трека
-    if (isSingleTrack && !focusTrackPromo.trim()) {
-      newErrors.focusTrackPromo = 'Для сингла обязательно нужно заполнить промо-текст трека';
-    }
-    
-    // Если альбом (больше 1 трека) - требуем описание альбома
-    if (isAlbum && !albumDescription.trim()) {
-      newErrors.albumDescription = 'Для альбома обязательно нужно заполнить общее описание релиза';
-    }
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    
-    setErrors({});
+  // Промо теперь необязательно - просто переходим дальше
+  const handleNext = () => {
     onFilled?.(); // Устанавливаем статус "заполнено"
     onNext();
   };
   
   const handleSkip = () => {
+    setShowSkipModal(true);
+  };
+
+  const confirmSkip = () => {
+    setShowSkipModal(false);
     onSkip?.(); // Устанавливаем статус "пропущено"
     onNext();
   };
@@ -152,10 +140,10 @@ export default function PromoStep({
               </div>
               <div className="flex-1">
                 <h3 className="text-white font-bold mb-1">
-                  Промо-текст трека <span className="text-red-400">*</span>
+                  Промо-текст трека <span className="text-zinc-500 text-xs font-normal">(необязательно)</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  Обязательное описание для сингла (1500-2000 символов)
+                  Описание для сингла (рекомендуется 1500-2000 символов)
                 </p>
               </div>
               <div className="text-sm">
@@ -166,31 +154,16 @@ export default function PromoStep({
             </div>
             <textarea
               value={focusTrackPromo}
-              onChange={(e) => {
-                setFocusTrackPromo(e.target.value);
-                if (errors.focusTrackPromo) setErrors({...errors, focusTrackPromo: undefined});
-              }}
+              onChange={(e) => setFocusTrackPromo(e.target.value)}
               placeholder="Расскажите об этом треке: история создания, настроение, особенности..."
               rows={6}
               maxLength={2000}
-              className={`w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border outline-none resize-none ${
-                errors.focusTrackPromo ? 'border-red-500/50' : 'border-white/10'
-              }`}
+              className="w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border outline-none resize-none border-white/10 hover:border-purple-500/40 focus:border-purple-500"
             />
-            {errors.focusTrackPromo && (
-              <div className="mt-2 text-sm text-red-400 flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {errors.focusTrackPromo}
-              </div>
-            )}
           </div>
         )}
 
-        {/* Описание альбома (только для альбомов) */}
+        {/* Описание альбома (только для альбомов/EP) */}
         {isAlbum && (
           <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
             <div className="flex items-start gap-3 mb-4">
@@ -203,10 +176,10 @@ export default function PromoStep({
               </div>
               <div className="flex-1">
                 <h3 className="text-white font-bold mb-1">
-                  Общее описание альбома <span className="text-red-400">*</span>
+                  Общее описание релиза <span className="text-zinc-500 text-xs font-normal">(необязательно)</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  Обязательное описание релиза целиком (до 2500 символов)
+                  Описание релиза целиком (рекомендуется до 2500 символов)
                 </p>
               </div>
               <div className="text-sm">
@@ -217,27 +190,12 @@ export default function PromoStep({
             </div>
           <textarea
             value={albumDescription}
-            onChange={(e) => {
-              setAlbumDescription(e.target.value);
-              if (errors.albumDescription) setErrors({...errors, albumDescription: undefined});
-            }}
+            onChange={(e) => setAlbumDescription(e.target.value)}
             placeholder="Расскажите о релизе: концепция, вдохновение, процесс создания..."
             rows={6}
             maxLength={2500}
-            className={`w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border outline-none resize-none ${
-              errors.albumDescription ? 'border-red-500/50' : 'border-white/10'
-            }`}
+            className="w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border outline-none resize-none border-white/10 hover:border-purple-500/40 focus:border-purple-500"
           />
-          {errors.albumDescription && (
-            <div className="mt-2 text-sm text-red-400 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              {errors.albumDescription}
-            </div>
-          )}
         </div>
         )}
 
@@ -306,21 +264,77 @@ export default function PromoStep({
           Назад
         </button>
         <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2">
-          {onSkip && (
-            <button onClick={handleSkip} className="px-6 py-3 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-yellow-500/30">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="13 17 18 12 13 7"/>
-                <polyline points="6 17 11 12 6 7"/>
-              </svg>
-              Пропустить
-            </button>
-          )}
-          <button onClick={validateAndNext} className="px-8 py-3 bg-[#6050ba] hover:bg-[#7060ca] rounded-xl font-bold transition flex items-center justify-center gap-2">
+          <button onClick={handleSkip} className="px-6 py-3 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-yellow-500/30">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="13 17 18 12 13 7"/>
+              <polyline points="6 17 11 12 6 7"/>
+            </svg>
+            Пропустить
+          </button>
+          <button onClick={handleNext} className="px-8 py-3 bg-[#6050ba] hover:bg-[#7060ca] rounded-xl font-bold transition flex items-center justify-center gap-2">
             Далее
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6" strokeWidth="2"/></svg>
           </button>
         </div>
       </div>
+
+      {/* Модальное окно подтверждения пропуска */}
+      {showSkipModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowSkipModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative w-full max-w-md backdrop-blur-xl bg-gradient-to-br from-white/[0.12] to-white/[0.04] border border-white/20 rounded-2xl p-6 shadow-2xl shadow-black/50 animate-fade-up">
+            {/* Close button */}
+            <button 
+              onClick={() => setShowSkipModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-400">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            
+            {/* Icon */}
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center ring-1 ring-yellow-500/30">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-yellow-400">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            
+            {/* Title & Description */}
+            <h3 className="text-xl font-bold text-center text-white mb-2">
+              Пропустить промо-материалы?
+            </h3>
+            <p className="text-sm text-center text-zinc-400 mb-6 leading-relaxed">
+              Без промо-материалов вашему релизу будет сложнее продвигаться на платформах. 
+              Рекомендуем заполнить хотя бы основные поля для лучшего результата.
+            </p>
+            
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button 
+                onClick={() => setShowSkipModal(false)}
+                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold transition text-white"
+              >
+                Заполнить
+              </button>
+              <button 
+                onClick={confirmSkip}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 border border-yellow-500/30 rounded-xl font-bold transition text-yellow-400"
+              >
+                Да, пропустить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

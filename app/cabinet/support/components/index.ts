@@ -1,9 +1,0 @@
-export { default as SupportSidebar } from './SupportSidebar';
-export { default as TicketList } from './TicketList';
-export { default as TicketListItem } from './TicketListItem';
-export { default as ChatView } from './ChatView';
-export { default as MessageBubble } from './MessageBubble';
-export { default as MessageInput } from './MessageInput';
-export { default as TypingIndicator } from './TypingIndicator';
-export { default as NewTicketModal } from './NewTicketModal';
-export { default as EmptyState } from './EmptyState';

@@ -7,6 +7,24 @@ interface CountriesStepProps {
   onBack: () => void;
 }
 
+// Флаги стран (emoji)
+const countryFlags: { [key: string]: string } = {
+  'Россия': '🇷🇺', 'Беларусь': '🇧🇾', 'Казахстан': '🇰🇿', 'Украина': '🇺🇦',
+  'Узбекистан': '🇺🇿', 'Азербайджан': '🇦🇿', 'Армения': '🇦🇲', 'Грузия': '🇬🇪',
+  'Молдова': '🇲🇩', 'Кыргызстан': '🇰🇬', 'Таджикистан': '🇹🇯', 'Туркменистан': '🇹🇲',
+  'США': '🇺🇸', 'Великобритания': '🇬🇧', 'Германия': '🇩🇪', 'Франция': '🇫🇷',
+  'Италия': '🇮🇹', 'Испания': '🇪🇸', 'Канада': '🇨🇦', 'Австралия': '🇦🇺',
+  'Япония': '🇯🇵', 'Южная Корея': '🇰🇷', 'Бразилия': '🇧🇷', 'Мексика': '🇲🇽',
+  'Аргентина': '🇦🇷', 'Польша': '🇵🇱', 'Турция': '🇹🇷', 'Нидерланды': '🇳🇱',
+  'Швеция': '🇸🇪', 'Норвегия': '🇳🇴', 'Финляндия': '🇫🇮', 'Чехия': '🇨🇿',
+  'Австрия': '🇦🇹', 'Бельгия': '🇧🇪', 'Швейцария': '🇨🇭', 'Дания': '🇩🇰',
+  'Португалия': '🇵🇹', 'Греция': '🇬🇷', 'Ирландия': '🇮🇪', 'Китай': '🇨🇳',
+  'Индия': '🇮🇳', 'Индонезия': '🇮🇩', 'Таиланд': '🇹🇭', 'Вьетнам': '🇻🇳',
+  'Малайзия': '🇲🇾', 'Сингапур': '🇸🇬', 'Филиппины': '🇵🇭', 'ОАЭ': '🇦🇪',
+  'Саудовская Аравия': '🇸🇦', 'Израиль': '🇮🇱', 'Египет': '🇪🇬', 'ЮАР': '🇿🇦',
+  'Нигерия': '🇳🇬', 'Чили': '🇨🇱', 'Колумбия': '🇨🇴', 'Перу': '🇵🇪', 'Венесуэла': '🇻🇪'
+};
+
 export default function CountriesStep({ selectedCountries, setSelectedCountries, onNext, onBack }: CountriesStepProps) {
   const countryCodes: { [key: string]: string } = {
     'Россия': 'RU',
@@ -89,6 +107,9 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
     return allCountries.filter(c => !selectedCountries.includes(c));
   });
   
+  // Состояние аккордеонов (раскрытые регионы)
+  const [expandedRegions, setExpandedRegions] = useState<string[]>(['СНГ']);
+  
   // Обновляем selectedCountries при изменении excludedCountries
   useEffect(() => {
     if (setSelectedCountries) {
@@ -96,6 +117,14 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
       setSelectedCountries(included);
     }
   }, [excludedCountries]);
+
+  const toggleRegion = (regionName: string) => {
+    setExpandedRegions(prev => 
+      prev.includes(regionName) 
+        ? prev.filter(r => r !== regionName)
+        : [...prev, regionName]
+    );
+  };
 
   const toggleCountry = (country: string) => {
     if (excludedCountries.includes(country)) {
@@ -207,37 +236,109 @@ export default function CountriesStep({ selectedCountries, setSelectedCountries,
               })}
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {allCountries.map(country => {
-              const isExcluded = excludedCountries.includes(country);
+          
+          {/* Аккордеоны регионов с флагами */}
+          <div className="space-y-3">
+            {Object.entries(regions).map(([regionName, regionCountries]) => {
+              const selectedInRegion = regionCountries.filter(c => selectedCountries?.includes(c)).length;
+              const allInRegion = regionCountries.length;
+              const isFullySelected = selectedInRegion === allInRegion;
+              const isPartiallySelected = selectedInRegion > 0 && selectedInRegion < allInRegion;
+              const isExpanded = expandedRegions.includes(regionName);
+              
               return (
-                <button
-                  key={country}
-                  onClick={() => toggleCountry(country)}
-                  className={`relative px-4 py-3 rounded-xl text-sm font-semibold transition-all overflow-hidden group ${
-                    isExcluded
-                      ? 'bg-gradient-to-br from-white/[0.03] to-white/[0.01] border-2 border-white/10 text-zinc-500 hover:border-white/20'
-                      : 'bg-gradient-to-br from-emerald-500/20 to-green-500/20 border-2 border-emerald-500/40 text-white hover:border-emerald-500/60 hover:shadow-xl hover:shadow-emerald-500/20'
-                  }`}
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-green-500/10 opacity-0 transition-opacity ${
-                    isExcluded ? '' : 'group-hover:opacity-100'
-                  }`}/>
-                  <div className="relative flex items-center gap-2.5">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-wider ${
-                      isExcluded ? 'bg-white/5 text-zinc-600' : 'bg-white/10 text-white'
-                    }`}>
-                      {countryCodes[country]}
-                    </span>
-                    <span className={isExcluded ? 'line-through' : ''}>{country}</span>
-                    {isExcluded && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="ml-auto" strokeWidth="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    )}
-                  </div>
-                </button>
+                <div key={regionName} className="rounded-xl overflow-hidden border border-white/10">
+                  {/* Заголовок аккордеона */}
+                  <button
+                    onClick={() => toggleRegion(regionName)}
+                    className={`w-full px-4 py-3 flex items-center justify-between transition-all ${
+                      isFullySelected 
+                        ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/10' 
+                        : isPartiallySelected
+                          ? 'bg-gradient-to-r from-amber-500/10 to-yellow-500/5'
+                          : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Чекбокс региона */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isFullySelected) {
+                            setExcludedCountries([...excludedCountries, ...regionCountries.filter(c => !excludedCountries.includes(c))]);
+                          } else {
+                            setExcludedCountries(excludedCountries.filter(c => !regionCountries.includes(c)));
+                          }
+                        }}
+                        className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
+                          isFullySelected 
+                            ? 'bg-emerald-500 text-black' 
+                            : isPartiallySelected
+                              ? 'bg-amber-500/50 text-white'
+                              : 'bg-white/10 hover:bg-white/20'
+                        }`}
+                      >
+                        {isFullySelected && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                        {isPartiallySelected && <div className="w-2 h-2 bg-white rounded-sm"/>}
+                      </button>
+                      
+                      <span className="font-bold text-white">{regionName}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        isFullySelected 
+                          ? 'bg-emerald-500/30 text-emerald-300' 
+                          : isPartiallySelected
+                            ? 'bg-amber-500/30 text-amber-300'
+                            : 'bg-white/10 text-zinc-400'
+                      }`}>
+                        {selectedInRegion}/{allInRegion}
+                      </span>
+                    </div>
+                    
+                    <svg 
+                      width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                      className={`text-zinc-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      strokeWidth="2"
+                    >
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                  
+                  {/* Содержимое аккордеона */}
+                  {isExpanded && (
+                    <div className="p-3 bg-black/20 border-t border-white/5">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {regionCountries.map(country => {
+                          const isExcluded = excludedCountries.includes(country);
+                          return (
+                            <button
+                              key={country}
+                              onClick={() => toggleCountry(country)}
+                              className={`relative px-3 py-2.5 rounded-lg text-sm font-medium transition-all overflow-hidden group ${
+                                isExcluded
+                                  ? 'bg-white/5 border border-white/10 text-zinc-500 hover:border-white/20'
+                                  : 'bg-gradient-to-br from-emerald-500/20 to-green-500/10 border border-emerald-500/30 text-white hover:border-emerald-500/50'
+                              }`}
+                            >
+                              <div className="relative flex items-center gap-2">
+                                <span className="text-lg">{countryFlags[country] || '🌍'}</span>
+                                <span className={isExcluded ? 'line-through opacity-50' : ''}>{country}</span>
+                                {!isExcluded && (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="ml-auto text-emerald-400" strokeWidth="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

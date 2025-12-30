@@ -45,6 +45,8 @@ export default function EditBasicReleasePage() {
   const [tracks, setTracks] = useState<Array<{
     title: string;
     link: string;
+    audioFile?: File | null;
+    audioMetadata?: { format: string; duration?: number; bitrate?: string; sampleRate?: string; size: number } | null;
     hasDrugs: boolean;
     lyrics: string;
     language: string;
@@ -55,12 +57,15 @@ export default function EditBasicReleasePage() {
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [trackTitle, setTrackTitle] = useState('');
   const [trackLink, setTrackLink] = useState('');
+  const [trackAudioFile, setTrackAudioFile] = useState<File | null>(null);
+  const [trackAudioMetadata, setTrackAudioMetadata] = useState<{ format: string; duration?: number; bitrate?: string; sampleRate?: string; size: number } | null>(null);
   const [trackHasDrugs, setTrackHasDrugs] = useState(false);
   const [trackLyrics, setTrackLyrics] = useState('');
   const [trackLanguage, setTrackLanguage] = useState('');
   const [trackVersion, setTrackVersion] = useState('');
   const [trackProducers, setTrackProducers] = useState<string[]>([]);
   const [trackFeaturing, setTrackFeaturing] = useState<string[]>([]);
+  const [releaseType, setReleaseType] = useState<'single' | 'ep' | 'album' | null>(null);
   
   // Countries state
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
@@ -166,6 +171,16 @@ export default function EditBasicReleasePage() {
       setAlbumDescription(release.album_description || '');
       setPromoPhotos(release.promo_photos || []);
       setReleaseStatus(release.status || '');
+      
+      // Определяем тип релиза на основе количества треков
+      const tracksCount = (release.tracks || []).length;
+      if (tracksCount === 1) {
+        setReleaseType('single');
+      } else if (tracksCount >= 2 && tracksCount <= 7) {
+        setReleaseType('ep');
+      } else if (tracksCount >= 8) {
+        setReleaseType('album');
+      }
       
       setLoading(false);
     } catch (error) {
@@ -351,10 +366,16 @@ export default function EditBasicReleasePage() {
       <AnimatedBackground />
       <div className="max-w-[1600px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 items-stretch relative z-10">
         
-        {/* Боковая панель с шагами */}
-        <aside className="lg:w-64 w-full bg-[#0d0d0f] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-6 flex flex-col lg:self-start lg:sticky lg:top-24">
+        {/* Боковая панель с шагами - Glassmorphism */}
+        <aside className="lg:w-64 w-full bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-6 flex flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl shadow-purple-500/5">
           <div className="mb-4 sm:mb-6">
-            <h3 className="font-bold text-base sm:text-lg">Редактирование релиза</h3>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mb-3 ring-1 ring-white/10">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <h3 className="font-black text-base sm:text-lg bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">Редактирование релиза</h3>
             <p className="text-xs text-zinc-500 mt-1">Basic Plan</p>
           </div>
           
@@ -369,12 +390,16 @@ export default function EditBasicReleasePage() {
                   onClick={() => setCurrentStep(step.id)}
                   className={`w-full text-left py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl flex items-center gap-2 sm:gap-3 transition-all ${
                     isCurrent 
-                      ? 'bg-[#6050ba] text-white shadow-lg shadow-[#6050ba]/20' 
+                      ? 'bg-gradient-to-r from-purple-500/30 to-blue-500/30 text-white shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30' 
                       : 'text-zinc-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10'
+                  <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    isComplete 
+                      ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' 
+                      : isCurrent
+                        ? 'bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30'
+                        : 'bg-white/10'
                   }`}>
                     {isComplete ? (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -386,7 +411,7 @@ export default function EditBasicReleasePage() {
                   </span>
                   <span className="text-xs sm:text-sm font-medium">{step.label}</span>
                   {isCurrent && (
-                    <span className="ml-auto w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse" />
+                    <span className="ml-auto w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-400 animate-pulse" />
                   )}
                 </button>
               );
@@ -398,7 +423,13 @@ export default function EditBasicReleasePage() {
             <div className="text-xs text-zinc-500 mb-2">Прогресс заполнения</div>
             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-[#6050ba] to-[#9d8df1] transition-all duration-500"
+                className={`h-full transition-all duration-500 ${
+                  progress >= 100 
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' 
+                    : progress >= 50 
+                      ? 'bg-gradient-to-r from-yellow-500 to-amber-400' 
+                      : 'bg-gradient-to-r from-red-500 to-rose-400'
+                }`}
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -413,24 +444,37 @@ export default function EditBasicReleasePage() {
               <button
                 onClick={() => handleSave(false)}
                 disabled={saving}
-                className={`w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-bold transition ${
+                className={`w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-bold transition flex items-center justify-center gap-2 ${
                   saving
                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                    : 'bg-white/10 hover:bg-white/20 text-white'
+                    : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                 }`}
               >
-                {saving ? 'Сохранение...' : '💾 Сохранить черновик'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                {saving ? 'Сохранение...' : 'Сохранить черновик'}
               </button>
               <button
                 onClick={() => handleSave(true)}
                 disabled={saving || progress < 100}
-                className={`w-full py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition ${
+                className={`relative w-full py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition overflow-hidden group flex items-center justify-center gap-2 ${
                   saving || progress < 100
                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                    : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20'
+                    : 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-black shadow-lg shadow-emerald-500/20'
                 }`}
               >
-                {saving ? 'Отправка...' : '✓ Отправить на модерацию'}
+                {!(saving || progress < 100) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                )}
+                <span className="relative flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  {saving ? 'Отправка...' : 'Отправить на модерацию'}
+                </span>
               </button>
               {progress < 100 && (
                 <p className="text-xs text-zinc-500 text-center">
@@ -442,28 +486,36 @@ export default function EditBasicReleasePage() {
             <button
               onClick={() => handleSave(false)}
               disabled={saving}
-              className={`w-full mt-3 sm:mt-4 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition ${
+              className={`relative w-full mt-3 sm:mt-4 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition overflow-hidden group flex items-center justify-center gap-2 ${
                 saving
                   ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20'
+                  : 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-black shadow-lg shadow-emerald-500/20'
               }`}
             >
-              {saving ? 'Сохранение...' : '✓ Сохранить изменения'}
+              {!saving && (
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              )}
+              <span className="relative flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {saving ? 'Сохранение...' : 'Сохранить изменения'}
+              </span>
             </button>
           )}
         </aside>
 
-        {/* Основной контент */}
-        <section className="flex-1 bg-[#0d0d0f] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[600px]">
+        {/* Основной контент - Glassmorphism */}
+        <section className="flex-1 bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[600px] shadow-2xl shadow-purple-500/5">
           
           {/* Кнопка возврата */}
-          <div className="mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/5">
+          <div className="mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/10">
             <button 
               onClick={() => router.push(fromPage === 'admin' ? '/admin' : '/cabinet')}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm sm:text-base font-medium transition flex items-center gap-2"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm sm:text-base font-medium transition flex items-center gap-2 group"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="flex-shrink-0">
-                <polyline points="15 18 9 12 15 6" strokeWidth="2"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="flex-shrink-0 group-hover:-translate-x-1 transition-transform" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6"/>
               </svg>
               <span className="hidden sm:inline">{fromPage === 'admin' ? 'Вернуться в админ панель' : 'Вернуться в кабинет'}</span>
               <span className="sm:hidden">Назад</span>
@@ -504,6 +556,7 @@ export default function EditBasicReleasePage() {
           {currentStep === 'tracklist' && (
             <TracklistStep
               releaseTitle={releaseTitle}
+              releaseType={releaseType}
               tracks={tracks}
               setTracks={setTracks}
               currentTrack={currentTrack}
@@ -512,6 +565,10 @@ export default function EditBasicReleasePage() {
               setTrackTitle={setTrackTitle}
               trackLink={trackLink}
               setTrackLink={setTrackLink}
+              trackAudioFile={trackAudioFile}
+              setTrackAudioFile={setTrackAudioFile}
+              trackAudioMetadata={trackAudioMetadata}
+              setTrackAudioMetadata={setTrackAudioMetadata}
               trackHasDrugs={trackHasDrugs}
               setTrackHasDrugs={setTrackHasDrugs}
               trackLyrics={trackLyrics}

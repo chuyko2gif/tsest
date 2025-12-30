@@ -46,6 +46,18 @@ interface TicketMessage {
   sender_username?: string;
   sender_avatar?: string;
   sender_nickname?: string;
+  reactions?: MessageReaction[];
+}
+
+interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
+  user?: {
+    nickname: string;
+    avatar: string;
+  };
 }
 
 export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
@@ -58,6 +70,7 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   // Состояния для просмотра профиля
   const [viewingUser, setViewingUser] = useState<any>(null);
@@ -103,6 +116,15 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
     }
   }, [selectedTicket?.ticket_messages]);
 
+  // Получаем текущего пользователя
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    };
+    getUser();
+  }, [supabase]);
+
   // Прокручиваем вниз когда появляется индикатор печати (только если внизу)
   useEffect(() => {
     if (userTyping) {
@@ -119,6 +141,77 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
       preloadAvatars(avatarUrls);
     }
   }, [tickets]);
+
+  // Функция переключения реакции
+  const toggleReaction = async (messageId: string, hasReaction: boolean) => {
+    if (!currentUserId || !selectedTicket) return;
+    
+    try {
+      if (hasReaction) {
+        // Удаляем реакцию
+        await supabase
+          .from('ticket_message_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', currentUserId);
+        
+        // Обновляем локальное состояние
+        setSelectedTicket(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            ticket_messages: prev.ticket_messages.map(msg => {
+              if (msg.id === messageId) {
+                return {
+                  ...msg,
+                  reactions: (msg.reactions || []).filter(r => r.user_id !== currentUserId)
+                };
+              }
+              return msg;
+            })
+          };
+        });
+      } else {
+        // Добавляем реакцию
+        const { data, error } = await supabase
+          .from('ticket_message_reactions')
+          .insert({
+            message_id: messageId,
+            user_id: currentUserId,
+            reaction: '❤️'
+          })
+          .select(`
+            id,
+            message_id,
+            user_id,
+            reaction,
+            user:profiles(nickname, avatar)
+          `)
+          .single();
+        
+        if (error) throw error;
+        
+        // Обновляем локальное состояние
+        setSelectedTicket(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            ticket_messages: prev.ticket_messages.map(msg => {
+              if (msg.id === messageId) {
+                return {
+                  ...msg,
+                  reactions: [...(msg.reactions || []), data]
+                };
+              }
+              return msg;
+            })
+          };
+        });
+      }
+    } catch (e) {
+      console.error('Ошибка реакции:', e);
+    }
+  };
 
   const loadTickets = async (forceRefresh = false) => {
     try {
@@ -184,15 +277,17 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
     }
   };
 
-  // Автообновление каждые 5 секунд
+  // Автообновление каждые 5 секунд (polling вместо Realtime)
   useEffect(() => {
     loadTickets();
     
     const interval = setInterval(() => {
       loadTickets();
-    }, 5000); // 5 секунд
+    }, 5000); // 5 секунд - реакции тоже обновляются
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   // Проверка статуса печати пользователя
@@ -940,10 +1035,14 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                   // Проверяем, является ли это первым сообщением пользователя в тикете с релизом
                   const isFirstUserMessage = idx === 0 && !msg.is_admin && selectedTicket.release_id && selectedTicket.release;
                   
+                  // Реакции
+                  const hasUserReaction = msg.reactions?.some(r => r.user_id === currentUserId);
+                  const reactionsCount = msg.reactions?.length || 0;
+                  
                   return (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.is_admin ? 'justify-start' : 'justify-end'}`}
+                      className={`flex ${msg.is_admin ? 'justify-start' : 'justify-end'} group`}
                     >
                       <div className={`max-w-[80%] ${msg.is_admin ? '' : 'flex flex-col items-end'}`}>
                         {/* Метка отправителя */}
@@ -972,11 +1071,14 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                           </div>
                         </div>
 
-                        <div className={`rounded-lg p-4 ${
+                        <div 
+                          className={`rounded-lg p-4 relative ${
                           msg.is_admin
                             ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30'
                             : 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30'
-                        }`}>
+                        }`}
+                          onDoubleClick={() => toggleReaction(msg.id, !!hasUserReaction)}
+                        >
                           <p className="text-white whitespace-pre-wrap break-words">{msg.message}</p>
                           
                           {/* Изображения */}
@@ -1044,6 +1146,27 @@ export default function AdminTicketsPanel({ supabase }: { supabase: any }) {
                           <div className="text-xs text-zinc-500 mt-2">
                             {new Date(msg.created_at).toLocaleString('ru-RU')}
                           </div>
+                        </div>
+                        
+                        {/* Кнопка реакции - под сообщением */}
+                        <div className={`flex items-center gap-1 mt-1 ${msg.is_admin ? 'justify-start' : 'justify-end'}`}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleReaction(msg.id, !!hasUserReaction);
+                            }}
+                            className={`h-5 px-1.5 rounded-full flex items-center gap-1 transition-all text-[10px] ${
+                              hasUserReaction || reactionsCount > 0
+                                ? 'bg-pink-500/30 border border-pink-400/40' 
+                                : 'bg-zinc-800/60 border border-zinc-600/40 opacity-0 group-hover:opacity-100 hover:bg-pink-500/20 hover:border-pink-400/40'
+                            }`}
+                            title={msg.reactions?.map(r => r.user?.nickname || 'Пользователь').join(', ') || 'Поставить лайк'}
+                          >
+                            <span>{hasUserReaction || reactionsCount > 0 ? '❤️' : '🤍'}</span>
+                            {reactionsCount > 0 && (
+                              <span className="text-pink-300 font-medium">{reactionsCount}</span>
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>

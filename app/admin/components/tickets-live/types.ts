@@ -1,5 +1,12 @@
 // Типы для живых тикетов
 
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
+}
+
 export interface Message {
   id: string;
   ticket_id: string;
@@ -9,6 +16,7 @@ export interface Message {
   is_read: boolean;
   created_at: string;
   attachments?: Attachment[];
+  reactions?: MessageReaction[];
   user?: {
     nickname: string;
     avatar: string;
@@ -34,6 +42,8 @@ export interface Ticket {
   unread_count: number;
   is_typing: boolean;
   typing_user_id: string;
+  typing_nickname?: string | null;
+  typing_is_admin?: boolean;
   archived_at: string | null;
   user?: {
     nickname: string;

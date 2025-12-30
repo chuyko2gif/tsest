@@ -4,6 +4,17 @@ const nextConfig: NextConfig = {
   /* config options here */
   devIndicators: false,
   
+  // Автоматическая очистка кэша при сборке
+  cleanDistDir: true,
+  
+  // Отключаем кэширование в dev режиме для свежих данных
+  onDemandEntries: {
+    // Период в мс, в течение которого страница хранится в буфере
+    maxInactiveAge: 15 * 1000, // 15 секунд
+    // Количество страниц, которые должны храниться одновременно
+    pagesBufferLength: 2,
+  },
+  
   // Оптимизация производительности
   compiler: {
     // Удаляем console.log в продакшене

@@ -23,6 +23,7 @@ export default function AudioPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function AudioPlayer({
         audioRef.current.pause();
         audioRef.current.src = '';
       }
+      setIsAudioReady(false);
     };
   }, [releaseId, trackIndex]);
 
@@ -67,6 +69,7 @@ export default function AudioPlayer({
 
       const audio = new Audio(url);
       audioRef.current = audio;
+      setIsAudioReady(true);
 
       // Обработчики событий
       audio.addEventListener('loadedmetadata', () => {
@@ -84,7 +87,8 @@ export default function AudioPlayer({
       });
 
       audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
+        const error = audio.error;
+        console.error('Audio error:', error?.message || error?.code || 'Unknown audio error');
         setLoading(false);
         setIsPlaying(false);
       });
@@ -182,10 +186,10 @@ export default function AudioPlayer({
           max={duration || 0}
           value={currentTime}
           onChange={handleSeek}
-          disabled={!audioRef.current}
+          disabled={!isAudioReady}
           className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-[#6050ba] [&::-webkit-slider-thumb]:to-[#9d8df1] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-[#6050ba]/50 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-[#6050ba] [&::-moz-range-thumb]:to-[#9d8df1] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-[#6050ba]/50 [&::-moz-range-thumb]:cursor-pointer"
           style={{
-            background: audioRef.current 
+            background: isAudioReady 
               ? `linear-gradient(to right, #6050ba 0%, #9d8df1 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.1) ${(currentTime / duration) * 100}%, rgba(255,255,255,0.1) 100%)`
               : 'rgba(255,255,255,0.1)'
           }}

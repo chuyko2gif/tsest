@@ -97,6 +97,13 @@ function StepsSidebar({
   const totalRequiredSteps = steps.length - 1; // Исключаем "Отправка"
   const progress = (completedSteps / totalRequiredSteps) * 100;
 
+  // Динамические цвета прогресс-бара
+  const getProgressColorClass = () => {
+    if (progress >= 100) return 'from-emerald-500 via-green-400 to-emerald-500 shadow-emerald-500/50';
+    if (progress >= 50) return 'from-amber-500 via-yellow-400 to-amber-500 shadow-amber-500/50';
+    return 'from-red-500 via-rose-400 to-red-500 shadow-red-500/50';
+  };
+
   return (
     <aside className="lg:w-64 w-full backdrop-blur-xl bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 rounded-3xl p-6 flex flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl shadow-black/20 relative overflow-hidden">
       {/* Декоративный градиент */}
@@ -226,7 +233,7 @@ function StepsSidebar({
         <div className="text-xs text-zinc-400 mb-2 font-medium">Прогресс заполнения</div>
         <div className="h-2.5 backdrop-blur-sm bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
           <div 
-            className="h-full bg-gradient-to-r from-purple-500 via-purple-400 to-blue-500 transition-all duration-500 shadow-lg shadow-purple-500/50"
+            className={`h-full bg-gradient-to-r ${getProgressColorClass()} transition-all duration-500 shadow-lg`}
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -568,6 +575,7 @@ export default function CreateReleaseBasicPage() {
               releaseTitle={releaseTitle}
               releaseType={releaseType}
               selectedTracksCount={selectedTracksCount}
+              coverFile={coverFile}
               tracks={tracks}
               setTracks={setTracks}
               currentTrack={currentTrack}

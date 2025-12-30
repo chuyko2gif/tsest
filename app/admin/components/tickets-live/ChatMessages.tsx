@@ -1,14 +1,18 @@
 'use client';
 
-import { Message } from './types';
+import { Message, Ticket } from './types';
 
 interface ChatMessagesProps {
   messages: Message[];
   isTyping: boolean;
+  typingInfo?: {
+    nickname?: string | null;
+    isAdmin?: boolean;
+  };
   messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
-export function ChatMessages({ messages, isTyping, messagesEndRef }: ChatMessagesProps) {
+export function ChatMessages({ messages, isTyping, typingInfo, messagesEndRef }: ChatMessagesProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map(message => (
@@ -60,12 +64,21 @@ export function ChatMessages({ messages, isTyping, messagesEndRef }: ChatMessage
       ))}
       
       {isTyping && (
-        <div className="flex justify-start">
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-3">
+        <div className={`flex ${typingInfo?.isAdmin ? 'justify-end' : 'justify-start'}`}>
+          <div className={`max-w-[70%] ${
+            typingInfo?.isAdmin 
+              ? 'bg-[#6050ba]/20 border-[#6050ba]/30' 
+              : 'bg-white/10 border-white/20'
+          } border rounded-2xl p-3`}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-zinc-400">
+                {typingInfo?.nickname || (typingInfo?.isAdmin ? 'Администратор' : 'Пользователь')}
+              </span>
+            </div>
             <div className="flex gap-1 items-center">
-              <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-              <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-              <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              <span className={`w-2 h-2 ${typingInfo?.isAdmin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '0ms' }}></span>
+              <span className={`w-2 h-2 ${typingInfo?.isAdmin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '150ms' }}></span>
+              <span className={`w-2 h-2 ${typingInfo?.isAdmin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '300ms' }}></span>
               <span className="text-xs text-zinc-500 ml-2">печатает...</span>
             </div>
           </div>

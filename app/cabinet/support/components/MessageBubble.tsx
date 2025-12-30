@@ -1,19 +1,33 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { Message, Attachment } from '../types';
 import TicketAvatar from '@/components/TicketAvatar';
 
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
+  onReaction?: (messageId: string, hasReaction: boolean) => void;
+  currentUserId?: string;
 }
 
-export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
+export default function MessageBubble({ message, isOwn, onReaction, currentUserId }: MessageBubbleProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString('ru-RU', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
+  };
+  
+  // Проверяем реакции
+  const hasUserReaction = message.reactions?.some(r => r.user_id === currentUserId);
+  const reactionsCount = message.reactions?.length || 0;
+
+  const handleReaction = () => {
+    if (onReaction) {
+      onReaction(message.id, !!hasUserReaction);
+    }
   };
 
   const renderAttachment = (attachment: Attachment) => {
@@ -52,19 +66,18 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     );
   };
 
-  // Системное сообщение (автоответ) - специальный ID
-  const isSystemMessage = (message as any).sender_id === '00000000-0000-0000-0000-000000000000';
-  
-  // Определяем имя и email отправителя
-  const senderName = isSystemMessage 
-    ? 'THQ Support' 
-    : (message.sender_nickname || message.user_nickname || message.sender_email || message.user_email || (message.is_admin ? 'Поддержка' : 'Пользователь'));
+  // Определяем имя отправителя
+  const senderName = message.sender_nickname || message.user_nickname || message.sender_email || message.user_email || (message.is_admin ? 'Поддержка' : 'Пользователь');
   const senderEmail = message.sender_email || message.user_email;
   const senderAvatar = message.sender_avatar || message.user_avatar;
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+    <div 
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} relative`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'} relative`}>
         {/* Avatar для чужих сообщений */}
         {!isOwn && (
           <div className="flex items-center gap-2 mb-1">
@@ -82,11 +95,13 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         )}
         
         {/* Bubble */}
-        <div className={`rounded-2xl px-4 py-2.5 ${
-          isOwn 
-            ? 'bg-gradient-to-r from-[#6050ba] to-[#8b5cf6] text-white' 
-            : 'bg-white/10 text-white'
-        }`}>
+        <div 
+          className={`rounded-2xl px-4 py-2.5 relative ${
+            isOwn 
+              ? 'bg-gradient-to-r from-[#6050ba] to-[#8b5cf6] text-white' 
+              : 'bg-white/10 text-white'
+          }`}
+        >
           <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
           
           {/* Attachments */}
@@ -99,6 +114,22 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
               ))}
             </div>
           )}
+          
+          {/* Кнопка реакции - ВСЕГДА видна */}
+          {onReaction && (
+            <button
+              onClick={handleReaction}
+              className={`absolute -bottom-3 ${isOwn ? 'left-2' : 'right-2'} px-2 py-1 rounded-full text-sm transition-all ${
+                hasUserReaction 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-zinc-700 hover:bg-zinc-600 text-white'
+              } shadow-lg z-10`}
+            >
+              {hasUserReaction ? '❤️' : '🤍'} {reactionsCount > 0 && reactionsCount}
+            </button>
+          )}
+          
+          {/* Убрал условие hover - кнопка всегда видна */}
         </div>
         
         {/* Time */}

@@ -252,7 +252,7 @@ function StepsSidebar({
           <h3 className="font-bold text-base mb-2 bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">Создание релиза</h3>
           <div className="h-2 backdrop-blur-sm bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
             <div 
-              className="h-full bg-gradient-to-r from-purple-500 via-purple-400 to-blue-500 transition-all duration-500 shadow-lg shadow-purple-500/50"
+              className={`h-full bg-gradient-to-r ${getProgressColorClass()} transition-all duration-500 shadow-lg`}
               style={{ width: `${progress}%` }}
             />
           </div>

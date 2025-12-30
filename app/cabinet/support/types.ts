@@ -10,6 +10,7 @@ export interface Message {
   is_read: boolean;
   created_at: string;
   attachments?: Attachment[];
+  reactions?: MessageReaction[];
   user_avatar?: string;
   user_nickname?: string;
   user_email?: string;
@@ -36,8 +37,18 @@ export interface Ticket {
   unread_count: number;
   is_typing: boolean;
   typing_user_id?: string | null;
+  typing_nickname?: string | null;
+  typing_is_admin?: boolean;
   archived_at?: string | null;
   user_id?: string;
+}
+
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
+  created_at: string;
 }
 
 export type TicketStatus = 'open' | 'answered' | 'closed' | 'all';

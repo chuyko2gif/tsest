@@ -110,8 +110,8 @@ export default function AdminRoleHUD({ currentRole, originalRole, userId, onRole
   const currentConfig = ROLE_CONFIG[currentRole];
 
   return (
-    <div className="fixed bottom-6 right-24 z-50">
-      {/* Плавающая панель */}
+    <div className="fixed bottom-6 right-[88px] z-[9998]">
+      {/* Плавающая панель - прикреплена рядом с виджетом поддержки */}
       <div 
         className={`transition-all duration-500 ease-out ${
           isExpanded ? 'w-80' : 'w-auto'

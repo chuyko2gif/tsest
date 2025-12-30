@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "SET NODE_OPTIONS=--no-warnings && next dev",
+    "dev:fresh": "rmdir /s /q .next 2>nul & SET NODE_OPTIONS=--no-warnings && next dev",
     "build": "next build",
+    "build:clean": "rmdir /s /q .next 2>nul & next build",
     "start": "next start",
+    "clean": "rmdir /s /q .next 2>nul & echo Cache cleared",
     "lint": "eslint"
   },
   "dependencies": {

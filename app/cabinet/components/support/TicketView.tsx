@@ -3,6 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../lib/fetchWithAuth';
 import { statusColors, statusLabels, categoryLabels } from './TicketCard';
 import TicketAvatar from '@/components/TicketAvatar';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 interface TicketViewProps {
   ticket: any;
@@ -22,9 +27,72 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
   const [currentStatus, setCurrentStatus] = useState(ticket.status);
   const [adminTyping, setAdminTyping] = useState(false);
   const [adminTypingName, setAdminTypingName] = useState<string>('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef(messages.length);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Получаем текущего пользователя
+  useEffect(() => {
+    const getUser = async () => {
+      if (!supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    };
+    getUser();
+  }, []);
+
+  // Функция для переключения реакции
+  const toggleReaction = async (messageId: string, hasReaction: boolean) => {
+    if (!supabase || !currentUserId) return;
+    
+    try {
+      if (hasReaction) {
+        // Удаляем реакцию
+        await supabase
+          .from('ticket_message_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', currentUserId);
+        
+        // Обновляем локально
+        setMessages((prev: any[]) => prev.map(msg => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              reactions: (msg.reactions || []).filter((r: any) => r.user_id !== currentUserId)
+            };
+          }
+          return msg;
+        }));
+      } else {
+        // Добавляем реакцию
+        const { data } = await supabase
+          .from('ticket_message_reactions')
+          .insert({
+            message_id: messageId,
+            user_id: currentUserId,
+            reaction: '❤️'
+          })
+          .select()
+          .single();
+        
+        if (data) {
+          setMessages((prev: any[]) => prev.map(msg => {
+            if (msg.id === messageId) {
+              return {
+                ...msg,
+                reactions: [...(msg.reactions || []), data]
+              };
+            }
+            return msg;
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Ошибка реакции:', e);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,19 +147,25 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
 
     const markAsRead = async () => {
       try {
-        await fetchWithAuth(`/api/support/tickets/${ticket.id}/read`, { method: 'POST' });
-        onUpdateUnreadCount?.();
+        const response = await fetchWithAuth(`/api/support/tickets/${ticket.id}/read`, { method: 'POST' });
+        if (response.ok) {
+          onUpdateUnreadCount?.();
+        }
       } catch (err) {
         console.error('Error marking as read:', err);
       }
     };
 
+    // Отмечаем как прочитанное сразу при открытии
     markAsRead();
     loadMessages();
     loadTicket();
+    
+    // Интервал загрузки сообщений - каждый раз отмечаем как прочитанное
     const interval = setInterval(() => {
       loadMessages();
       loadTicket();
+      markAsRead(); // Отмечаем прочитанным при каждом обновлении
     }, 2000);
 
     const typingInterval = setInterval(async () => {
@@ -119,6 +193,7 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
       clearInterval(interval);
       clearInterval(typingInterval);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
     };
   }, [ticket.id, onUpdateUnreadCount, onUpdate, onBack, currentStatus]);
 
@@ -255,9 +330,13 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
           const displayEmail = msg.sender_email;
           const isFirstUserMessage = idx === 0 && !isFromAdmin && ticket?.release_id && ticket?.release;
           
+          // Реакции
+          const hasUserReaction = msg.reactions?.some((r: any) => r.user_id === currentUserId);
+          const reactionsCount = msg.reactions?.length || 0;
+          
           return (
-            <div key={msg.id} className={`flex ${isFromAdmin ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[85%] ${isFromAdmin ? '' : 'flex flex-col items-end'}`}>
+            <div key={msg.id} className={`flex ${isFromAdmin ? 'justify-start' : 'justify-end'} group`}>
+              <div className={`max-w-[85%] ${isFromAdmin ? '' : 'flex flex-col items-end'} relative`}>
                 <div className={`flex items-center gap-2 mb-1 ${isFromAdmin ? '' : 'flex-row-reverse'}`}>
                   <TicketAvatar
                     src={displayAvatar}
@@ -279,6 +358,7 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
                     : 'bg-blue-500/20 border-blue-500/40'
                 }`}
                 style={{ boxShadow: isFromAdmin ? '0 4px 16px 0 rgba(34, 197, 94, 0.2)' : '0 4px 16px 0 rgba(59, 130, 246, 0.2)' }}
+                onDoubleClick={() => toggleReaction(msg.id, hasUserReaction)}
                 >
                   {msg.message && <p className="text-sm text-white whitespace-pre-wrap break-words">{msg.message}</p>}
 
@@ -329,6 +409,27 @@ export default function TicketView({ ticket, onBack, onUpdate, onClose, onUpdate
                   <div className="mt-1 text-[10px] text-zinc-500">
                     {new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                   </div>
+                </div>
+                
+                {/* Кнопка реакции - под сообщением */}
+                <div className={`flex items-center gap-1 mt-1 ${isFromAdmin ? 'justify-start' : 'justify-end'}`}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleReaction(msg.id, hasUserReaction);
+                    }}
+                    className={`h-5 px-1.5 rounded-full flex items-center gap-1 transition-all text-[10px] ${
+                      hasUserReaction || reactionsCount > 0
+                        ? 'bg-pink-500/30 border border-pink-400/40' 
+                        : 'bg-zinc-800/60 border border-zinc-600/40 opacity-0 group-hover:opacity-100 hover:bg-pink-500/20 hover:border-pink-400/40'
+                    }`}
+                    title={msg.reactions?.map((r: any) => r.user?.nickname || 'Пользователь').join(', ') || 'Поставить лайк'}
+                  >
+                    <span>{hasUserReaction || reactionsCount > 0 ? '❤️' : '🤍'}</span>
+                    {reactionsCount > 0 && (
+                      <span className="text-pink-300 font-medium">{reactionsCount}</span>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

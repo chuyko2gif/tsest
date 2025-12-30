@@ -88,7 +88,7 @@ export async function GET(
     if (senderIds.length > 0) {
       const { data: senders, error: sendersError } = await supabase
         .from('profiles')
-        .select('id, email, username, nickname, avatar')
+        .select('id, email, nickname, avatar')
         .in('id', senderIds);
       
       if (sendersError) {
@@ -98,15 +98,56 @@ export async function GET(
       senders?.forEach(s => sendersMap.set(s.id, s));
     }
 
-    // Форматируем сообщения со свежими данными из профилей
+    // Получаем реакции для всех сообщений с информацией о пользователях
+    const messageIds = messages.map(m => m.id);
+    const reactionsMap = new Map();
+    
+    if (messageIds.length > 0) {
+      const { data: reactions, error: reactionsError } = await supabase
+        .from('ticket_message_reactions')
+        .select('*')
+        .in('message_id', messageIds);
+      
+      if (reactionsError) {
+        console.error('Error fetching reactions:', reactionsError);
+      }
+      
+      // Получаем профили пользователей которые поставили реакции
+      if (reactions && reactions.length > 0) {
+        const reactionUserIds = [...new Set(reactions.map(r => r.user_id))];
+        const { data: reactionUsers } = await supabase
+          .from('profiles')
+          .select('id, nickname, avatar')
+          .in('id', reactionUserIds);
+        
+        const reactionUsersMap = new Map();
+        reactionUsers?.forEach(u => reactionUsersMap.set(u.id, u));
+        
+        // Группируем реакции по message_id с данными пользователей
+        reactions.forEach(r => {
+          const user = reactionUsersMap.get(r.user_id);
+          const reactionWithUser = {
+            ...r,
+            user: user ? { nickname: user.nickname, avatar: user.avatar } : null
+          };
+          
+          if (!reactionsMap.has(r.message_id)) {
+            reactionsMap.set(r.message_id, []);
+          }
+          reactionsMap.get(r.message_id).push(reactionWithUser);
+        });
+      }
+    }
+
+    // Форматируем сообщения со свежими данными из профилей и реакциями
     const formattedMessages = messages.map(msg => {
       const sender = sendersMap.get(msg.sender_id);
       return {
         ...msg,
         sender_email: sender?.email || msg.sender_email || null,
-        sender_username: sender?.username || msg.sender_username || null,
         sender_nickname: sender?.nickname || msg.sender_nickname || null,
-        sender_avatar: sender?.avatar || msg.sender_avatar || null
+        sender_avatar: sender?.avatar || msg.sender_avatar || null,
+        reactions: reactionsMap.get(msg.id) || []
       };
     });
 

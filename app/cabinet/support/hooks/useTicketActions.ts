@@ -63,7 +63,7 @@ export function useTicketActions({
     
     const { data } = await supabase
       .from('ticket_messages')
-      .select('*, attachments:ticket_attachments(*)')
+      .select('*, attachments:ticket_attachments(*), reactions:ticket_message_reactions(*)')
       .eq('ticket_id', ticket.id)
       .order('created_at', { ascending: true });
     

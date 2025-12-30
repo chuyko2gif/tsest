@@ -10,7 +10,8 @@ import {
   useTicketActions, 
   useTypingStatus, 
   useFileUpload,
-  useSupportRealtime 
+  useSupportRealtime,
+  useMessageReactions
 } from './hooks';
 
 // Компоненты
@@ -99,6 +100,12 @@ export default function SupportPage() {
     setMessages,
     setIsTyping,
     loadTickets,
+  });
+
+  // Реакции на сообщения
+  const { toggleReaction } = useMessageReactions({
+    user,
+    setMessages,
   });
 
   // Проверка авторизации
@@ -194,6 +201,7 @@ export default function SupportPage() {
             onFileUpload={uploadFile}
             onCloseTicket={closeTicket}
             onBack={() => setSelectedTicket(null)}
+            onReaction={toggleReaction}
           />
         ) : (
           <EmptyState onAction={() => setShowNewTicket(true)} />

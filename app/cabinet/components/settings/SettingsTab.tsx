@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import ThemeSelector from './ThemeSelector';
-import AdminRoleHUD from './AdminRoleHUD';
 import AccountManager from './AccountManager';
 import { UserRole, ROLE_CONFIG } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
@@ -141,15 +140,6 @@ export default function SettingsTab({
 
   return (
     <>
-      {/* Плавающая панель управления ролями */}
-      {(originalRole === 'admin' || originalRole === 'owner') && (
-        <AdminRoleHUD
-          currentRole={role}
-          originalRole={originalRole}
-          userId={user?.id}
-        />
-      )}
-
       <div className="animate-fade-up">
         <div className="mb-8">
           <h2 className="text-3xl font-black uppercase tracking-tight mb-2 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">

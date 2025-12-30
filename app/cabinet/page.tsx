@@ -17,13 +17,14 @@ import {
   CopyToast,
   NotificationModal,
   ConfirmDialog,
-  AvatarUploadModal 
+  AvatarCropModal 
 } from './components/modals';
 
 // Компоненты вкладок
 import UserReleases from './components/UserReleases';
 import { FinanceTab } from './components/finance';
 import { SettingsTab } from './components/settings';
+import AdminRoleHUD from './components/settings/AdminRoleHUD';
 
 // Компоненты сайдбара
 import ProfileSidebar from './components/sidebar/ProfileSidebar';
@@ -124,9 +125,8 @@ export default function CabinetPage() {
   // UI состояние
   const [showToast, setShowToast] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAvatar, setDeletingAvatar] = useState(false);
   
   // Уведомления
   const { 
@@ -375,74 +375,78 @@ export default function CabinetPage() {
     setTimeout(() => setShowToast(false), 2000);
   };
 
-  const handleAvatarFileSelect = (file: File) => {
-    setAvatarFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => setAvatarPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  const handleAvatarSave = async () => {
-    if (!avatarFile || !supabase || !user) return;
+  // Сохранение обрезанного изображения аватара
+  const handleAvatarSave = async (croppedImageBlob: Blob) => {
+    if (!supabase || !user) return;
     
     setUploadingAvatar(true);
     try {
+      // Удаляем старый аватар если есть
       if (avatar && avatar.includes('avatars/')) {
         const oldPath = avatar.split('/avatars/')[1];
         await supabase.storage.from('avatars').remove([oldPath]);
       }
       
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // Генерируем имя файла
+      const fileName = `${user.id}/${Date.now()}.jpg`;
       
+      // Загружаем новый аватар
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, avatarFile);
+        .upload(fileName, croppedImageBlob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
       
       if (uploadError) throw uploadError;
       
+      // Получаем публичный URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
       
+      // Обновляем профиль
       await supabase.from('profiles').update({ avatar: publicUrl }).eq('email', user.email);
       
       setAvatar(publicUrl);
       setShowAvatarModal(false);
-      setAvatarPreview(null);
-      setAvatarFile(null);
-      showNotification('Аватар обновлён', 'success');
+      showNotification('Аватар успешно обновлён!', 'success');
     } catch (error: any) {
+      console.error('Ошибка загрузки аватара:', error);
       showNotification('Ошибка загрузки: ' + error.message, 'error');
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  const handleAvatarDelete = () => {
-    if (!confirm('Удалить текущий аватар?')) return;
+  // Удаление аватара
+  const handleAvatarDelete = async () => {
+    if (!supabase || !user) return;
     
-    (async () => {
-      if (!supabase || !user) return;
-      try {
-        if (avatar.includes('avatars/')) {
-          const filePath = avatar.split('/avatars/')[1];
-          await supabase.storage.from('avatars').remove([filePath]);
-        }
-        await supabase.from('profiles').update({ avatar: null }).eq('email', user.email);
-        setAvatar('');
-        setShowAvatarModal(false);
-        showNotification('Аватар удалён', 'success');
-      } catch (error: any) {
-        showNotification('Ошибка удаления: ' + error.message, 'error');
+    setDeletingAvatar(true);
+    try {
+      // Удаляем файл из storage
+      if (avatar && avatar.includes('avatars/')) {
+        const filePath = avatar.split('/avatars/')[1];
+        await supabase.storage.from('avatars').remove([filePath]);
       }
-    })();
+      
+      // Обновляем профиль
+      await supabase.from('profiles').update({ avatar: null }).eq('email', user.email);
+      
+      setAvatar('');
+      setShowAvatarModal(false);
+      showNotification('Аватар удалён', 'success');
+    } catch (error: any) {
+      console.error('Ошибка удаления аватара:', error);
+      showNotification('Ошибка удаления: ' + error.message, 'error');
+    } finally {
+      setDeletingAvatar(false);
+    }
   };
 
   const handleCloseAvatarModal = () => {
     setShowAvatarModal(false);
-    setAvatarPreview(null);
-    setAvatarFile(null);
   };
 
   // Экран загрузки
@@ -676,21 +680,28 @@ export default function CabinetPage() {
         onCancel={handleCancel}
       />
       
-      {/* Модалка аватара */}
-      <AvatarUploadModal
+      {/* Модалка аватара с кадрированием */}
+      <AvatarCropModal
         show={showAvatarModal}
         onClose={handleCloseAvatarModal}
         avatar={avatar}
-        avatarPreview={avatarPreview}
         nickname={nickname}
         role={role}
         uploadingAvatar={uploadingAvatar}
-        onFileSelect={handleAvatarFileSelect}
-        onSave={handleAvatarSave}
+        deletingAvatar={deletingAvatar}
+        onSaveImage={handleAvatarSave}
         onDelete={handleAvatarDelete}
-        onClearPreview={() => { setAvatarPreview(null); setAvatarFile(null); }}
         showNotification={showNotification}
       />
+
+      {/* Режим тестирования ролей - только на вкладке настроек для owner/admin */}
+      {tab === 'settings' && (originalRole === 'admin' || originalRole === 'owner' || role === 'admin' || role === 'owner') && (
+        <AdminRoleHUD
+          currentRole={role}
+          originalRole={originalRole || role}
+          userId={user?.id}
+        />
+      )}
     </div>
   );
 }

@@ -24,6 +24,7 @@ interface Track {
 interface TracklistStepProps {
   releaseTitle: string;
   releaseType?: 'single' | 'ep' | 'album' | null;
+  coverFile?: File | null;
   tracks: Track[];
   setTracks: (tracks: Track[]) => void;
   currentTrack: number | null;
@@ -55,6 +56,7 @@ interface TracklistStepProps {
 export default function TracklistStep({
   releaseTitle,
   releaseType,
+  coverFile,
   tracks,
   setTracks,
   currentTrack,
@@ -86,6 +88,18 @@ export default function TracklistStep({
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
+  // Создаем preview URL для обложки
+  React.useEffect(() => {
+    if (coverFile) {
+      const url = URL.createObjectURL(coverFile);
+      setCoverPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setCoverPreviewUrl(null);
+    }
+  }, [coverFile]);
 
   // Функция для анализа аудиофайла
   const analyzeAudioFile = async (file: File): Promise<AudioMetadata | null> => {
@@ -203,36 +217,36 @@ export default function TracklistStep({
     setDragOverIndex(null);
   };
 
-  // Автоматически обновляем название единственного трека при изменении названия релиза
+  // Автоматически обновляем название единственного трека при изменении названия релиза (только для сингла)
   React.useEffect(() => {
-    if (tracks.length === 1 && releaseTitle) {
+    if (releaseType === 'single' && tracks.length === 1 && releaseTitle) {
       const updatedTracks = [...tracks];
       if (updatedTracks[0].title !== releaseTitle) {
         updatedTracks[0] = { ...updatedTracks[0], title: releaseTitle };
         setTracks(updatedTracks);
       }
     }
-  }, [releaseTitle, tracks, setTracks]);
+  }, [releaseType, releaseTitle, tracks, setTracks]);
 
-  // Автозаполнение названия трека при создании первого трека
+  // Автозаполнение названия трека при создании первого трека (только для сингла)
   React.useEffect(() => {
     if (currentTrack !== null && currentTrack === tracks.length) {
-      if (tracks.length === 0 && releaseTitle) {
-        // Если создаем первый трек, автоматически используем название релиза
+      if (tracks.length === 0 && releaseTitle && releaseType === 'single') {
+        // Если создаем первый трек сингла, автоматически используем название релиза
         setTrackTitle(releaseTitle);
-      } else if (tracks.length >= 1) {
-        // Если создаем второй или последующий трек, очищаем поле
+      } else {
+        // Для EP/альбома или последующих треков очищаем поле
         setTrackTitle('');
       }
     }
-  }, [currentTrack, tracks.length, releaseTitle]);
+  }, [currentTrack, tracks.length, releaseTitle, releaseType]);
 
-  // Синхронизация trackTitle при редактировании единственного трека
+  // Синхронизация trackTitle при редактировании единственного трека (только для сингла)
   React.useEffect(() => {
-    if (currentTrack !== null && currentTrack < tracks.length && tracks.length === 1) {
+    if (releaseType === 'single' && currentTrack !== null && currentTrack < tracks.length && tracks.length === 1) {
       setTrackTitle(releaseTitle);
     }
-  }, [releaseTitle, currentTrack, tracks.length, setTrackTitle]);
+  }, [releaseType, releaseTitle, currentTrack, tracks.length, setTrackTitle]);
 
   return (
     <div className="animate-fade-up">
@@ -304,12 +318,26 @@ export default function TracklistStep({
                       </svg>
                     </div>
                     
-                    {/* Номер трека */}
+                    {/* Миниатюра обложки с номером трека */}
                     <div className="relative flex-shrink-0">
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-base font-black ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all">
-                        {idx + 1}
-                      </div>
+                      {coverPreviewUrl ? (
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all">
+                          <img 
+                            src={coverPreviewUrl} 
+                            alt="Cover" 
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Номер трека поверх обложки */}
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span className="text-base font-black text-white drop-shadow-lg">{idx + 1}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-base font-black ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all">
+                          {idx + 1}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex-1 relative min-w-0">
@@ -399,8 +427,8 @@ export default function TracklistStep({
                       <button
                         onClick={() => {
                           const newTracks = tracks.filter((_, i) => i !== idx);
-                          // Если после удаления остался 1 трек, обновляем его название на название релиза
-                          if (newTracks.length === 1) {
+                          // Если после удаления остался 1 трек И это сингл, обновляем его название на название релиза
+                          if (releaseType === 'single' && newTracks.length === 1) {
                             newTracks[0] = { ...newTracks[0], title: releaseTitle };
                           }
                           setTracks(newTracks);
@@ -464,17 +492,17 @@ export default function TracklistStep({
           <div>
             <label className="text-sm text-zinc-400 mb-2 block">
               Название трека *
-              {((tracks.length === 1 && currentTrack < tracks.length) || (tracks.length === 0 && currentTrack === 0)) && (
+              {releaseType === 'single' && (
                 <span className="ml-2 text-xs text-emerald-400">(Автоматически совпадает с названием релиза)</span>
               )}
             </label>
             <input 
-              value={(tracks.length === 1 && currentTrack < tracks.length) || (tracks.length === 0 && currentTrack === 0) ? releaseTitle : trackTitle} 
+              value={releaseType === 'single' ? releaseTitle : trackTitle} 
               onChange={(e) => setTrackTitle(e.target.value)} 
               placeholder={releaseTitle || "Введите название"}
-              disabled={(tracks.length === 1 && currentTrack < tracks.length) || (tracks.length === 0 && currentTrack === 0)}
+              disabled={releaseType === 'single'}
               className={`w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border border-white/10 outline-none transition-all ${
-                ((tracks.length === 1 && currentTrack < tracks.length) || (tracks.length === 0 && currentTrack === 0)) ? 'opacity-60 cursor-not-allowed ring-2 ring-emerald-500/20' : 'hover:border-white/20 focus:border-[#6050ba] focus:ring-2 focus:ring-[#6050ba]/20'
+                releaseType === 'single' ? 'opacity-60 cursor-not-allowed ring-2 ring-emerald-500/20' : 'hover:border-white/20 focus:border-[#6050ba] focus:ring-2 focus:ring-[#6050ba]/20'
               }`}
             />
           </div>
@@ -704,14 +732,14 @@ export default function TracklistStep({
           <div className="flex gap-3 pt-4 border-t border-white/10">
             <button
               onClick={() => {
-                // Проверяем, будет ли это единственный трек после сохранения
-                const willBeSingleTrack = currentTrack < tracks.length ? tracks.length === 1 : tracks.length === 0;
+                // Проверяем тип релиза для определения названия трека
+                const isSingleRelease = releaseType === 'single';
                 
-                // Для сингла всегда используем название релиза
-                const finalTitle = willBeSingleTrack ? releaseTitle : trackTitle;
+                // Для сингла всегда используем название релиза, для EP/альбома - название трека
+                const finalTitle = isSingleRelease ? releaseTitle : trackTitle;
                 
                 // Проверяем наличие названия релиза для сингла
-                if (willBeSingleTrack && (!releaseTitle || !releaseTitle.trim())) {
+                if (isSingleRelease && (!releaseTitle || !releaseTitle.trim())) {
                   alert('Сначала заполните название релиза на предыдущем шаге');
                   return;
                 }

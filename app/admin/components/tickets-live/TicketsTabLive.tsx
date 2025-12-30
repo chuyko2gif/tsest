@@ -11,6 +11,18 @@ interface Message {
   is_read: boolean;
   created_at: string;
   attachments?: Attachment[];
+  reactions?: MessageReaction[];
+  user?: {
+    nickname: string;
+    avatar: string;
+  };
+}
+
+interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
   user?: {
     nickname: string;
     avatar: string;
@@ -36,6 +48,8 @@ interface Ticket {
   unread_count: number;
   is_typing: boolean;
   typing_user_id: string;
+  typing_nickname?: string | null;
+  typing_is_admin?: boolean;
   archived_at: string | null;
   user?: {
     nickname: string;
@@ -132,6 +146,14 @@ export default function TicketsTabLive({ supabase, currentUser }: { supabase: an
         .select(`
           *,
           attachments:ticket_attachments(*),
+          reactions:ticket_message_reactions(
+            id,
+            message_id,
+            user_id,
+            reaction,
+            created_at,
+            user:profiles(nickname, avatar)
+          ),
           user:profiles(nickname, avatar)
         `)
         .eq('ticket_id', ticketId)
@@ -307,6 +329,8 @@ export default function TicketsTabLive({ supabase, currentUser }: { supabase: an
       .update({ 
         is_typing: true,
         typing_user_id: currentUser.id,
+        typing_nickname: currentUser.nickname || currentUser.email || 'Администратор',
+        typing_is_admin: true,
       })
       .eq('id', selectedTicket.id);
   };
@@ -319,6 +343,8 @@ export default function TicketsTabLive({ supabase, currentUser }: { supabase: an
       .update({ 
         is_typing: false,
         typing_user_id: null,
+        typing_nickname: null,
+        typing_is_admin: false,
       })
       .eq('id', selectedTicket.id);
   };
@@ -341,6 +367,58 @@ export default function TicketsTabLive({ supabase, currentUser }: { supabase: an
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleReaction = async (messageId: string, hasReaction: boolean) => {
+    if (!currentUser) return;
+    
+    try {
+      if (hasReaction) {
+        // Удаляем реакцию
+        await supabase
+          .from('ticket_message_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', currentUser.id);
+        
+        // Обновляем локальное состояние
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              reactions: msg.reactions?.filter(r => r.user_id !== currentUser.id) || []
+            };
+          }
+          return msg;
+        }));
+      } else {
+        // Добавляем реакцию
+        const { data, error } = await supabase
+          .from('ticket_message_reactions')
+          .insert({
+            message_id: messageId,
+            user_id: currentUser.id,
+            reaction: '❤️'
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Обновляем локальное состояние
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              reactions: [...(msg.reactions || []), data]
+            };
+          }
+          return msg;
+        }));
+      }
+    } catch (e) {
+      console.error('Ошибка реакции:', e);
+    }
   };
 
   const selectTicket = (ticket: Ticket) => {
@@ -492,61 +570,112 @@ export default function TicketsTabLive({ supabase, currentUser }: { supabase: an
 
               {/* Сообщения */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map(message => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.is_admin ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-[70%] ${message.is_admin ? 'bg-[#6050ba]/20 border-[#6050ba]/30' : 'bg-white/10 border-white/20'} border rounded-2xl p-3`}>
-                      {!message.is_admin && message.user && (
-                        <div className="flex items-center gap-2 mb-2">
-                          {message.user.avatar && (
-                            <div 
-                              className="w-6 h-6 rounded-full bg-cover bg-center"
-                              style={{ backgroundImage: `url(${message.user.avatar})` }}
-                            />
-                          )}
-                          <span className="text-xs font-bold text-zinc-400">
-                            {message.user.nickname}
-                          </span>
+                {messages.map(message => {
+                  const hasUserReaction = message.reactions?.some(r => r.user_id === currentUser.id);
+                  const reactionsCount = message.reactions?.length || 0;
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.is_admin ? 'justify-end' : 'justify-start'} group`}
+                    >
+                      <div 
+                        className={`max-w-[70%] ${message.is_admin ? 'bg-[#6050ba]/20 border-[#6050ba]/30' : 'bg-white/10 border-white/20'} border rounded-2xl p-3 cursor-pointer select-none transition-transform relative hover:scale-[1.01]`}
+                        onDoubleClick={() => toggleReaction(message.id, !!hasUserReaction)}
+                      >
+                        {/* Кнопка лайка - компактная сбоку */}
+                        <div className={`absolute top-1/2 -translate-y-1/2 ${message.is_admin ? '-left-7' : '-right-7'} flex items-center gap-1`}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleReaction(message.id, !!hasUserReaction);
+                            }}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                              hasUserReaction || reactionsCount > 0
+                                ? 'bg-pink-500/20 border border-pink-400/50 opacity-100' 
+                                : 'bg-white/10 border border-white/20 opacity-0 group-hover:opacity-100 hover:bg-pink-500/20 hover:border-pink-400/50'
+                            }`}
+                            title={hasUserReaction ? 'Убрать лайк' : 'Поставить лайк'}
+                          >
+                            <span className="text-[10px]">{hasUserReaction || reactionsCount > 0 ? '❤️' : '🤍'}</span>
+                          </button>
                         </div>
-                      )}
-                      
-                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                      
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {message.attachments.map(att => (
-                            <a
-                              key={att.id}
-                              href={att.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                              </svg>
-                              {att.file_name}
-                            </a>
-                          ))}
+                        {!message.is_admin && message.user && (
+                          <div className="flex items-center gap-2 mb-2">
+                            {message.user.avatar && (
+                              <div 
+                                className="w-6 h-6 rounded-full bg-cover bg-center"
+                                style={{ backgroundImage: `url(${message.user.avatar})` }}
+                              />
+                            )}
+                            <span className="text-xs font-bold text-zinc-400">
+                              {message.user.nickname}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                        
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.attachments.map(att => (
+                              <a
+                                key={att.id}
+                                href={att.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                {att.file_name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="text-[10px] text-zinc-600 mt-1">
+                          {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                         </div>
-                      )}
-                      
-                      <div className="text-[10px] text-zinc-600 mt-1">
-                        {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        
+                        {/* Reactions badge с информацией кто поставил */}
+                        {reactionsCount > 0 && (
+                          <div 
+                            className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-zinc-800/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1 border border-pink-400/30 cursor-default"
+                            title={message.reactions?.map(r => r.user?.nickname || 'Пользователь').join(', ')}
+                          >
+                            <span className="text-[10px]">❤️</span>
+                            <span className="text-[10px] text-pink-400 font-medium">{reactionsCount}</span>
+                            {message.reactions && message.reactions[0]?.user?.nickname && (
+                              <span className="text-[10px] text-zinc-400 max-w-[50px] truncate">
+                                {message.reactions[0].user.nickname}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="bg-white/10 border border-white/20 rounded-2xl p-3">
+                  <div className={`flex ${selectedTicket?.typing_is_admin ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] ${
+                      selectedTicket?.typing_is_admin 
+                        ? 'bg-[#6050ba]/20 border-[#6050ba]/30' 
+                        : 'bg-white/10 border-white/20'
+                    } border rounded-2xl p-3`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-zinc-400">
+                          {selectedTicket?.typing_nickname || (selectedTicket?.typing_is_admin ? 'Администратор' : 'Пользователь')}
+                        </span>
+                      </div>
                       <div className="flex gap-1 items-center">
-                        <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                        <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                        <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                        <span className={`w-2 h-2 ${selectedTicket?.typing_is_admin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '0ms' }}></span>
+                        <span className={`w-2 h-2 ${selectedTicket?.typing_is_admin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '150ms' }}></span>
+                        <span className={`w-2 h-2 ${selectedTicket?.typing_is_admin ? 'bg-[#6050ba]' : 'bg-zinc-400'} rounded-full animate-bounce`} style={{ animationDelay: '300ms' }}></span>
                         <span className="text-xs text-zinc-500 ml-2">печатает...</span>
                       </div>
                     </div>

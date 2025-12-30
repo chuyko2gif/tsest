@@ -151,7 +151,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0, opacity: 0 });
-  const updateTimeoutRef = useRef<NodeJS.Timeout>();
+  const updateTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const pathnameRef = useRef(pathname);
 
   // Синхронизируем ref с prop

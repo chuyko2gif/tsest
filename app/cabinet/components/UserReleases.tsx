@@ -286,7 +286,7 @@ export default function UserReleases({ userId, nickname, onOpenUpload, userRole,
           onBack={() => setSelectedRelease(null)}
           showCopyToast={showCopyToast}
           setShowCopyToast={setShowCopyToast}
-          supabase={supabase}
+          supabase={supabase || undefined}
         />
       ) : (
         <div>

@@ -165,10 +165,11 @@ export async function GET(request: NextRequest) {
     // Генерируем файл
     const buffer = await workbook.xlsx.writeBuffer();
 
-    // Формируем имя файла
+    // Формируем имя файла в формате: Artist Name - Release Title (thqrel-XXXX).xlsx
     const sanitizedTitle = sanitizeFilename(release.title);
     const sanitizedArtist = sanitizeFilename(release.artist_name);
-    const filename = `${release.catalog_number || 'RELEASE'}_${sanitizedArtist}_${sanitizedTitle}_metadata.xlsx`;
+    const customIdPart = release.custom_id ? ` (${release.custom_id})` : (release.catalog_number ? ` (${release.catalog_number})` : '');
+    const filename = `${sanitizedArtist} - ${sanitizedTitle}${customIdPart}.xlsx`;
 
     // Возвращаем файл
     return new NextResponse(buffer, {

@@ -19,17 +19,32 @@ const RELEASES = [
   { id: 8, title: 'Холодно', artist: 'qqdie', cover: 'https://images.genius.com/ece70e671b3422967c2012217763c557.807x807x1.jpg' },
 ];
 
-// Услуги лейбла
+// Услуги лейбла с иконками
 const SERVICES = [
-  'Дистрибуция на все платформы',
-  'Маркетинг и PR',
-  'Синхронизация с соцсетями',
-  'Защита авторских прав',
-  'Аналитика и отчетность',
-  'Продвижение в плейлистах',
-  'Создание контента',
-  'Консультации по развитию карьеры',
+  { name: 'Дистрибуция на все платформы', icon: 'globe' },
+  { name: 'Маркетинг и PR', icon: 'megaphone' },
+  { name: 'Синхронизация с соцсетями', icon: 'share' },
+  { name: 'Защита авторских прав', icon: 'shield' },
+  { name: 'Аналитика и отчетность', icon: 'chart' },
+  { name: 'Продвижение в плейлистах', icon: 'playlist' },
+  { name: 'Создание контента', icon: 'video' },
+  { name: 'Консультации по развитию карьеры', icon: 'users' },
 ];
+
+// SVG иконки для услуг
+const ServiceIcon = ({ type, className }: { type: string; className?: string }) => {
+  const icons: Record<string, JSX.Element> = {
+    globe: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="1.5"/><path strokeLinecap="round" strokeWidth="1.5" d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+    megaphone: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>,
+    share: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>,
+    shield: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
+    chart: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>,
+    playlist: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>,
+    video: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>,
+    users: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>,
+  };
+  return icons[type] || null;
+};
 
 // Оптимизированный анимированный счетчик
 const AnimatedCounter = memo(({ end, duration = 2500, suffix = '', delay = 0 }: { end: number; duration?: number; suffix?: string; delay?: number }) => {
@@ -341,51 +356,87 @@ const ServicesModal = memo(({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-16 pb-8 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
       onClick={onClose}
     >
       <div 
-        className="relative max-w-2xl w-full bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-3xl p-8 border border-[#9d8df1]/30 shadow-2xl"
+        className="relative max-w-3xl w-full rounded-3xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(145deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%)',
+          boxShadow: '0 25px 80px -20px rgba(96, 80, 186, 0.5), 0 0 0 1px rgba(157, 141, 241, 0.2)',
+        }}
       >
-        {/* Кнопка закрытия */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:scale-110 border border-white/10"
-        >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        {/* Заголовок */}
-        <h3 className="text-3xl font-black text-white mb-2 uppercase tracking-wider">
-          Услуги <span className="text-[#9d8df1]">Лейбла</span>
-        </h3>
-        <p className="text-sm text-white/60 mb-8">Полный спектр услуг для артистов</p>
-
-        {/* Список услуг */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {SERVICES.map((service, index) => (
-            <div 
-              key={index}
-              className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#9d8df1]/30 transition-all group"
-            >
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#6050ba] to-[#9d8df1] flex items-center justify-center text-white text-xs font-bold group-hover:scale-110 transition-transform">
-                ✓
-              </div>
-              <p className="text-white text-sm font-semibold">{service}</p>
+        {/* Декоративные элементы */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#9d8df1] to-transparent" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#6050ba]/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#9d8df1]/20 rounded-full blur-3xl" />
+        
+        <div className="relative p-6 md:p-8">
+          {/* Заголовок */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#6050ba] to-[#9d8df1] flex items-center justify-center shadow-lg shadow-[#6050ba]/30">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-          ))}
-        </div>
+            <div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-wider">
+                Услуги <span className="text-[#9d8df1]">Лейбла</span>
+              </h3>
+              <p className="text-xs text-white/50">Полный спектр услуг для артистов</p>
+            </div>
+          </div>
 
-        {/* Кнопка закрыть внизу */}
-        <button
-          onClick={onClose}
-          className="mt-8 w-full py-4 rounded-xl bg-gradient-to-r from-[#6050ba] to-[#9d8df1] text-white font-bold uppercase tracking-wider hover:scale-105 transition-transform shadow-lg hover:shadow-[#6050ba]/50"
-        >
-          Закрыть
-        </button>
+          {/* Список услуг */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {SERVICES.map((service, index) => (
+              <div 
+                key={index}
+                className="group relative flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-[1.02] cursor-default overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                  border: '1px solid rgba(157, 141, 241, 0.15)',
+                }}
+              >
+                {/* Hover эффект */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#6050ba]/10 to-[#9d8df1]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ boxShadow: 'inset 0 0 30px rgba(157, 141, 241, 0.1)' }} />
+                
+                {/* Иконка */}
+                <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#6050ba]/80 to-[#9d8df1]/80 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all shadow-lg shadow-[#6050ba]/20">
+                  <ServiceIcon type={service.icon} className="w-5 h-5 text-white" />
+                </div>
+                
+                {/* Текст */}
+                <p className="relative text-white/90 text-sm font-semibold group-hover:text-white transition-colors">{service.name}</p>
+                
+                {/* Стрелка */}
+                <svg className="relative ml-auto w-4 h-4 text-white/20 group-hover:text-[#9d8df1] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            ))}
+          </div>
+
+          {/* Кнопка закрыть внизу */}
+          <button
+            onClick={onClose}
+            className="mt-6 w-full py-3.5 rounded-xl text-white font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] group relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #6050ba 0%, #9d8df1 100%)',
+              boxShadow: '0 10px 30px -10px rgba(96, 80, 186, 0.5)',
+            }}
+          >
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 group-hover:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Закрыть
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -463,21 +514,46 @@ export default function FeedPage() {
       {/* Intro анимация с большим логотипом */}
       {showIntro && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center animate-[fade-out_0.4s_ease-out_1.1s_forwards]"
           style={{
             background: 'linear-gradient(to bottom, #08080a 0%, #0d0d1a 50%, #08080a 100%)',
-            animation: 'fade-out 0.5s ease-out 1s forwards',
           }}
         >
           <img 
             src="/logo.png" 
             alt="thqlabel" 
-            className="w-[80vw] max-w-[1200px] h-auto"
+            className="w-[70vw] max-w-[900px] h-auto"
             style={{
-              filter: 'drop-shadow(0 0 60px rgba(96,80,186,0.9))',
-              animation: 'logo-intro 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              filter: 'drop-shadow(0 0 80px rgba(96,80,186,0.9))',
+              animation: 'intro-scale 0.8s cubic-bezier(0.34,1.56,0.64,1), intro-float 2s ease-in-out 0.5s infinite',
             }}
           />
+          {/* Спиннер загрузки */}
+          <div className="mt-8 flex items-center gap-3 animate-[fade-in_0.5s_ease-out_0.3s_both]">
+            <div className="relative w-5 h-5">
+              <div className="absolute inset-0 rounded-full border-2 border-[#9d8df1]/20" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#9d8df1] animate-spin" />
+            </div>
+            <span className="text-white/50 text-xs uppercase tracking-widest font-bold animate-pulse">Загрузка</span>
+          </div>
+          <style jsx>{`
+            @keyframes intro-scale {
+              0% { opacity: 0; transform: scale(0.7); }
+              100% { opacity: 1; transform: scale(1); }
+            }
+            @keyframes intro-float {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-15px); }
+            }
+            @keyframes fade-in {
+              0% { opacity: 0; }
+              100% { opacity: 1; }
+            }
+            @keyframes fade-out {
+              0% { opacity: 1; }
+              100% { opacity: 0; visibility: hidden; }
+            }
+          `}</style>
         </div>
       )}
       
@@ -514,17 +590,17 @@ export default function FeedPage() {
       <div className="relative z-20 w-full h-screen px-4 md:px-6 lg:px-8">
         
         {/* Grid layout - фиксированная высота экрана */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 h-full py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 h-full py-2">
           
           {/* Левая колонка - Текст, кнопки и релизы (компактно) */}
-          <div className="lg:col-span-3 flex flex-col justify-between h-full">
+          <div className="lg:col-span-3 flex flex-col h-full">
             <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
               {/* Текст и кнопки с стеклянным эффектом */}
-              <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-4 lg:p-6 border border-white/10 shadow-2xl">
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r from-white via-[#c4b5fd] to-white bg-clip-text text-transparent mb-3 lg:mb-4 leading-tight">
+              <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-3 lg:p-4 border border-white/10 shadow-2xl">
+                <h1 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-white via-[#c4b5fd] to-white bg-clip-text text-transparent mb-2 lg:mb-3 leading-tight">
                   Продвигаем вашу музыку на новый уровень
                 </h1>
-                <p className="text-xs md:text-sm lg:text-base text-white/90 mb-4 lg:mb-5 leading-relaxed">
+                <p className="text-[10px] md:text-xs lg:text-sm text-white/90 mb-3 lg:mb-4 leading-relaxed">
                   Полный спектр услуг для артистов: дистрибуция, маркетинг, PR и синхронизация.
                 </p>
 
@@ -543,18 +619,29 @@ export default function FeedPage() {
                   
                   <button 
                     onClick={() => setServicesModalOpen(true)}
-                    className="flex-1 px-4 lg:px-5 py-2.5 lg:py-3 backdrop-blur-md bg-white/10 border border-white/30 rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider hover:bg-white/20 transition-all text-white hover:scale-105 shadow-lg"
+                    className="group relative flex-1 px-4 lg:px-5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider transition-all hover:scale-105 text-white overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(157, 141, 241, 0.2) 0%, rgba(96, 80, 186, 0.3) 100%)',
+                      border: '1px solid rgba(157, 141, 241, 0.5)',
+                      boxShadow: '0 0 20px rgba(157, 141, 241, 0.3), inset 0 0 20px rgba(157, 141, 241, 0.1)',
+                    }}
                   >
-                    Услуги
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Услуги
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#9d8df1]/0 via-[#9d8df1]/30 to-[#9d8df1]/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Релизы - подняты выше */}
-            <div className={`mb-8 transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {/* Релизы - чуть больше */}
+            <div className={`mt-3 transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-3 lg:p-4 border border-white/10 shadow-xl">
-                <h2 className="text-xs font-black bg-gradient-to-r from-[#9d8df1] to-[#c4b5fd] bg-clip-text text-transparent uppercase mb-3">
+                <h2 className="text-[11px] font-black bg-gradient-to-r from-[#9d8df1] to-[#c4b5fd] bg-clip-text text-transparent uppercase mb-2">
                   Популярные Релизы
                 </h2>
                 <div className="grid grid-cols-3 gap-2">
@@ -590,17 +677,17 @@ export default function FeedPage() {
           {/* Центральная колонка - Логотип и информация */}
           <div className="lg:col-span-6 flex flex-col justify-center items-center">
             {/* Логотип чуть выше центра */}
-            <div className={`relative mb-6 transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+            <div className={`relative mb-4 transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
               <div 
-                className="absolute inset-0 blur-[120px] opacity-70 bg-gradient-to-br from-[#6050ba] via-[#9d8df1] to-[#c4b5fd]" 
+                className="absolute inset-0 blur-[100px] opacity-70 bg-gradient-to-br from-[#6050ba] via-[#9d8df1] to-[#c4b5fd]" 
                 style={{ animation: 'logo-glow 4s ease-in-out infinite' }} 
               />
               <img 
                 src="/logo.png" 
                 alt="thqlabel" 
-                className="relative z-10 w-full max-w-[700px] lg:max-w-[900px] h-auto object-contain"
+                className="relative z-10 w-full max-w-[500px] lg:max-w-[650px] h-auto object-contain"
                 style={{ 
-                  filter: 'drop-shadow(0 0 60px rgba(96,80,186,0.9))',
+                  filter: 'drop-shadow(0 0 50px rgba(96,80,186,0.9))',
                   animation: 'logo-float 6s ease-in-out infinite, logo-pulse 3s ease-in-out infinite',
                 }}
                 loading="eager"
@@ -609,7 +696,7 @@ export default function FeedPage() {
             </div>
 
             {/* Кнопка "Лейбл ждёт тебя" под логотипом */}
-            <div className={`mb-6 transition-all duration-1000 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`mb-4 transition-all duration-1000 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               <div className="inline-flex items-center gap-2 text-[10px] text-white uppercase tracking-wider font-black px-4 py-2 border-2 border-[#9d8df1]/80 rounded-full bg-gradient-to-r from-[#6050ba]/30 to-[#9d8df1]/30 shadow-xl backdrop-blur-sm">
                 <span className="relative">
                   <span className="w-1.5 h-1.5 rounded-full bg-white block animate-pulse" />
@@ -621,46 +708,66 @@ export default function FeedPage() {
 
             {/* Информация под логотипом - по центру снизу */}
             <div className={`text-center w-full transition-all duration-1000 delay-[1200ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              <p className="text-white text-sm md:text-base mb-5 leading-relaxed max-w-2xl mx-auto">
-                Дистрибуция музыки на все платформы мира.<br/>
-                Мы помогаем артистам стать услышанными.
+              <p className="text-white text-xs md:text-sm mb-3 leading-relaxed max-w-xl mx-auto">
+                Дистрибуция музыки на все платформы мира. Мы помогаем артистам стать услышанными.
               </p>
               
               {/* Статистика */}
-              <div className="flex flex-wrap justify-center gap-8 md:gap-10 lg:gap-12 mb-4">
+              <div className="flex flex-wrap justify-center gap-6 md:gap-8 lg:gap-10 mb-3">
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
                     <AnimatedCounter end={150} suffix="+" delay={2200} />
                   </div>
-                  <div className="text-[10px] text-white/70 uppercase tracking-wider font-bold">Релизов</div>
+                  <div className="text-[9px] text-white/70 uppercase tracking-wider font-bold">Релизов</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
                     <AnimatedCounter end={50} suffix="+" delay={2200} />
                   </div>
-                  <div className="text-[10px] text-white/70 uppercase tracking-wider font-bold">Артистов</div>
+                  <div className="text-[9px] text-white/70 uppercase tracking-wider font-bold">Артистов</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#a89ef5] via-[#c4b5fd] to-white">
                     <AnimatedCounter end={1000000} suffix="+" delay={2200} />
                   </div>
-                  <div className="text-[10px] text-white/70 uppercase tracking-wider font-bold">Прослушиваний</div>
+                  <div className="text-[9px] text-white/70 uppercase tracking-wider font-bold">Прослушиваний</div>
                 </div>
               </div>              {/* Футер ссылки */}
-              <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { href: '/faq', label: 'FAQ' },
-                  { href: '/contacts', label: 'Контакты' },
-                  { href: '/news', label: 'Новости' },
-                ].map((link) => (
-                  <Link 
-                    key={link.href}
-                    href={link.href} 
-                    className="text-white/70 hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all hover:scale-105"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link 
+                  href="/faq"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-[#6050ba]/20 hover:border-[#9d8df1]/40 transition-all hover:scale-105"
+                >
+                  <svg className="w-4 h-4 text-[#9d8df1] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-white/70 group-hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">FAQ</span>
+                </Link>
+                <Link 
+                  href="/contacts"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-[#6050ba]/20 hover:border-[#9d8df1]/40 transition-all hover:scale-105"
+                >
+                  <svg className="w-4 h-4 text-[#9d8df1] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-white/70 group-hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">Контакты</span>
+                </Link>
+                <Link 
+                  href="/news"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-[#6050ba]/20 hover:border-[#9d8df1]/40 transition-all hover:scale-105"
+                >
+                  <svg className="w-4 h-4 text-[#9d8df1] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                  <span className="text-white/70 group-hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">Новости</span>
+                </Link>
+              </div>
+              
+              {/* Копирайт */}
+              <div className="mt-3 text-center">
+                <p className="text-white/30 text-[9px] font-medium tracking-wider">
+                  © 2025 <span className="text-[#9d8df1]/50">thqlabel</span>. Все права защищены.
+                </p>
               </div>
             </div>
           </div>
@@ -668,42 +775,75 @@ export default function FeedPage() {
           {/* Правая колонка - Новости */}
           <div className="lg:col-span-3">
             <div className={`transition-all duration-1000 delay-400 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
-              <h2 className="text-sm font-black text-white mb-2 uppercase">
-                Новости и События
+              <h2 className="text-xs font-black text-white mb-1.5 uppercase">
+                Новости
               </h2>
               <div className="space-y-2">
                 {news.length > 0 ? news.map((item) => (
                   <Link
                     key={item.id}
                     href={`/news?id=${item.id}`}
-                    className="block p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#9d8df1]/30 transition-all group"
+                    className="group block p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-[#6050ba]/15 hover:border-[#9d8df1]/40 transition-all hover:scale-[1.02]"
                   >
-                    <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">
-                      {new Date(item.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' })}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#6050ba]/50 to-[#9d8df1]/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">
+                          {new Date(item.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                        </div>
+                        <h3 className="text-white font-bold text-xs group-hover:text-[#c4b5fd] transition-colors line-clamp-1">
+                          {item.title}
+                        </h3>
+                      </div>
+                      <svg className="w-4 h-4 text-white/20 group-hover:text-[#9d8df1] group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
-                    <h3 className="text-white font-bold text-xs mb-0.5 group-hover:text-[#c4b5fd] transition-colors line-clamp-2">
-                      {item.title}
-                    </h3>
-                    {item.content && (
-                      <p className="text-white/60 text-[10px] line-clamp-2">{cleanMarkdown(item.content).substring(0, 80)}...</p>
-                    )}
                   </Link>
                 )) : (
                   <>
-                    <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                      <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">28.10</div>
-                      <h3 className="text-white font-bold text-xs mb-0.5">Анонс нового альбома</h3>
-                      <p className="text-white/60 text-[10px]">Скоро релиз от группы Spectrum</p>
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#6050ba]/50 to-[#9d8df1]/50 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">28 окт</div>
+                          <h3 className="text-white font-bold text-xs">Анонс нового альбома</h3>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                      <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">25.10</div>
-                      <h3 className="text-white font-bold text-xs mb-0.5">"Luna" на премию</h3>
-                      <p className="text-white/60 text-[10px]">Номинация в категории</p>
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#6050ba]/50 to-[#9d8df1]/50 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">25 окт</div>
+                          <h3 className="text-white font-bold text-xs">"Luna" на премию</h3>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                      <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">20.10</div>
-                      <h3 className="text-white font-bold text-xs mb-0.5">Расширение сети</h3>
-                      <p className="text-white/60 text-[10px]">Новые партнеры для артистов</p>
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#6050ba]/50 to-[#9d8df1]/50 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[#9d8df1] font-bold text-[10px] mb-0.5">20 окт</div>
+                          <h3 className="text-white font-bold text-xs">Расширение сети</h3>
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}

@@ -129,11 +129,11 @@ export async function GET(
       // Получаем информацию о пользователе
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, nickname, email')
+        .select('nickname, email')
         .eq('id', typingStatus.user_id)
         .single();
 
-      const displayName = profile?.nickname || profile?.username || profile?.email?.split('@')[0] || 'Пользователь';
+      const displayName = profile?.nickname || profile?.email?.split('@')[0] || 'Пользователь';
       
       console.log('Typing status found:', {
         userId: typingStatus.user_id,

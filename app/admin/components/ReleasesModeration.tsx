@@ -7,6 +7,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 
 interface Release {
   id: string;
+  custom_id?: string;
   created_at: string;
   release_date?: string;
   release_type: 'basic' | 'exclusive';
@@ -1625,7 +1626,7 @@ export default function ReleasesModeration({ supabase }: ReleasesModerationProps
                             )}
 
                             {/* Аудиоплеер */}
-                            {track.link && (
+                            {(track.link || track.audio_url || track.audioFile) && (
                               <div className="mt-3">
                                 <AudioPlayer
                                   releaseId={selectedRelease.id}
@@ -2032,7 +2033,7 @@ export default function ReleasesModeration({ supabase }: ReleasesModerationProps
                         Релиз отклонен
                       </div>
                       {selectedRelease.rejection_reason && (
-                        <div className="text-xs sm:text-sm text-zinc-400">{selectedRelease.rejection_reason}</div>
+                        <div className="text-xs sm:text-sm text-white">{selectedRelease.rejection_reason}</div>
                       )}
                     </div>
                   )}
@@ -2179,7 +2180,13 @@ export default function ReleasesModeration({ supabase }: ReleasesModerationProps
                       const downloadUrl = window.URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = downloadUrl;
-                      a.download = `${selectedRelease.catalog_number || 'RELEASE'}_metadata.xlsx`;
+                      // Имя файла генерируется на сервере и берётся из Content-Disposition
+                      const contentDisposition = response.headers.get('Content-Disposition');
+                      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+                      const filename = filenameMatch 
+                        ? filenameMatch[1] 
+                        : `${selectedRelease.artist_name || 'Artist'} - ${selectedRelease.title}${selectedRelease.custom_id ? ` (${selectedRelease.custom_id})` : ''}.xlsx`;
+                      a.download = filename;
                       document.body.appendChild(a);
                       a.click();
                       window.URL.revokeObjectURL(downloadUrl);
@@ -2296,7 +2303,7 @@ export default function ReleasesModeration({ supabase }: ReleasesModerationProps
                   <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                     <div className="text-red-400 font-bold mb-2">Релиз отклонен</div>
                     {selectedRelease.rejection_reason && (
-                      <div className="text-sm text-zinc-400">
+                      <div className="text-sm text-white">
                         Причина: {selectedRelease.rejection_reason}
                       </div>
                     )}

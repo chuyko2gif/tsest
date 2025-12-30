@@ -184,16 +184,11 @@ export default function ReleaseCard({ release, onClick, onDelete, onDragStart, o
         {/* Overlay при наведении на обложку */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Бейдж 18+ для explicit контента */}
-        {hasExplicitContent && (
+        {/* Бейдж custom_id в верхнем левом углу (если есть) */}
+        {release.custom_id && (
           <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10">
-            <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-600/90 backdrop-blur-sm rounded text-[8px] sm:text-[10px] font-black text-white shadow-lg shadow-red-500/50 border border-red-400/30 flex items-center gap-0.5 sm:gap-1">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="sm:w-3 sm:h-3">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              18+
+            <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-purple-600/90 backdrop-blur-sm rounded text-[8px] sm:text-[10px] font-bold text-white shadow-lg shadow-purple-500/50 border border-purple-400/30">
+              {release.custom_id}
             </div>
           </div>
         )}
@@ -210,7 +205,7 @@ export default function ReleaseCard({ release, onClick, onDelete, onDragStart, o
       </div>
 
       {/* Статус и дата с улучшенным стилем */}
-      <div className="mt-2 sm:mt-3">
+      <div className="mt-2 sm:mt-3 flex items-center justify-between gap-2">
         <div className={`text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-white font-bold flex items-center gap-1 sm:gap-1.5 w-fit transition-all duration-300 group-hover:scale-105 ${statusColor}`}>
           {shouldAnimate ? (
             <svg className="animate-spin h-2.5 w-2.5 sm:h-3 sm:w-3" viewBox="0 0 24 24">
@@ -223,6 +218,18 @@ export default function ReleaseCard({ release, onClick, onDelete, onDragStart, o
           <span className="hidden sm:inline">{statusLabel}</span>
           <span className="inline sm:hidden truncate max-w-[60px]">{statusLabel.slice(0, 6)}</span>
         </div>
+        
+        {/* Бейдж 18+ для explicit контента (в footer справа) */}
+        {hasExplicitContent && (
+          <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-600/90 backdrop-blur-sm rounded text-[8px] sm:text-[10px] font-black text-white shadow-lg shadow-red-500/30 border border-red-400/30 flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="sm:w-3 sm:h-3">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            18+
+          </div>
+        )}
       </div>
       
       {/* Индикатор редактирования для pending релизов с улучшенной анимацией */}

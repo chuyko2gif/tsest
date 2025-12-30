@@ -64,7 +64,7 @@ export default function ReleaseDetailView({
           tracks={release.tracks} 
           onCopyUPC={handleCopyUPC}
           releaseId={release.id}
-          releaseType={release.release_type}
+          releaseType={release.release_type || 'basic'}
           status={release.status}
           supabase={supabase}
         />

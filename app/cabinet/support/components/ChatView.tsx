@@ -21,6 +21,7 @@ interface ChatViewProps {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCloseTicket: (id: string) => void;
   onBack: () => void;
+  onReaction?: (messageId: string, hasReaction: boolean) => void;
 }
 
 export default function ChatView({
@@ -38,6 +39,7 @@ export default function ChatView({
   onFileUpload,
   onCloseTicket,
   onBack,
+  onReaction,
 }: ChatViewProps) {
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -94,11 +96,18 @@ export default function ChatView({
               key={message.id}
               message={message}
               isOwn={message.user_id === user.id && !message.is_admin}
+              onReaction={onReaction}
+              currentUserId={user.id}
             />
           ))
         )}
         
-        {isTyping && <TypingIndicator />}
+        {isTyping && (
+          <TypingIndicator 
+            nickname={ticket.typing_nickname} 
+            isAdmin={ticket.typing_is_admin ?? true} 
+          />
+        )}
         
         <div ref={messagesEndRef} />
       </div>

@@ -128,6 +128,43 @@ export async function GET(request: Request) {
       messagesByTicket.get(msg.ticket_id).push(msg);
     });
 
+    // Загружаем реакции для всех сообщений
+    const allMessageIds = allMessages?.map(m => m.id) || [];
+    const reactionsMap = new Map();
+    
+    if (allMessageIds.length > 0) {
+      const { data: reactions } = await supabase
+        .from('ticket_message_reactions')
+        .select('*')
+        .in('message_id', allMessageIds);
+      
+      if (reactions && reactions.length > 0) {
+        // Получаем профили пользователей которые поставили реакции
+        const reactionUserIds = [...new Set(reactions.map(r => r.user_id))];
+        const { data: reactionUsers } = await supabase
+          .from('profiles')
+          .select('id, nickname, avatar')
+          .in('id', reactionUserIds);
+        
+        const reactionUsersMap = new Map();
+        reactionUsers?.forEach(u => reactionUsersMap.set(u.id, u));
+        
+        // Группируем реакции по message_id с данными пользователей
+        reactions.forEach(r => {
+          const user = reactionUsersMap.get(r.user_id);
+          const reactionWithUser = {
+            ...r,
+            user: user ? { nickname: user.nickname, avatar: user.avatar } : null
+          };
+          
+          if (!reactionsMap.has(r.message_id)) {
+            reactionsMap.set(r.message_id, []);
+          }
+          reactionsMap.get(r.message_id).push(reactionWithUser);
+        });
+      }
+    }
+
     // Собираем ВСЕ уникальные ID пользователей (владельцы тикетов + отправители сообщений)
     // Исключаем системные ID (нулевой UUID для автоответов)
     const SYSTEM_ID = '00000000-0000-0000-0000-000000000000';
@@ -140,7 +177,7 @@ export async function GET(request: Request) {
     if (allUserIds.length > 0) {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, nickname, username, telegram, avatar, role')
+        .select('id, email, nickname, telegram, avatar, role')
         .in('id', allUserIds);
       
       if (profilesError) {
@@ -154,15 +191,15 @@ export async function GET(request: Request) {
     const formattedTickets = tickets.map((ticket) => {
       const profile = profilesMap.get(ticket.user_id);
       
-      // Форматируем сообщения со свежими данными отправителей
+      // Форматируем сообщения со свежими данными отправителей и реакциями
       const messages = (messagesByTicket.get(ticket.id) || []).map((msg: any) => {
         const senderProfile = profilesMap.get(msg.sender_id);
         return {
           ...msg,
           sender_email: senderProfile?.email || msg.sender_email,
           sender_nickname: senderProfile?.nickname || msg.sender_nickname,
-          sender_username: senderProfile?.username || msg.sender_username,
-          sender_avatar: senderProfile?.avatar || msg.sender_avatar
+          sender_avatar: senderProfile?.avatar || msg.sender_avatar,
+          reactions: reactionsMap.get(msg.id) || []
         };
       });
       

@@ -19,7 +19,12 @@ export function useTypingStatus({
     if (!selectedTicket || !supabase || !user) return;
     await supabase
       .from('tickets')
-      .update({ is_typing: true, typing_user_id: user.id })
+      .update({ 
+        is_typing: true, 
+        typing_user_id: user.id,
+        typing_nickname: user.nickname || user.email || 'Пользователь',
+        typing_is_admin: false
+      })
       .eq('id', selectedTicket.id);
   }, [selectedTicket, user]);
 
@@ -27,7 +32,12 @@ export function useTypingStatus({
     if (!selectedTicket || !supabase) return;
     await supabase
       .from('tickets')
-      .update({ is_typing: false, typing_user_id: null })
+      .update({ 
+        is_typing: false, 
+        typing_user_id: null,
+        typing_nickname: null,
+        typing_is_admin: false
+      })
       .eq('id', selectedTicket.id);
   }, [selectedTicket]);
 

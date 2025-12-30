@@ -21,7 +21,6 @@ import { Release } from './types';
 import { UserRole } from '../../lib/types';
 import { SortableReleaseCard } from './SortableReleaseCard';
 import { TrashZone } from './TrashZone';
-import { AddReleaseCard } from './ReleaseCard';
 
 interface DraggableReleasesGridProps {
   releases: Release[];
@@ -186,8 +185,8 @@ export function DraggableReleasesGrid({
         {/* Сетка с релизами */}
         <SortableContext items={draftIds} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-5 gap-3 sm:gap-4 pb-32 auto-rows-fr">
-            {/* Карточка добавления релиза - скрыта в архиве черновиков */}
-            {userRole && !showArchive && <AddReleaseCard onClick={onAddRelease} />}
+            {/* Карточка добавления релиза - скрыта в режиме черновиков */}
+            {/* Кнопка создания показывается только в ReleasesGrid */}
 
             {/* Карточки релизов */}
             {localReleases.map((release) => (

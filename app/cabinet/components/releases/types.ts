@@ -3,6 +3,7 @@ import { UserRole } from '../../lib/types';
 
 export interface Release {
   id: string;
+  custom_id?: string; // thqrel-0001, thqrel-0002, ...
   title: string;
   artist_name?: string;
   artist?: string;
@@ -55,6 +56,7 @@ export interface Track {
   explicit?: boolean;
   hasDrugs?: boolean; // Алиас для explicit - указывает на наркотики/ненормативную лексику
   lyrics?: string;
+  link?: string; // Ссылка на аудиофайл трека
 }
 
 export interface UserReleasesProps {
