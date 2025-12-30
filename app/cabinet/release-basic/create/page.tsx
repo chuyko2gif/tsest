@@ -268,6 +268,10 @@ export default function CreateReleaseBasicPage() {
     version?: string;
     producers?: string[];
     featuring?: string[];
+    isInstrumental?: boolean;
+    tiktokPreviewStart?: string;
+    composers?: string[];
+    lyricists?: string[];
   }>>([]);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [trackTitle, setTrackTitle] = useState('');
@@ -286,6 +290,10 @@ export default function CreateReleaseBasicPage() {
   const [trackVersion, setTrackVersion] = useState('');
   const [trackProducers, setTrackProducers] = useState<string[]>([]);
   const [trackFeaturing, setTrackFeaturing] = useState<string[]>([]);
+  const [trackIsInstrumental, setTrackIsInstrumental] = useState(false);
+  const [trackTiktokPreviewStart, setTrackTiktokPreviewStart] = useState('');
+  const [trackComposers, setTrackComposers] = useState<string[]>([]);
+  const [trackLyricists, setTrackLyricists] = useState<string[]>([]);
   
   // Countries state
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
@@ -573,6 +581,14 @@ export default function CreateReleaseBasicPage() {
               setTrackProducers={setTrackProducers}
               trackFeaturing={trackFeaturing}
               setTrackFeaturing={setTrackFeaturing}
+              trackIsInstrumental={trackIsInstrumental}
+              setTrackIsInstrumental={setTrackIsInstrumental}
+              trackTiktokPreviewStart={trackTiktokPreviewStart}
+              setTrackTiktokPreviewStart={setTrackTiktokPreviewStart}
+              trackComposers={trackComposers}
+              setTrackComposers={setTrackComposers}
+              trackLyricists={trackLyricists}
+              setTrackLyricists={setTrackLyricists}
               onNext={() => setCurrentStep('countries')}
               onBack={() => setCurrentStep('release')}
             />

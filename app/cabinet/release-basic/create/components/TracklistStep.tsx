@@ -19,6 +19,10 @@ interface Track {
   version?: string;
   producers?: string[];
   featuring?: string[];
+  isInstrumental?: boolean;
+  tiktokPreviewStart?: string;
+  composers?: string[];
+  lyricists?: string[];
 }
 
 interface TracklistStepProps {
@@ -49,6 +53,14 @@ interface TracklistStepProps {
   setTrackProducers?: (value: string[]) => void;
   trackFeaturing?: string[];
   setTrackFeaturing?: (value: string[]) => void;
+  trackIsInstrumental?: boolean;
+  setTrackIsInstrumental?: (value: boolean) => void;
+  trackTiktokPreviewStart?: string;
+  setTrackTiktokPreviewStart?: (value: string) => void;
+  trackComposers?: string[];
+  setTrackComposers?: (value: string[]) => void;
+  trackLyricists?: string[];
+  setTrackLyricists?: (value: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -81,6 +93,14 @@ export default function TracklistStep({
   setTrackProducers,
   trackFeaturing,
   setTrackFeaturing,
+  trackIsInstrumental,
+  setTrackIsInstrumental,
+  trackTiktokPreviewStart,
+  setTrackTiktokPreviewStart,
+  trackComposers,
+  setTrackComposers,
+  trackLyricists,
+  setTrackLyricists,
   onNext,
   onBack,
 }: TracklistStepProps) {
@@ -409,6 +429,20 @@ export default function TracklistStep({
                             setTrackFeaturing(
                               Array.isArray(track.featuring) ? track.featuring : 
                               track.featuring ? [track.featuring] : []
+                            );
+                          }
+                          if (setTrackIsInstrumental) setTrackIsInstrumental(track.isInstrumental || false);
+                          if (setTrackTiktokPreviewStart) setTrackTiktokPreviewStart(track.tiktokPreviewStart || '');
+                          if (setTrackComposers) {
+                            setTrackComposers(
+                              Array.isArray(track.composers) ? track.composers : 
+                              track.composers ? [track.composers] : []
+                            );
+                          }
+                          if (setTrackLyricists) {
+                            setTrackLyricists(
+                              Array.isArray(track.lyricists) ? track.lyricists : 
+                              track.lyricists ? [track.lyricists] : []
                             );
                           }
                         }}
@@ -823,6 +857,140 @@ export default function TracklistStep({
                 )}
               </div>
             </div>
+
+            {/* Чекбокс "Инструментал" */}
+            <div className="p-4 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={trackIsInstrumental || false}
+                  onChange={(e) => setTrackIsInstrumental && setTrackIsInstrumental(e.target.checked)}
+                  className="w-5 h-5 rounded"
+                />
+                <div>
+                  <div className="text-sm font-medium text-white">🎵 Инструментал (Instrumental)</div>
+                  <div className="text-xs text-zinc-400">Трек без вокала, только музыка</div>
+                </div>
+              </label>
+            </div>
+
+            {/* Композиторы */}
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Композиторы / Авторы музыки (до 10)</label>
+              <div className="space-y-2">
+                {trackComposers && trackComposers.map((composer, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input 
+                      value={composer} 
+                      onChange={(e) => {
+                        if (setTrackComposers) {
+                          const newComposers = [...trackComposers];
+                          newComposers[idx] = e.target.value;
+                          setTrackComposers(newComposers);
+                        }
+                      }}
+                      placeholder={`Композитор ${idx + 1}`} 
+                      className="flex-1 px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border border-white/10 outline-none" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setTrackComposers) {
+                          setTrackComposers(trackComposers.filter((_, i) => i !== idx));
+                        }
+                      }}
+                      className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {(!trackComposers || trackComposers.length < 10) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (setTrackComposers) {
+                        setTrackComposers([...(trackComposers || []), '']);
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-xl text-sm text-zinc-400 hover:text-white transition"
+                  >
+                    + Добавить композитора
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Авторы слов (скрываются для инструментала) */}
+            {!trackIsInstrumental && (
+              <div>
+                <label className="text-sm text-zinc-400 mb-2 block">Авторы слов / Поэты (до 10)</label>
+                <div className="space-y-2">
+                  {trackLyricists && trackLyricists.map((lyricist, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input 
+                        value={lyricist} 
+                        onChange={(e) => {
+                          if (setTrackLyricists) {
+                            const newLyricists = [...trackLyricists];
+                            newLyricists[idx] = e.target.value;
+                            setTrackLyricists(newLyricists);
+                          }
+                        }}
+                        placeholder={`Автор слов ${idx + 1}`} 
+                        className="flex-1 px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border border-white/10 outline-none" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (setTrackLyricists) {
+                            setTrackLyricists(trackLyricists.filter((_, i) => i !== idx));
+                          }
+                        }}
+                        className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {(!trackLyricists || trackLyricists.length < 10) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setTrackLyricists) {
+                          setTrackLyricists([...(trackLyricists || []), '']);
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-xl text-sm text-zinc-400 hover:text-white transition"
+                    >
+                      + Добавить автора слов
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Время начала превью для TikTok */}
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">
+                ⏱️ Время начала превью для TikTok (опционально)
+                <span className="ml-2 text-xs text-zinc-500">Формат: мм:сс (например: 01:30)</span>
+              </label>
+              <input 
+                value={trackTiktokPreviewStart || ''} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Валидация формата мм:сс
+                  if (value === '' || /^\d{0,2}:?\d{0,2}$/.test(value)) {
+                    setTrackTiktokPreviewStart && setTrackTiktokPreviewStart(value);
+                  }
+                }}
+                placeholder="01:30" 
+                maxLength={5}
+                className="w-full px-4 py-3 bg-gradient-to-br from-white/[0.07] to-white/[0.03] placeholder:text-zinc-600 rounded-xl border border-white/10 outline-none" 
+              />
+              <p className="text-xs text-zinc-500 mt-2">Укажите самый цепляющий момент трека для превью</p>
+            </div>
           </div>
 
           <label className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition">
@@ -874,7 +1042,11 @@ export default function TracklistStep({
                   language: trackLanguage,
                   version: trackVersion || undefined,
                   producers: trackProducers && trackProducers.filter(p => p.trim()).length > 0 ? trackProducers.filter(p => p.trim()) : undefined,
-                  featuring: trackFeaturing && trackFeaturing.filter(f => f.trim()).length > 0 ? trackFeaturing.filter(f => f.trim()) : undefined
+                  featuring: trackFeaturing && trackFeaturing.filter(f => f.trim()).length > 0 ? trackFeaturing.filter(f => f.trim()) : undefined,
+                  isInstrumental: trackIsInstrumental || false,
+                  tiktokPreviewStart: trackTiktokPreviewStart || undefined,
+                  composers: trackComposers && trackComposers.filter(c => c.trim()).length > 0 ? trackComposers.filter(c => c.trim()) : undefined,
+                  lyricists: trackLyricists && trackLyricists.filter(l => l.trim()).length > 0 ? trackLyricists.filter(l => l.trim()) : undefined
                 };
                 if (currentTrack < tracks.length) {
                   setTracks(tracks.map((t, i) => i === currentTrack ? newTrack : t));
@@ -893,6 +1065,10 @@ export default function TracklistStep({
                 if (setTrackVersion) setTrackVersion('');
                 if (setTrackProducers) setTrackProducers([]);
                 if (setTrackFeaturing) setTrackFeaturing([]);
+                if (setTrackIsInstrumental) setTrackIsInstrumental(false);
+                if (setTrackTiktokPreviewStart) setTrackTiktokPreviewStart('');
+                if (setTrackComposers) setTrackComposers([]);
+                if (setTrackLyricists) setTrackLyricists([]);
               }}
               className="flex-1 px-6 py-3 bg-[#6050ba] hover:bg-[#7060ca] rounded-xl font-bold transition"
             >
@@ -911,6 +1087,10 @@ export default function TracklistStep({
               if (setTrackVersion) setTrackVersion('');
               if (setTrackProducers) setTrackProducers([]);
               if (setTrackFeaturing) setTrackFeaturing([]);
+              if (setTrackIsInstrumental) setTrackIsInstrumental(false);
+              if (setTrackTiktokPreviewStart) setTrackTiktokPreviewStart('');
+              if (setTrackComposers) setTrackComposers([]);
+              if (setTrackLyricists) setTrackLyricists([]);
             }} className="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-xl font-bold transition">
               Отмена
             </button>
