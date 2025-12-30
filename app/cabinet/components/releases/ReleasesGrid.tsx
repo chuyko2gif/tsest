@@ -10,7 +10,6 @@ interface ReleasesGridProps {
   showArchive: boolean;
   onReleaseClick: (release: Release) => void;
   onAddRelease: () => void;
-  onShowPaymentModal: () => void;
   totalCount: number;
   hasFilters: boolean;
   onResetFilters: () => void;
@@ -29,7 +28,6 @@ export default function ReleasesGrid({
   showArchive,
   onReleaseClick,
   onAddRelease,
-  onShowPaymentModal,
   totalCount,
   hasFilters,
   onResetFilters,
@@ -67,7 +65,6 @@ export default function ReleasesGrid({
       userRole={userRole}
       hasFilters={hasFilters}
       onAddRelease={onAddRelease}
-      onShowPaymentModal={onShowPaymentModal}
       onResetFilters={onResetFilters}
     />;
   }
@@ -82,7 +79,7 @@ export default function ReleasesGrid({
       {!showArchive && (
         <>
           {userRole === 'exclusive' && <AddReleaseCard onClick={onAddRelease} />}
-          {userRole === 'basic' && <AddReleaseCard onClick={onShowPaymentModal} />}
+          {userRole === 'basic' && <AddReleaseCard onClick={onAddRelease} />}
           {(userRole === 'admin' || userRole === 'owner') && <AddReleaseCard onClick={onAddRelease} />}
         </>
       )}
@@ -148,7 +145,6 @@ interface EmptyStateProps {
   userRole?: UserRole;
   hasFilters: boolean;
   onAddRelease: () => void;
-  onShowPaymentModal: () => void;
   onResetFilters: () => void;
 }
 
@@ -157,8 +153,7 @@ function EmptyState({
   totalCount, 
   userRole, 
   hasFilters, 
-  onAddRelease, 
-  onShowPaymentModal,
+  onAddRelease,
   onResetFilters 
 }: EmptyStateProps) {
   const isEmpty = totalCount === 0;
@@ -205,7 +200,6 @@ function EmptyState({
           <AddFirstReleaseButton 
             userRole={userRole}
             onAddRelease={onAddRelease}
-            onShowPaymentModal={onShowPaymentModal}
           />
         )}
         
@@ -230,23 +224,14 @@ function EmptyState({
 interface AddFirstReleaseButtonProps {
   userRole?: UserRole;
   onAddRelease: () => void;
-  onShowPaymentModal: () => void;
 }
 
-function AddFirstReleaseButton({ userRole, onAddRelease, onShowPaymentModal }: AddFirstReleaseButtonProps) {
-  const handleClick = () => {
-    if (userRole === 'basic') {
-      onShowPaymentModal();
-    } else {
-      onAddRelease();
-    }
-  };
-
+function AddFirstReleaseButton({ userRole, onAddRelease }: AddFirstReleaseButtonProps) {
   if (!userRole) return null;
 
   return (
     <button
-      onClick={handleClick}
+      onClick={onAddRelease}
       className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
     >
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

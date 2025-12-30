@@ -2,7 +2,7 @@
 import "./globals.css";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ModalProvider } from '../components/ModalProvider';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
@@ -137,20 +137,27 @@ const AnimatedBackground = () => {
   );
 };
 
+const NAV_ITEMS = [
+  { href: '/cabinet', label: 'Кабинет' },
+  { href: '/news', label: 'Новости' },
+  { href: '/contacts', label: 'Контакты' },
+  { href: '/faq', label: 'FAQ' },
+];
+
 function BodyContent({ children, pathname }: { children: React.ReactNode; pathname: string }) {
   const { themeName } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
-  
-  const navItems = [
-    { href: '/cabinet', label: 'Кабинет' },
-    { href: '/news', label: 'Новости' },
-    { href: '/contacts', label: 'Контакты' },
-    { href: '/faq', label: 'FAQ' },
-  ];
+  const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0, opacity: 0 });
+  const updateTimeoutRef = useRef<NodeJS.Timeout>();
+  const pathnameRef = useRef(pathname);
+
+  // Синхронизируем ref с prop
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -158,21 +165,70 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
+
+  // Обновление позиции слайдера - только при изменении pathname
   useEffect(() => {
     if (!mounted) return;
     
-    const activeIndex = navItems.findIndex(item => item.href === pathname);
-    if (activeIndex !== -1 && navRefs.current[activeIndex]) {
-      const activeEl = navRefs.current[activeIndex];
-      const parent = activeEl?.parentElement;
-      if (activeEl && parent) {
-        const left = activeEl.offsetLeft;
-        const width = activeEl.offsetWidth;
-        setSliderStyle({ left: left + 4, width: width - 8 });
-      }
+    // Очищаем предыдущий таймаут
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
     }
+    
+    // Запускаем обновление с задержкой (debounce)
+    updateTimeoutRef.current = setTimeout(() => {
+      const activeIndex = NAV_ITEMS.findIndex(item => item.href === pathnameRef.current);
+      if (activeIndex !== -1 && navRefs.current[activeIndex]) {
+        const activeEl = navRefs.current[activeIndex];
+        if (activeEl) {
+          const left = activeEl.offsetLeft + 4;
+          const width = activeEl.offsetWidth - 8;
+          
+          // Используем функциональное обновление
+          setSliderStyle(prev => {
+            if (Math.abs(prev.left - left) < 1 && Math.abs(prev.width - width) < 1 && prev.opacity === 1) {
+              return prev;
+            }
+            return { left, width, opacity: 1 };
+          });
+        }
+      }
+    }, 150);
+    
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
   }, [pathname, mounted]);
+
+  // Отдельный эффект для resize - запускается только один раз
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const handleResize = () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      updateTimeoutRef.current = setTimeout(() => {
+        const activeIndex = NAV_ITEMS.findIndex(item => item.href === pathnameRef.current);
+        if (activeIndex !== -1 && navRefs.current[activeIndex]) {
+          const activeEl = navRefs.current[activeIndex];
+          if (activeEl) {
+            const left = activeEl.offsetLeft + 4;
+            const width = activeEl.offsetWidth - 8;
+            setSliderStyle({ left, width, opacity: 1 });
+          }
+        }
+      }, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [mounted]);
 
   return (
     <>
@@ -182,10 +238,15 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
       {/* Навигация */}
       {pathname !== '/' && pathname !== '/auth' && pathname !== '/admin' && (
         <header 
-          className="fixed top-0 w-full z-50 transition-all duration-500 glass-morphism-header"
+          className="fixed top-0 w-full z-50 transition-all duration-500"
           style={{
             height: '70px',
+            background: scrolled ? 'rgba(8, 8, 10, 0.3)' : 'transparent',
+            backdropFilter: scrolled ? 'blur(30px) saturate(150%)' : 'none',
+            borderBottom: scrolled ? '1px solid rgba(157, 141, 241, 0.08)' : '1px solid transparent',
+            boxShadow: scrolled ? '0 4px 20px rgba(0, 0, 0, 0.15)' : 'none',
           }}
+          suppressHydrationWarning
         >
           <div className="px-4 sm:px-6 md:px-10 h-full flex justify-between items-center">
             {/* Лого - визуально большое через scale с правильным свечением */}
@@ -205,89 +266,65 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
             </Link>
 
             {/* Навигация с плавным ползунком - скрывается на мобилке */}
-            <nav className="hidden md:flex relative items-center rounded-2xl p-1">
-              {/* Water ripple effect container */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                {/* Animated water drops */}
-                <div 
-                  className="absolute w-2 h-2 bg-gradient-to-r from-blue-400/30 to-cyan-300/30 rounded-full blur-sm"
-                  style={{
-                    left: '10%',
-                    top: '20%',
-                    animation: 'water-drop 2s ease-in-out infinite 0.5s',
-                  }}
-                />
-                <div 
-                  className="absolute w-1.5 h-1.5 bg-gradient-to-r from-blue-300/20 to-cyan-200/20 rounded-full blur-sm"
-                  style={{
-                    right: '15%',
-                    top: '30%',
-                    animation: 'water-drop 2.5s ease-in-out infinite 1.2s',
-                  }}
-                />
-                <div 
-                  className="absolute w-1 h-1 bg-gradient-to-r from-cyan-400/25 to-blue-300/25 rounded-full blur-sm"
-                  style={{
-                    left: '60%',
-                    bottom: '25%',
-                    animation: 'water-drop 3s ease-in-out infinite 2s',
-                  }}
-                />
-              </div>
-              {/* Анимированный ползунок на точных координатах (скрыт на главной странице feed) */}
-              {mounted && sliderStyle.width > 0 && pathname !== '/feed' && (
-                <div 
-                  className="absolute rounded-xl transition-all duration-500 ease-out glass-morphism-button"
-                  style={{
-                    left: `${sliderStyle.left}px`,
-                    top: '4px',
-                    bottom: '4px',
-                    width: `${sliderStyle.width}px`,
-                    animation: 'water-drop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                  }}
-                >
-                  {/* Water ripple effect on active tab */}
-                  <div className="absolute inset-0 rounded-xl overflow-hidden">
-                    <div 
-                      className="absolute inset-0 rounded-xl"
-                      style={{
-                        background: 'radial-gradient(circle at center, rgba(96, 80, 186, 0.3) 0%, transparent 70%)',
-                        animation: 'water-ripple 0.8s ease-out',
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
+            <nav className="hidden md:flex relative items-center rounded-2xl p-1" suppressHydrationWarning>
+
+              {/* Glass Morphism слайдер в стиле iOS с эффектом капли */}
+              <div 
+                className="absolute rounded-2xl overflow-visible"
+                style={{
+                  left: `${sliderStyle.left}px`,
+                  top: '2px',
+                  bottom: '2px',
+                  width: `${sliderStyle.width}px`,
+                  transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  opacity: sliderStyle.width > 0 ? 1 : 0,
+                  pointerEvents: 'none',
+                  background: themeName === 'light'
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(245,245,250,0.9) 50%, rgba(255,255,255,0.85) 100%)'
+                    : 'linear-gradient(135deg, rgba(96,80,186,0.35) 0%, rgba(80,65,160,0.3) 50%, rgba(70,55,140,0.25) 100%)',
+                  backdropFilter: 'blur(24px) saturate(200%) brightness(1.1)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.1)',
+                  boxShadow: themeName === 'light'
+                    ? '0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.12), inset 0 2px 4px rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.5)'
+                    : '0 2px 8px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.1), inset 0 -1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
+                  border: themeName === 'light'
+                    ? '1.5px solid rgba(255,255,255,0.9)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  transform: 'translateZ(0) perspective(1000px)',
+                }}
+              />
               
-              {navItems.map((item, index) => {
+              
+              {NAV_ITEMS.map((item, index) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link 
                     key={item.href}
                     ref={(el) => { navRefs.current[index] = el; }}
                     href={item.href}
-                    className="relative px-4 md:px-5 lg:px-7 py-2.5 md:py-3 lg:py-3.5 text-[9px] md:text-[10px] lg:text-[11px] uppercase tracking-[0.15em] font-black transition-all duration-300 z-10 group"
+                    className="relative px-4 md:px-5 lg:px-7 py-2.5 md:py-3 lg:py-3.5 text-[9px] md:text-[10px] lg:text-[11px] uppercase tracking-[0.15em] font-black transition-all duration-500 z-10 group"
                     style={{
                       color: isActive 
-                        ? themeName === 'light' ? '#000' : '#fff'
-                        : themeName === 'light' ? '#666' : '#a1a1aa',
+                        ? themeName === 'light' ? '#0a0a0a' : '#ffffff'
+                        : themeName === 'light' ? '#888' : '#999',
                       textShadow: isActive 
-                        ? themeName === 'light' ? '0 0 10px rgba(0,0,0,0.2)' : '0 0 10px rgba(255,255,255,0.8)'
+                        ? themeName === 'light' 
+                          ? '0 1px 1px rgba(255,255,255,1), 0 2px 0 rgba(255,255,255,0.9), 0 3px 8px rgba(0,0,0,0.2), 0 5px 12px rgba(0,0,0,0.15), 0 -1px 1px rgba(200,200,200,0.4)'
+                          : '0 -1px 1px rgba(0,0,0,0.8), 0 1px 2px rgba(255,255,255,0.5), 0 2px 4px rgba(255,255,255,0.3), 0 4px 16px rgba(96,80,186,0.5)'
                         : 'none',
+                      transform: isActive ? 'scale(1.12) translateZ(10px)' : 'scale(1)',
+                      fontWeight: isActive ? '900' : '800',
+                      letterSpacing: isActive ? '0.18em' : '0.15em',
+                      filter: isActive 
+                        ? themeName === 'light'
+                          ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.15)) brightness(1.05) contrast(1.1)'
+                          : 'drop-shadow(0 4px 16px rgba(96,80,186,0.4)) brightness(1.15) saturate(1.3)'
+                        : 'none',
+                      WebkitTextStroke: isActive && themeName === 'light' ? '0.3px rgba(0,0,0,0.1)' : 'none',
                     }}
                   >
                     <span className="relative">
                       {item.label}
-                      {/* Glass reflection effect on hover */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden rounded">
-                        <div 
-                          className="absolute inset-0"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%)',
-                            animation: 'glass-shine 2s ease-in-out infinite',
-                          }}
-                        />
-                      </div>
                     </span>
                   </Link>
                 );
@@ -364,7 +401,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
 
               {/* Навигация с иконками и 3D эффектами */}
               <nav className="flex-1 space-y-3 overflow-y-auto pr-2 relative z-10" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(157,141,241,0.3) transparent' }}>
-                {navItems.map((item, index) => {
+                {NAV_ITEMS.map((item, index) => {
                   const isActive = pathname === item.href;
                   const icons = {
                     '/cabinet': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>',

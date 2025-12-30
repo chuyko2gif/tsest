@@ -11,7 +11,10 @@ import {
   PlatformsStep,
   PromoStep,
   SendStep,
+  ReleaseTypeSelector,
 } from './components';
+
+export type ReleaseType = 'single' | 'ep' | 'album';
 
 // Компонент боковой панели шагов (адаптивный)
 function StepsSidebar({ 
@@ -202,7 +205,8 @@ export default function CreateReleasePage() {
   const [user, setUser] = useState<any>(null);
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState('release');
+  const [currentStep, setCurrentStep] = useState('type'); // Начинаем с выбора типа
+  const [releaseType, setReleaseType] = useState<ReleaseType | null>(null); // Тип релиза
   
   // Release info state
   const [releaseTitle, setReleaseTitle] = useState('');
@@ -419,6 +423,19 @@ export default function CreateReleasePage() {
 
   if (!user) {
     return null;
+  }
+
+  // Шаг 0: Выбор типа релиза
+  if (currentStep === 'type') {
+    return (
+      <ReleaseTypeSelector 
+        onSelectType={(type: 'single' | 'ep' | 'album') => {
+          setReleaseType(type);
+          setCurrentStep('release');
+        }}
+        onBack={() => router.push('/cabinet')}
+      />
+    );
   }
 
   return (

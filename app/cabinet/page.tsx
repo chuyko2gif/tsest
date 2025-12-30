@@ -17,7 +17,7 @@ import {
   CopyToast,
   NotificationModal,
   ConfirmDialog,
-  AvatarCropModal 
+  AvatarUploadModal 
 } from './components/modals';
 
 // Компоненты вкладок
@@ -94,6 +94,8 @@ export default function CabinetPage() {
   // UI состояние
   const [showToast, setShowToast] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // Уведомления
@@ -361,79 +363,74 @@ export default function CabinetPage() {
     setTimeout(() => setShowToast(false), 2000);
   };
 
-  const handleAvatarSave = async (croppedImageBlob: Blob) => {
-    if (!supabase || !user) return;
+  const handleAvatarFileSelect = (file: File) => {
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setAvatarPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarSave = async () => {
+    if (!avatarFile || !supabase || !user) return;
     
     setUploadingAvatar(true);
     try {
-      // Удаляем старый аватар если он есть
       if (avatar && avatar.includes('avatars/')) {
         const oldPath = avatar.split('/avatars/')[1];
         await supabase.storage.from('avatars').remove([oldPath]);
       }
       
-      // Создаем имя файла
-      const fileName = `${user.id}/${Date.now()}.jpg`;
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
-      // Загружаем новый аватар
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, croppedImageBlob, {
-          contentType: 'image/jpeg',
-          upsert: false
-        });
+        .upload(fileName, avatarFile);
       
       if (uploadError) throw uploadError;
       
-      // Получаем публичный URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
       
-      // Обновляем профиль
       await supabase.from('profiles').update({ avatar: publicUrl }).eq('email', user.email);
       
       setAvatar(publicUrl);
+      setShowAvatarModal(false);
+      setAvatarPreview(null);
+      setAvatarFile(null);
       showNotification('Аватар обновлён', 'success');
     } catch (error: any) {
       showNotification('Ошибка загрузки: ' + error.message, 'error');
     } finally {
       setUploadingAvatar(false);
-      setShowAvatarModal(false);
     }
   };
 
-  const handleAvatarDelete = async () => {
-    const confirmed = await confirm(
-      'Удалить аватар?',
-      'Это действие нельзя отменить',
-      'error'
-    );
+  const handleAvatarDelete = () => {
+    if (!confirm('Удалить текущий аватар?')) return;
     
-    if (!confirmed) return;
-    
-    setUploadingAvatar(true);
-    
-    try {
+    (async () => {
       if (!supabase || !user) return;
-      
-      if (avatar.includes('avatars/')) {
-        const filePath = avatar.split('/avatars/')[1];
-        await supabase.storage.from('avatars').remove([filePath]);
+      try {
+        if (avatar.includes('avatars/')) {
+          const filePath = avatar.split('/avatars/')[1];
+          await supabase.storage.from('avatars').remove([filePath]);
+        }
+        await supabase.from('profiles').update({ avatar: null }).eq('email', user.email);
+        setAvatar('');
+        setShowAvatarModal(false);
+        showNotification('Аватар удалён', 'success');
+      } catch (error: any) {
+        showNotification('Ошибка удаления: ' + error.message, 'error');
       }
-      await supabase.from('profiles').update({ avatar: null }).eq('email', user.email);
-      setAvatar('');
-      showNotification('Аватар удалён', 'success');
-    } catch (error: any) {
-      showNotification('Ошибка удаления: ' + error.message, 'error');
-    } finally {
-      setUploadingAvatar(false);
-      setShowAvatarModal(false);
-    }
+    })();
   };
 
   const handleCloseAvatarModal = () => {
     setShowAvatarModal(false);
+    setAvatarPreview(null);
+    setAvatarFile(null);
   };
 
   // Экран загрузки
@@ -447,7 +444,7 @@ export default function CabinetPage() {
   }
 
   return (
-    <div className="min-h-screen text-white relative z-10" style={{ paddingTop: scrolled ? '90px' : '70px' }}>
+    <div className="min-h-screen text-white relative z-10" style={{ paddingTop: '70px' }}>
       <AnimatedBackground />
       
       {/* Декоративные элементы */}
@@ -460,9 +457,9 @@ export default function CabinetPage() {
       <div 
         className="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-start relative z-10 transition-all duration-500"
         style={{ 
-          padding: scrolled ? '20px 24px 32px' : '20px 24px 32px',
-          marginTop: scrolled ? '0' : '0px',
-          gap: scrolled ? '32px' : '0px'
+          padding: scrolled ? '20px 24px 32px' : '0px 24px 32px',
+          marginTop: '0',
+          gap: scrolled ? '20px' : '0px'
         }}
       >
         
@@ -470,11 +467,12 @@ export default function CabinetPage() {
         <aside 
           className="lg:w-64 w-full glass-morphism-sidebar glass-card-hover interactive-glass flex flex-col lg:sticky transition-all duration-500" 
           style={{
-            borderRadius: scrolled ? '24px' : '16px 16px 0 0',
-            top: scrolled ? '110px' : '90px',
+            borderRadius: scrolled ? '24px' : '16px 0 0 0',
+            top: '70px',
             padding: scrolled ? '24px' : '24px 24px 24px 24px',
             marginTop: scrolled ? '0px' : '0px',
-            borderTop: scrolled ? '1px solid rgba(157, 141, 241, 0.15)' : 'none',
+            borderTop: scrolled ? '1px solid rgba(157, 141, 241, 0.15)' : '1px solid transparent',
+            borderRight: scrolled ? '1px solid rgba(157, 141, 241, 0.08)' : 'none',
           }}
           data-animate="sidebar"
         >
@@ -501,24 +499,79 @@ export default function CabinetPage() {
           )}
         </aside>
 
+        {/* Красивый визуальный разделитель */}
+        <div 
+          className="hidden lg:flex items-center justify-center relative transition-all duration-500" 
+          style={{ 
+            width: scrolled ? '40px' : '0px',
+            opacity: scrolled ? 1 : 0,
+            marginTop: scrolled ? '0' : '0',
+            overflow: 'hidden',
+          }}
+        >
+          <div 
+            className="absolute inset-y-0 flex items-center justify-center transition-all duration-500"
+            style={{
+              width: '1px',
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(157, 141, 241, 0.3) 10%, rgba(157, 141, 241, 0.5) 50%, rgba(157, 141, 241, 0.3) 90%, transparent 100%)',
+              boxShadow: '0 0 20px rgba(157, 141, 241, 0.3)',
+            }}
+          />
+          {/* Декоративные точки */}
+          <div 
+            className="absolute w-2 h-2 rounded-full animate-pulse"
+            style={{
+              top: '20%',
+              background: 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
+              boxShadow: '0 0 10px rgba(157, 141, 241, 0.6)',
+              animation: 'pulse 3s ease-in-out infinite',
+            }}
+          />
+          <div 
+            className="absolute w-2 h-2 rounded-full animate-pulse"
+            style={{
+              top: '50%',
+              background: 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
+              boxShadow: '0 0 10px rgba(157, 141, 241, 0.6)',
+              animation: 'pulse 3s ease-in-out infinite 1s',
+            }}
+          />
+          <div 
+            className="absolute w-2 h-2 rounded-full animate-pulse"
+            style={{
+              top: '80%',
+              background: 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
+              boxShadow: '0 0 10px rgba(157, 141, 241, 0.6)',
+              animation: 'pulse 3s ease-in-out infinite 2s',
+            }}
+          />
+        </div>
+
         {/* Контент */}
         <section 
           className="flex-1 glass-morphism-card glass-card-hover interactive-glass transition-all duration-500"
           style={{
-            borderRadius: scrolled ? '24px' : '16px 16px 0 0',
+            borderRadius: scrolled ? '24px' : '0 16px 0 0',
             padding: scrolled ? '40px' : '40px 40px 40px 40px',
             minHeight: '600px',
             marginTop: scrolled ? '0px' : '0px',
-            borderTop: scrolled ? '1px solid rgba(157, 141, 241, 0.15)' : 'none',
+            borderTop: scrolled ? '1px solid rgba(157, 141, 241, 0.15)' : '1px solid transparent',
+            borderLeft: scrolled ? '1px solid rgba(157, 141, 241, 0.08)' : 'none',
           }}
         >
           
           {tab === 'releases' && (
-            <div className="animate-fade-up">
+            <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
               <UserReleases 
                 userId={user?.id} 
                 nickname={nickname} 
-                onOpenUpload={() => router.push('/cabinet/release/create')} 
+                onOpenUpload={() => {
+                  // Basic пользователи идут на release-basic/create, остальные на release/create
+                  const createPath = role === 'basic' 
+                    ? '/cabinet/release-basic/create' 
+                    : '/cabinet/release/create';
+                  router.push(createPath);
+                }} 
                 userRole={role}
                 showNotification={showNotification}
               />
@@ -526,29 +579,33 @@ export default function CabinetPage() {
           )}
           
           {tab === 'finance' && (
-            <FinanceTab
-              userId={user?.id}
-              balance={balance}
-              setBalance={setBalance}
-              payouts={payouts}
-              withdrawalRequests={withdrawalRequests}
-              showNotification={showNotification}
-              reloadRequests={loadWithdrawalRequests}
-            />
+            <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              <FinanceTab
+                userId={user?.id}
+                balance={balance}
+                setBalance={setBalance}
+                payouts={payouts}
+                withdrawalRequests={withdrawalRequests}
+                showNotification={showNotification}
+                reloadRequests={loadWithdrawalRequests}
+              />
+            </div>
           )}
           
           {tab === 'settings' && (
-            <SettingsTab
-              user={user}
-              nickname={nickname}
-              memberId={memberId}
-              role={role}
-              originalRole={originalRole}
-              avatar={avatar}
-              onSignOut={handleSignOut}
-              onShowAvatarModal={() => setShowAvatarModal(true)}
-              showToast={handleShowToast}
-            />
+            <div className="animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              <SettingsTab
+                user={user}
+                nickname={nickname}
+                memberId={memberId}
+                role={role}
+                originalRole={originalRole}
+                avatar={avatar}
+                onSignOut={handleSignOut}
+                onShowAvatarModal={() => setShowAvatarModal(true)}
+                showToast={handleShowToast}
+              />
+            </div>
           )}
         </section>
       </div>
@@ -592,16 +649,19 @@ export default function CabinetPage() {
         onCancel={handleCancel}
       />
       
-      {/* Модалка аватара с кадрированием */}
-      <AvatarCropModal
+      {/* Модалка аватара */}
+      <AvatarUploadModal
         show={showAvatarModal}
         onClose={handleCloseAvatarModal}
         avatar={avatar}
+        avatarPreview={avatarPreview}
         nickname={nickname}
         role={role}
         uploadingAvatar={uploadingAvatar}
-        onSaveImage={handleAvatarSave}
+        onFileSelect={handleAvatarFileSelect}
+        onSave={handleAvatarSave}
         onDelete={handleAvatarDelete}
+        onClearPreview={() => { setAvatarPreview(null); setAvatarFile(null); }}
         showNotification={showNotification}
       />
     </div>

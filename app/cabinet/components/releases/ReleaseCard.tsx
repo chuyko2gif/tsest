@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Release } from './types';
 import { STATUS_COLORS, formatDate } from './constants';
 
@@ -18,8 +18,8 @@ export default function ReleaseCard({ release, onClick, onDelete, onDragStart, o
   const statusColor = STATUS_COLORS[release.status] || 'bg-zinc-500';
   const isDraft = release.status === 'draft';
   const canDrag = isDraft;
-  const lastEnterTimeRef = React.useRef<number>(0);
-  const [isDragStarting, setIsDragStarting] = React.useState(false);
+  const lastEnterTimeRef = useRef<number>(0);
+  const [isDragStarting, setIsDragStarting] = useState(false);
   
   const statusLabel = {
     pending: 'На модерации',

@@ -29,7 +29,6 @@ interface DraggableReleasesGridProps {
   showArchive: boolean;
   onReleaseClick: (release: Release) => void;
   onAddRelease: () => void;
-  onShowPaymentModal: () => void;
   onDeleteDraft?: (releaseId: string) => Promise<void>;
   onReorderDrafts?: (releaseId: string, newPosition: number, releaseType: 'basic' | 'exclusive') => Promise<boolean>;
 }
@@ -40,7 +39,6 @@ export function DraggableReleasesGrid({
   showArchive,
   onReleaseClick,
   onAddRelease,
-  onShowPaymentModal,
   onDeleteDraft,
   onReorderDrafts,
 }: DraggableReleasesGridProps) {
@@ -192,7 +190,7 @@ export function DraggableReleasesGrid({
             {!showArchive && (
               <>
                 {userRole === 'exclusive' && <AddReleaseCard onClick={onAddRelease} />}
-                {userRole === 'basic' && <AddReleaseCard onClick={onShowPaymentModal} />}
+                {userRole === 'basic' && <AddReleaseCard onClick={onAddRelease} />}
                 {(userRole === 'admin' || userRole === 'owner') && <AddReleaseCard onClick={onAddRelease} />}
               </>
             )}

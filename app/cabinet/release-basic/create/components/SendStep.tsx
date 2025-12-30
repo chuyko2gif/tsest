@@ -54,23 +54,6 @@ export default function SendStep({
 }: SendStepProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  
-  // Получаем данные о чеке из localStorage
-  const [paymentReceiptUrl, setPaymentReceiptUrl] = useState<string | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState<string | null>(null);
-
-  // Загружаем данные о чеке при монтировании
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const receiptUrl = localStorage.getItem('basic_payment_receipt');
-      const amount = localStorage.getItem('basic_payment_amount');
-      console.log('=== PAYMENT RECEIPT DEBUG ===');
-      console.log('Receipt URL from localStorage:', receiptUrl);
-      console.log('Amount from localStorage:', amount);
-      setPaymentReceiptUrl(receiptUrl);
-      setPaymentAmount(amount);
-    }
-  }, []);
 
   // Проверка заполненности каждого шага
   const stepValidation = [
@@ -189,58 +172,6 @@ export default function SendStep({
         </div>
       </div>
 
-      {/* Информация о чеке оплаты */}
-      <div className="mb-6 p-5 bg-white/[0.02] border border-white/5 rounded-xl">
-        <h3 className="font-bold mb-4 flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-yellow-400">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="2"/>
-            <line x1="1" y1="10" x2="23" y2="10" strokeWidth="2"/>
-          </svg>
-          Информация об оплате
-        </h3>
-        
-        {paymentReceiptUrl ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400 flex-shrink-0">
-                <polyline points="20 6 9 17 4 12" strokeWidth="2"/>
-              </svg>
-              <span className="text-emerald-300 font-medium">Чек оплаты загружен</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-white/5 rounded-lg">
-                <div className="text-xs text-zinc-500 mb-1">Сумма</div>
-                <div className="font-bold">{paymentAmount || '500'} ₽</div>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <div className="text-xs text-zinc-500 mb-1">Статус</div>
-                <div className="text-yellow-400 font-bold">На проверке</div>
-              </div>
-            </div>
-            <a 
-              href={paymentReceiptUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block text-sm text-zinc-400 hover:text-white transition underline"
-            >
-              Просмотреть чек →
-            </a>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-red-400 flex-shrink-0">
-              <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-              <line x1="15" y1="9" x2="9" y2="15" strokeWidth="2"/>
-              <line x1="9" y1="9" x2="15" y2="15" strokeWidth="2"/>
-            </svg>
-            <div>
-              <span className="text-red-300 font-medium">Чек оплаты не загружен</span>
-              <div className="text-xs text-zinc-500 mt-1">Вернитесь в кабинет и загрузите чек через модальное окно оплаты</div>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Предупреждение если не все заполнено */}
       {!allValid && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
@@ -316,24 +247,11 @@ export default function SendStep({
                 album_description: albumDescription,
                 promo_photos: promoPhotos,
                 status: 'pending',
-                payment_status: 'pending', // Админ проверит чек
+                payment_status: 'pending',
               };
               
               // Отладка: проверяем данные треков
               console.log('Треки для сохранения:', JSON.stringify(tracks, null, 2));
-              
-              // Добавляем данные о чеке, если они есть
-              console.log('=== PAYMENT DATA BEFORE INSERT ===');
-              console.log('paymentReceiptUrl:', paymentReceiptUrl);
-              console.log('paymentAmount:', paymentAmount);
-              if (paymentReceiptUrl) {
-                releaseData.payment_receipt_url = paymentReceiptUrl;
-                releaseData.payment_amount = paymentAmount ? parseInt(paymentAmount) : 500;
-                console.log('Payment data added to releaseData');
-              } else {
-                console.warn('NO PAYMENT RECEIPT URL FOUND!');
-              }
-              console.log('Final releaseData:', releaseData);
               
               const { error: insertError } = await supabase
                 .from('releases_basic')
@@ -343,12 +261,6 @@ export default function SendStep({
                 console.error('Ошибка вставки в БД:', insertError);
                 console.error('Данные релиза:', releaseData);
                 throw insertError;
-              }
-              
-              // Очищаем localStorage
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('basic_payment_receipt');
-                localStorage.removeItem('basic_payment_amount');
               }
               
               alert('Релиз успешно отправлен на модерацию!');

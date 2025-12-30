@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SupportContent from './support/SupportContent';
 
 interface SupportSidebarProps {
@@ -14,6 +14,16 @@ interface SupportSidebarProps {
 
 export default function SupportSidebar({ isOpen, onClose, onOpen, unreadCount, onUpdateUnreadCount, isMobile = false }: SupportSidebarProps) {
   const [isWidgetHidden, setIsWidgetHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <>
@@ -47,9 +57,14 @@ export default function SupportSidebar({ isOpen, onClose, onOpen, unreadCount, o
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-[380px] bg-zinc-900 border-l border-zinc-800 shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className="fixed top-0 right-0 h-full w-[380px] z-[9999] transform transition-all duration-500 ease-in-out"
+        style={{
+          background: scrolled ? 'rgb(24, 24, 27)' : 'transparent',
+          borderLeft: scrolled ? '1px solid rgb(39, 39, 42)' : '1px solid transparent',
+          boxShadow: scrolled ? '0 0 50px rgba(0,0,0,0.5)' : 'none',
+          backdropFilter: scrolled ? 'blur(20px)' : 'none',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/95">

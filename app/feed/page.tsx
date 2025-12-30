@@ -24,19 +24,28 @@ const AnimatedCounter = memo(({ end, duration = 2500, suffix = '' }: { end: numb
   const [count, setCount] = useState(0);
   const countRef = useRef(0);
   const startTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const endRef = useRef(end);
+  const durationRef = useRef(duration);
+
+  useEffect(() => {
+    endRef.current = end;
+    durationRef.current = duration;
+  });
 
   useEffect(() => {
     startTimeRef.current = null;
     countRef.current = 0;
+    setCount(0);
     
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) startTimeRef.current = timestamp;
       const elapsed = timestamp - startTimeRef.current;
-      const progress = Math.min(elapsed / duration, 1);
+      const progress = Math.min(elapsed / durationRef.current, 1);
       
       // Плавный easeOutQuart
       const easeOut = 1 - Math.pow(1 - progress, 4);
-      const currentValue = Math.floor(end * easeOut);
+      const currentValue = Math.floor(endRef.current * easeOut);
       
       if (currentValue !== countRef.current) {
         countRef.current = currentValue;
@@ -44,15 +53,23 @@ const AnimatedCounter = memo(({ end, duration = 2500, suffix = '' }: { end: numb
       }
       
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        rafRef.current = requestAnimationFrame(animate);
       } else {
-        setCount(end);
+        setCount(endRef.current);
       }
     };
     
-    const timer = setTimeout(() => requestAnimationFrame(animate), 200);
-    return () => clearTimeout(timer);
-  }, [end, duration]);
+    const timer = setTimeout(() => {
+      rafRef.current = requestAnimationFrame(animate);
+    }, 200);
+    
+    return () => {
+      clearTimeout(timer);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   // Форматирование числа с разделителями
   const formatNumber = useCallback((num: number) => {

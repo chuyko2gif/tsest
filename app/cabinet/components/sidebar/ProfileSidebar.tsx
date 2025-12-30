@@ -134,7 +134,7 @@ export default function ProfileSidebar({
         {/* РЕЛИЗЫ - ПЕРВЫМИ! */}
         <button 
           onClick={() => onTabChange('releases')} 
-          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-200 border ${
+          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-300 border ${
             activeTab === 'releases' 
               ? 'glass-morphism-button text-white shadow-lg scale-[1.02]' 
               : 'text-zinc-300 glass-morphism hover:text-white hover:scale-[1.01] cursor-pointer'
@@ -146,7 +146,7 @@ export default function ProfileSidebar({
         {/* ФИНАНСЫ */}
         <button 
           onClick={() => onTabChange('finance')} 
-          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-200 border ${
+          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-300 border ${
             activeTab === 'finance' 
               ? 'glass-morphism-button text-white shadow-lg scale-[1.02]' 
               : 'text-zinc-300 glass-morphism hover:text-white hover:scale-[1.01] cursor-pointer'
@@ -158,7 +158,7 @@ export default function ProfileSidebar({
         {/* Кнопка поддержки */}
         <button 
           onClick={onSupportToggle} 
-          className="relative w-full text-left py-3.5 px-5 rounded-xl transition-all duration-200 border text-zinc-300 glass-morphism hover:text-white hover:scale-[1.01] cursor-pointer"
+          className="relative w-full text-left py-3.5 px-5 rounded-xl transition-all duration-300 border text-zinc-300 glass-morphism hover:text-white hover:scale-[1.01] cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold">Поддержка</span>
@@ -173,7 +173,7 @@ export default function ProfileSidebar({
         {/* Кнопка настроек - ПОСЛЕДНЯЯ */}
         <button 
           onClick={() => onTabChange('settings')} 
-          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-200 border ${
+          className={`w-full text-left py-3.5 px-5 rounded-xl transition-all duration-300 border ${
             activeTab === 'settings' 
               ? 'glass-morphism-button text-white shadow-lg scale-[1.02]' 
               : 'text-zinc-300 glass-morphism hover:text-white hover:scale-[1.01] cursor-pointer'

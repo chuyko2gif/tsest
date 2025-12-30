@@ -11,7 +11,6 @@ import {
   ReleasesFilters,
   ReleasesGrid,
   ReleasesHeader,
-  PaymentModal,
   CopyToast,
   DraggableReleasesGrid
 } from './releases';
@@ -50,7 +49,6 @@ export default function UserReleases({ userId, nickname, onOpenUpload, userRole,
   // UI состояние
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [isDraggingDraft, setIsDraggingDraft] = useState(false);
   const [draggingReleaseId, setDraggingReleaseId] = useState<string | null>(null);
@@ -317,7 +315,6 @@ export default function UserReleases({ userId, nickname, onOpenUpload, userRole,
               showArchive={filters.showArchive}
               onReleaseClick={handleReleaseClick}
               onAddRelease={handleAddRelease}
-              onShowPaymentModal={() => setShowPaymentModal(true)}
               onDeleteDraft={async (releaseId) => {
                 const release = releases.find(r => r.id === releaseId);
                 if (release) {
@@ -343,7 +340,6 @@ export default function UserReleases({ userId, nickname, onOpenUpload, userRole,
               showArchive={filters.showArchive}
               onReleaseClick={handleReleaseClick}
               onAddRelease={handleAddRelease}
-              onShowPaymentModal={() => setShowPaymentModal(true)}
               onDragEnter={handleDragEnter}
               dropTargetId={dropTargetId}
               totalCount={releases.length}
@@ -356,13 +352,6 @@ export default function UserReleases({ userId, nickname, onOpenUpload, userRole,
               onDrop={handleDrop}
             />
           )}
-
-          {/* Модальное окно оплаты */}
-          <PaymentModal
-            isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
-            userId={userId}
-          />
           
           {/* Модальное окно подтверждения удаления */}
           {showDeleteModal && draftToDelete && (
