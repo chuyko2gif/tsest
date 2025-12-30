@@ -302,6 +302,7 @@ export default function CreateReleaseBasicPage() {
   const [focusTrackPromo, setFocusTrackPromo] = useState('');
   const [albumDescription, setAlbumDescription] = useState('');
   const [promoPhotos, setPromoPhotos] = useState<string[]>([]);
+  const [promoPhotoFiles, setPromoPhotoFiles] = useState<Array<{file: File; preview: string}>>([]);
   
   // Draft state
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -621,6 +622,8 @@ export default function CreateReleaseBasicPage() {
               setAlbumDescription={setAlbumDescription}
               promoPhotos={promoPhotos}
               setPromoPhotos={setPromoPhotos}
+              promoPhotoFiles={promoPhotoFiles}
+              setPromoPhotoFiles={setPromoPhotoFiles}
               onNext={() => setCurrentStep('send')}
               onBack={() => setCurrentStep('platforms')}
             />
