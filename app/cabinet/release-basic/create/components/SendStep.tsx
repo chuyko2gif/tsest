@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
-import { showSuccessToast, showErrorToast } from '@/lib/showToast';
+import { showSuccessToast, showErrorToast } from '@/lib/utils/showToast';
 
 interface SendStepProps {
   releaseTitle: string;

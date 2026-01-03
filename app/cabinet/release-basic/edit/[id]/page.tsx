@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 import { supabase } from '../../../lib/supabase';
 import {
   ReleaseInfoStep,

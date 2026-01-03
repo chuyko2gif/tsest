@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { UserRole } from '../lib/types';
-import { showSuccessToast, showErrorToast } from '@/lib/showToast';
+import { supabase } from '../../lib/supabase';
+import { UserRole } from '../../lib/types';
+import { showSuccessToast, showErrorToast } from '@/lib/utils/showToast';
 import {
   Release,
   FilterState,
@@ -14,8 +14,8 @@ import {
   ReleasesHeader,
   CopyToast,
   DraggableReleasesGrid
-} from './releases';
-import { PaymentModal } from './modals';
+} from '../releases';
+import { PaymentModal } from '../modals';
 
 interface UserReleasesProps {
   userId?: string | null;

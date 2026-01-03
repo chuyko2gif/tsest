@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ReactNode, useMemo, useCallback } from 'react';
-import { SupportWidgetContext } from '@/lib/useSupportWidget';
+import { SupportWidgetContext } from '@/lib/hooks/useSupportWidget';
 
 export default function SupportWidgetProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);

@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ModalProvider } from '../components/ModalProvider';
+import { ModalProvider } from '../components/providers/ModalProvider';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
-import GlobalSupportWidget from '../components/GlobalSupportWidget';
-import SupportWidgetProvider from '../components/SupportWidgetProvider';
+import GlobalSupportWidget from '../components/support/GlobalSupportWidget';
+import SupportWidgetProvider from '../components/support/SupportWidgetProvider';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';

@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { showSuccessToast, showErrorToast } from '@/lib/showToast';
+import { showSuccessToast, showErrorToast } from '@/lib/utils/showToast';
 import { Release } from '../releases/types';
 
 interface PaymentModalProps {

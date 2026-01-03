@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import AnimatedBackground from '@/components/AnimatedBackground';
-import { useSupportWidget } from '@/lib/useSupportWidget';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
+import { useSupportWidget } from '@/lib/hooks/useSupportWidget';
 import { createClient } from '@supabase/supabase-js';
 import { useTheme } from '@/contexts/ThemeContext';
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getAllCountries } from '@/components/CountryFlagsSVG';

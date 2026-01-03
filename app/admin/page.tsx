@@ -3,23 +3,23 @@ import React, { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
-import Toast from '@/components/Toast';
+import Toast from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 
 // Ленивая загрузка тяжёлых компонентов для ускорения первоначальной загрузки
-const AnimatedBackground = dynamic(() => import('@/components/AnimatedBackground'), { 
+const AnimatedBackground = dynamic(() => import('@/components/ui/AnimatedBackground'), { 
   ssr: false,
   loading: () => null 
 });
 
 // Ленивая загрузка вкладок - загружаются только при активации
-const ReleasesModeration = lazy(() => import('./components/ReleasesModeration'));
+const ReleasesModeration = lazy(() => import('./components/releases/ReleasesModeration'));
 const ContractsTab = lazy(() => import('./components/contracts/ContractsTab'));
 const ArchiveTab = lazy(() => import('./components/archive/ArchiveTab'));
 const NewsTab = lazy(() => import('./components/news/NewsTab'));
 const PayoutsTab = lazy(() => import('./components/payouts/PayoutsTab'));
-const UsersTab = lazy(() => import('./components/UsersTab'));
-const AdminTicketsPanel = lazy(() => import('./components/AdminTicketsPanel'));
+const UsersTab = lazy(() => import('./components/users/UsersTab'));
+const AdminTicketsPanel = lazy(() => import('./components/tickets/AdminTicketsPanel'));
 const WithdrawalsTab = lazy(() => import('./components/withdrawals/WithdrawalsTab'));
 
 // Оптимизация: singleton паттерн для supabase клиента

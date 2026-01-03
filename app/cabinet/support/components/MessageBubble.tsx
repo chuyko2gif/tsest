@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { Message, Attachment } from '../types';
-import TicketAvatar from '@/components/TicketAvatar';
+import TicketAvatar from '@/components/icons/TicketAvatar';
 
 interface MessageBubbleProps {
   message: Message;

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

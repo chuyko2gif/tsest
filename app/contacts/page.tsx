@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import AnimatedBackground from '@/components/AnimatedBackground'
+import AnimatedBackground from '@/components/ui/AnimatedBackground'
 import { useTheme } from '@/contexts/ThemeContext'
 
 export default function ContactsPage() {

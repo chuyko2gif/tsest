@@ -1,14 +1,14 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 import { useTheme } from '@/contexts/ThemeContext';
 
 // Локальные модули
 import { supabase } from './lib/supabase';
 import { fetchWithAuth } from './lib/fetchWithAuth';
 import { UserRole, ROLE_CONFIG } from './lib/types';
-import { useSupportWidget } from '@/lib/useSupportWidget';
+import { useSupportWidget } from '@/lib/hooks/useSupportWidget';
 
 // Компоненты экранов
 import { LoadingScreen, UnauthorizedScreen } from './components/screens';
@@ -22,7 +22,7 @@ import {
 } from './components/modals';
 
 // Компоненты вкладок
-import UserReleases from './components/UserReleases';
+import UserReleases from './components/reports/UserReleases';
 import { FinanceTab } from './components/finance';
 import { SettingsTab } from './components/settings';
 import AdminRoleHUD from './components/settings/AdminRoleHUD';

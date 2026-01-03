@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { FinanceNotification, FinanceNotificationContainer } from '@/components/FinanceNotification';
+import { FinanceNotification, FinanceNotificationContainer } from '@/components/ui/FinanceNotification';
 
 interface NotificationContextType {
   addNotification: (notification: Omit<FinanceNotification, 'id' | 'timestamp'>) => void;

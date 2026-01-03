@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../lib/fetchWithAuth';
 import { statusColors, statusLabels, categoryLabels } from './TicketCard';
-import TicketAvatar from '@/components/TicketAvatar';
+import TicketAvatar from '@/components/icons/TicketAvatar';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

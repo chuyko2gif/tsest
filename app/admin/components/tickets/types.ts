@@ -42,7 +42,46 @@ export interface TicketMessage {
   sender_username?: string;
   sender_avatar?: string;
   sender_nickname?: string;
+  reactions?: MessageReaction[];
 }
+
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
+  user?: {
+    nickname: string;
+    avatar: string;
+  };
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  nickname?: string;
+  avatar?: string;
+  role?: string;
+  balance?: number;
+  created_at?: string;
+}
+
+export interface UserTransaction {
+  id: string;
+  user_id: string;
+  type: string;
+  amount: number;
+  status: string;
+  description?: string;
+  reference_id?: string;
+  source?: string;
+  bank_name?: string;
+  card_number?: string;
+  admin_comment?: string;
+  created_at: string;
+}
+
+export type TicketFilter = 'all' | 'in_progress' | 'pending' | 'closed';
 
 export const statusColors: Record<string, string> = {
   open: 'bg-green-500/20 text-green-400 border-green-500/30',

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 
 export default function LoadingScreen() {
   return (

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import SupportContent from './support/SupportContent';
+import SupportContent from './SupportContent';
 
 interface SupportSidebarProps {
   isOpen: boolean;

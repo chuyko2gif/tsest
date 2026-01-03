@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground from '@/components/ui/AnimatedBackground';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '@/contexts/ThemeContext';
-import { showSuccessToast, showErrorToast } from '@/lib/showToast';
+import { showSuccessToast, showErrorToast } from '@/lib/utils/showToast';
 import { getAllCountries } from '@/components/CountryFlagsSVG';
 import {
   ReleaseInfoStep,

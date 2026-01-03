@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import SupportSidebar from '@/app/cabinet/components/SupportSidebar';
+import SupportSidebar from '@/app/cabinet/components/support/SupportSidebar';
 import { fetchWithAuth } from '@/app/cabinet/lib/fetchWithAuth';
-import { useSupportWidget } from '@/lib/useSupportWidget';
+import { useSupportWidget } from '@/lib/hooks/useSupportWidget';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
