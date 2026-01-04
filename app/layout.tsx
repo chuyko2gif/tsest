@@ -11,6 +11,7 @@ import GlobalSupportWidget from '../components/support/GlobalSupportWidget';
 import SupportWidgetProvider from '../components/support/SupportWidgetProvider';
 import { SilverStar } from '../components/ui/SilverStars';
 import CacheBuster from '../components/CacheBuster';
+import PrefetchRoutes from '../components/PrefetchRoutes';
 
 // Отключаем автоматическое восстановление позиции скролла
 if (typeof window !== 'undefined') {
@@ -321,7 +322,8 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
             {/* Левые вкладки - Главная и Договор ПО */}
             <div className="hidden md:flex items-center gap-1 flex-shrink-0">
               <Link 
-                href="/feed" 
+                href="/feed"
+                prefetch={true}
                 className={`px-4 py-2 text-[10px] uppercase tracking-[0.12em] font-bold transition-all duration-300 rounded-xl ${themeName === 'light' ? 'hover:bg-[#8a63d2]/10' : 'hover:bg-white/10'}`}
                 style={{
                   color: pathname === '/feed' 
@@ -332,7 +334,8 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
                 Главная
               </Link>
               <Link 
-                href="/offer" 
+                href="/offer"
+                prefetch={true}
                 className={`px-4 py-2 text-[10px] uppercase tracking-[0.12em] font-bold transition-all duration-300 rounded-xl ${themeName === 'light' ? 'hover:bg-[#8a63d2]/10' : 'hover:bg-white/10'}`}
                 style={{
                   color: pathname === '/offer' 
@@ -459,6 +462,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
                     key={item.href}
                     ref={(el) => { navRefs.current[index] = el; }}
                     href={item.href}
+                    prefetch={true}
                     className="relative px-4 md:px-5 lg:px-7 py-2.5 md:py-3 lg:py-3.5 text-[9px] md:text-[10px] lg:text-[11px] uppercase tracking-[0.15em] font-black transition-all duration-500 z-10 group"
                     style={{
                       color: isActive 
@@ -571,6 +575,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 py-4 px-5 rounded-2xl font-bold text-sm uppercase tracking-wide transition-all duration-500 relative overflow-hidden group"
                       style={{
@@ -629,6 +634,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 py-4 px-5 rounded-2xl font-bold text-sm uppercase tracking-wide transition-all duration-500 relative overflow-hidden group"
                       style={{
@@ -814,6 +820,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NotificationProvider>
             <SupportWidgetProvider>
               <CacheBuster />
+              <PrefetchRoutes />
               <BodyContent pathname={pathname}>
                 {children}
               </BodyContent>

@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
       dynamic: 0,
       static: 0,
     },
+    // Оптимизация пакетов
+    optimizePackageImports: ['lucide-react', '@supabase/supabase-js'],
   },
   
   // Сжатие для ускорения загрузки
