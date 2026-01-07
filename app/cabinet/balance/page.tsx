@@ -106,6 +106,7 @@ export default function BalancePage() {
     
     const init = async () => {
       try {
+        if (!supabase) return;
         const { data: { user } } = await supabase.auth.getUser();
         if (!mounted) return;
         
@@ -167,6 +168,7 @@ export default function BalancePage() {
 
   const loadBalance = useCallback(async () => {
     try {
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
@@ -185,6 +187,10 @@ export default function BalancePage() {
   const loadTransactions = useCallback(async () => {
     setTransactionsLoading(true);
     try {
+      if (!supabase) {
+        setTransactionsLoading(false);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
@@ -501,6 +507,10 @@ export default function BalancePage() {
           {/* Debug кнопка */}
           <button
             onClick={async () => {
+              if (!supabase) {
+                alert('Supabase не инициализирован!');
+                return;
+              }
               const { data: { session } } = await supabase.auth.getSession();
               const token = session?.access_token;
               if (!token) {

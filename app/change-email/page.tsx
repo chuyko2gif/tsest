@@ -26,7 +26,7 @@ export default function ChangeEmailPage() {
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
         
-        if (accessToken && type === 'email_change') {
+        if (accessToken && type === 'email_change' && supabase) {
           // Устанавливаем сессию с токеном
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -43,10 +43,12 @@ export default function ChangeEmailPage() {
             setLoading(false);
             
             // Обновляем email в profiles
-            await supabase
-              .from('profiles')
-              .update({ email: data.user.email })
-              .eq('id', data.user.id);
+            if (supabase) {
+              await supabase
+                .from('profiles')
+                .update({ email: data.user.email })
+                .eq('id', data.user.id);
+            }
             
             showNotification(`Email успешно изменён на ${data.user.email}`, 'success');
             setTimeout(() => router.push('/cabinet'), 2000);
@@ -55,6 +57,9 @@ export default function ChangeEmailPage() {
         }
         
         // Если токена нет - пробуем получить текущую сессию
+        if (!supabase) {
+          throw new Error('Supabase не инициализирован');
+        }
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {

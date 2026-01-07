@@ -399,6 +399,3 @@ function TrackStatusMessage({ releaseType, tracksCount, maxTracks, isLight }: Tr
   
   return null;
 }
-
-// Export Track interface for use in other components
-export type { Track };

@@ -525,6 +525,7 @@ export default function CreateReleasePage() {
     producers?: string[];
     featuring?: string[];
     isInstrumental?: boolean;
+    originalFileName?: string;
   }>>([]);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [trackTitle, setTrackTitle] = useState('');
@@ -652,7 +653,7 @@ export default function CreateReleasePage() {
         let originalFileName = track.originalFileName || '';
         
         // Если есть аудио файл - ВСЕГДА загружаем его
-        if (track.audioFile) {
+        if (track.audioFile && supabase) {
           try {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;
@@ -817,7 +818,6 @@ export default function CreateReleasePage() {
     }
     
     setPrevStepsCompleted(currentCompleted);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [releaseTitle, genre, coverFile, releaseDate, tracks.length, excludedCountries.length, agreedToContract, selectedPlatforms, promoStatus]);
   
   // Ref для отслеживания предыдущего количества треков и авторов

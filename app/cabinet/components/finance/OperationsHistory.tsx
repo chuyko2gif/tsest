@@ -354,7 +354,7 @@ export default function OperationsHistory({ payouts, withdrawalRequests, transac
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
       </svg>
     ), color: 'from-blue-500/20 to-cyan-600/20 border-blue-500/30', lightColor: 'from-blue-100 to-blue-200 border-blue-400', iconColor: 'text-blue-400', lightIconColor: 'text-blue-600' },
-  ] as const;
+  ];
 
   return (
     <div className="space-y-2">
@@ -398,7 +398,7 @@ export default function OperationsHistory({ payouts, withdrawalRequests, transac
       {/* Фильтры категорий */}
       <div className="flex gap-1.5 overflow-x-auto pb-1.5 -mx-1 px-1 sm:gap-2 sm:pb-2 sm:-mx-2 sm:px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {filterButtons.map((btn) => {
-          const count = counts[btn.id];
+          const count = counts[btn.id as keyof typeof counts];
           if (count === 0 && btn.id !== 'all') return null;
           
           const buttonColor = isLight ? (btn.lightColor || btn.color) : btn.color;
@@ -407,7 +407,7 @@ export default function OperationsHistory({ payouts, withdrawalRequests, transac
           return (
             <button
               key={btn.id}
-              onClick={() => handleFilterChange(btn.id)}
+              onClick={() => handleFilterChange(btn.id as 'all' | 'income' | 'withdrawal' | 'frozen' | 'purchase')}
               className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap border min-h-[32px] sm:min-h-[36px] ${
                 activeFilter === btn.id
                   ? `bg-gradient-to-r ${buttonColor} ${isLight ? '!text-gray-800' : 'text-white'} shadow-lg`

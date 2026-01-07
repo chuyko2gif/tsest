@@ -559,7 +559,7 @@ export function TrackItem({ track, index, canPlay, releaseId, releaseType, supab
                 <path d="M6 4h4v16H6zm8 0h4v16h-4z"/>
               </svg>
             ) : (
-              <svg width="14" height="14" className="sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24" className="text-white ml-0.5">
+              <svg width="14" height="14" className="sm:w-4 sm:h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             )}

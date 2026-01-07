@@ -27,6 +27,7 @@ export function SortableReleaseCard({
     rejected: 'Отклонён',
     approved: 'Одобрен',
     published: 'Выложен',
+    distributed: 'Распространён',
     draft: 'Черновик',
     awaiting_payment: 'Ожидает оплаты'
   }[release.status] || release.status;

@@ -19,12 +19,16 @@ export interface Profile {
   id: string;
   email: string;
   nickname: string | null;
+  display_name?: string | null;
   member_id: string | null;
   balance: number;
   role: 'admin' | 'exclusive' | 'basic' | 'owner' | null;
   avatar: string | null;
   created_at: string | null;
   telegram?: string | null;
+  vk?: string | null;
+  instagram?: string | null;
+  youtube?: string | null;
 }
 
 export interface Transaction {

@@ -1233,7 +1233,7 @@ export default function ReleaseDetailModal({
             )}
 
             {/* Переключатель публикации - НЕ показываем для awaiting_payment */}
-            {(release.status === 'approved' || release.status === 'published' || release.status === 'distributed') && release.status !== 'awaiting_payment' && (
+            {(release.status === 'approved' || release.status === 'published' || release.status === 'distributed') && (
               <div className="mt-3 sm:mt-4">
                 <button
                   onClick={() => handleTogglePublished()}

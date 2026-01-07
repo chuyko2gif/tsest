@@ -184,7 +184,7 @@ export default function PaymentStep({
   }, [userId]);
 
   const loadBalance = async () => {
-    if (!userId) {
+    if (!userId || !supabase) {
       setLoading(false);
       return;
     }
@@ -231,7 +231,7 @@ export default function PaymentStep({
       return;
     }
 
-    if (!userId) {
+    if (!userId || !supabase) {
       setError('Ошибка: пользователь не авторизован');
       return;
     }

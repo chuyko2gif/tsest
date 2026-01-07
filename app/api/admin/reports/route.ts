@@ -1182,6 +1182,7 @@ export async function GET(request: NextRequest) {
         // Группируем по релизам
         const releaseMap = new Map<string, {
           releaseId: string | null;
+          releaseType: string | null;
           releaseTitle: string;
           artistName: string;
           isMatched: boolean;
@@ -1335,7 +1336,6 @@ export async function GET(request: NextRequest) {
           .eq('report_id', reportId)
           .order('amount', { ascending: false });
         
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const userPayouts = (payouts || []).map((p: any) => ({
           userId: p.user_id,
           artistName: p.profiles?.artist_name || 'Неизвестный артист',
@@ -1358,7 +1358,7 @@ export async function GET(request: NextRequest) {
               .sort((a, b) => b.streams - a.streams)
               .slice(0, 10),
             payouts: userPayouts
-              .sort((a, b) => b.streams - a.streams)
+              .sort((a, b) => b.amount - a.amount)
               .slice(0, 10),
           }
         });

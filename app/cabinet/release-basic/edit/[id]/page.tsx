@@ -404,7 +404,7 @@ export default function EditBasicReleasePage() {
         // Если есть новый аудио файл - ВСЕГДА загружаем его (даже если есть старый link)
         const hasAudioFile = !!(track as any).audioFile;
         
-        if (hasAudioFile) {
+        if (hasAudioFile && supabase) {
           try {
             const audioFile = (track as any).audioFile as File;
             const audioExt = audioFile.name.split('.').pop();
@@ -967,7 +967,7 @@ export default function EditBasicReleasePage() {
   // Шаг выбора типа релиза для черновиков (заблокирован после оплаты)
   if (isDraftMode && (releaseStatus === 'draft' || releaseStatus === 'awaiting_payment') && currentStep === 'type') {
     // Если уже есть оплата, нельзя менять тип
-    if (paymentReceiptUrl) {
+    if (paymentTransactionId) {
       setCurrentStep('release');
       return null;
     }

@@ -118,7 +118,16 @@ export const SilverStarsGroup = memo(({
   variant?: 'default' | 'header' | 'sidebar' | 'card' | 'auth' | 'modal' | 'hero';
   className?: string;
 }) => {
-  const configs = {
+  interface StarConfig {
+    size: number;
+    delay: number;
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+  }
+  
+  const configs: Record<string, StarConfig[]> = {
     default: [
       { size: 24, top: '10%', left: '5%', delay: 0 },
       { size: 16, top: '20%', right: '8%', delay: 0.5 },

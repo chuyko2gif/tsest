@@ -53,6 +53,7 @@ interface SendStepProps {
     title: string;
     link: string;
     audioFile?: File | null;
+    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;
@@ -75,6 +76,7 @@ interface SendStepProps {
   paymentReceiptUrl?: string;
   paymentComment?: string;
   draftId?: string | null;
+  onDeleteDraft?: () => Promise<void>;
 }
 
 export default function SendStep({ 
@@ -1051,7 +1053,7 @@ export default function SendStep({
                     track.audioFile instanceof File && 
                     track.audioFile.size > 0;
                   
-                  if (isValidFile) {
+                  if (isValidFile && track.audioFile && supabase) {
                     try {
                       const audioFileExt = track.audioFile.name.split('.').pop();
                       const audioFileName = `${user.id}/${Date.now()}-track-${index}.${audioFileExt}`;

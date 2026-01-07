@@ -295,6 +295,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
   // Загрузка данных пользователя для мобильного меню
   useEffect(() => {
     const loadUserData = async () => {
+      if (!supabase) return;
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -322,6 +323,7 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
     loadUserData();
     
     // Подписка на изменения авторизации
+    if (!supabase) return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       loadUserData();
     });

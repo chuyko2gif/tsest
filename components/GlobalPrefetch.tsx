@@ -43,31 +43,6 @@ export function GlobalPrefetch() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
 
-  const prefetchUrl = useCallback((url: string, priority: number = 1) => {
-    // Проверяем что это внутренняя ссылка и ещё не загружена
-    if (
-      !url || 
-      prefetchedUrls.has(url) ||
-      (!url.startsWith('/') && !url.startsWith(window.location.origin))
-    ) {
-      return;
-    }
-
-    // Нормализуем URL
-    const normalizedUrl = url.startsWith('/') ? url : new URL(url).pathname;
-    
-    if (prefetchedUrls.has(normalizedUrl)) return;
-
-    // На слабых устройствах добавляем в очередь
-    if (isLowEndDevice) {
-      prefetchQueue.push({ url: normalizedUrl, priority });
-      processQueue();
-    } else {
-      // На мощных устройствах - сразу prefetch
-      executePrefetch(normalizedUrl);
-    }
-  }, []);
-
   const executePrefetch = useCallback((url: string) => {
     if (prefetchedUrls.has(url)) return;
     
@@ -112,6 +87,31 @@ export function GlobalPrefetch() {
       setTimeout(process, 200);
     }
   }, [executePrefetch]);
+
+  const prefetchUrl = useCallback((url: string, priority: number = 1) => {
+    // Проверяем что это внутренняя ссылка и ещё не загружена
+    if (
+      !url || 
+      prefetchedUrls.has(url) ||
+      (!url.startsWith('/') && !url.startsWith(window.location.origin))
+    ) {
+      return;
+    }
+
+    // Нормализуем URL
+    const normalizedUrl = url.startsWith('/') ? url : new URL(url).pathname;
+    
+    if (prefetchedUrls.has(normalizedUrl)) return;
+
+    // На слабых устройствах добавляем в очередь
+    if (isLowEndDevice) {
+      prefetchQueue.push({ url: normalizedUrl, priority });
+      processQueue();
+    } else {
+      // На мощных устройствах - сразу prefetch
+      executePrefetch(normalizedUrl);
+    }
+  }, [processQueue, executePrefetch]);
 
   useEffect(() => {
     // Throttled обработчик наведения

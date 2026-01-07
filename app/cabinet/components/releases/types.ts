@@ -29,7 +29,7 @@ export interface Release {
   artist_name?: string;
   artist?: string;
   cover_url?: string;
-  status: 'draft' | 'pending' | 'rejected' | 'approved' | 'published' | 'awaiting_payment';
+  status: 'draft' | 'pending' | 'rejected' | 'approved' | 'published' | 'distributed' | 'awaiting_payment';
   release_type?: 'basic' | 'exclusive';
   date?: string;
   created_at?: string;

@@ -93,24 +93,22 @@ function PieChart({
   }
 
   // Рассчитываем сегменты
-  let currentAngle = -90; // Начинаем сверху
-  const segments = data.slice(0, 8).map((item, index) => {
+  const segments = data.slice(0, 8).reduce<Array<any>>((acc, item, index) => {
     const value = item[valueKey] || 0;
     const percentage = (value / total) * 100;
     const angle = (value / total) * 360;
+    const prevAngle = acc.length > 0 ? acc[acc.length - 1].endAngle : -90;
     
-    const startAngle = currentAngle;
-    currentAngle += angle;
-    
-    return {
+    acc.push({
       ...item,
       color: CHART_COLORS[index % CHART_COLORS.length],
       percentage,
-      startAngle,
-      endAngle: currentAngle,
+      startAngle: prevAngle,
+      endAngle: prevAngle + angle,
       value
-    };
-  });
+    });
+    return acc;
+  }, []);
 
   // SVG paths для сегментов
   const createArcPath = (startAngle: number, endAngle: number, radius: number, innerRadius: number = 0) => {

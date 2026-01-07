@@ -630,6 +630,7 @@ export default function CreateReleaseBasicPage() {
     title: string;
     link: string;
     audioFile?: File | null;
+    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;
@@ -948,7 +949,7 @@ export default function CreateReleaseBasicPage() {
         let originalFileName = track.originalFileName || '';
         
         // Если есть аудио файл - ВСЕГДА загружаем его
-        if (track.audioFile) {
+        if (track.audioFile && supabase) {
           try {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;

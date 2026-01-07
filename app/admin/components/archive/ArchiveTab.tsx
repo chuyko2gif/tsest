@@ -316,8 +316,8 @@ export default function ArchiveTab({ supabase }: ArchiveTabProps) {
                       Треклист ({release.tracks.length})
                     </span>
                     <svg 
-                      width="14" height="14" className="sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                      className={`text-zinc-500 transition-transform ${expandedRelease === release.id ? 'rotate-180' : ''}`}
+                      width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      className={`sm:w-4 sm:h-4 text-zinc-500 transition-transform ${expandedRelease === release.id ? 'rotate-180' : ''}`}
                     >
                       <polyline points="6 9 12 15 18 9"/>
                     </svg>

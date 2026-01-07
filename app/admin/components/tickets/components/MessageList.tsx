@@ -263,7 +263,8 @@ function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo
         </div>
 
         <div 
-          ref={(el) => { messageRefs.current[message.id] = el; }}
+          // eslint-disable-next-line react-hooks/immutability
+          ref={(el) => { if (el) messageRefs.current[message.id] = el; }}
           className={`rounded-lg p-4 relative transition-all duration-300 ${
             message.is_admin
               ? isLight 

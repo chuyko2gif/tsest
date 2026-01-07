@@ -53,6 +53,7 @@ interface SendStepProps {
     title: string;
     link: string;
     audioFile?: File | null;
+    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;

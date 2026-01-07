@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 
 interface CoverImageProps {
   src: string | null | undefined;
@@ -99,6 +99,52 @@ export const CoverImage = memo(function CoverImage({
   // Определяем оптимальный размер
   const targetWidth = SIZE_MAP[size] || SIZE_MAP.md;
 
+  const loadImage = useCallback(() => {
+    if (!src) return;
+    
+    setStatus('loading');
+    
+    // Оптимизированный URL
+    const optimizedSrc = optimized 
+      ? getOptimizedUrl(src, targetWidth * 2, quality) // 2x для retina
+      : src;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    // Используем decode() для плавного появления
+    img.src = optimizedSrc;
+    
+    img.onload = async () => {
+      try {
+        // Ждём декодирования для плавности
+        await img.decode?.();
+      } catch {}
+      
+      // Сохраняем в кэш
+      imageCache.set(src, optimizedSrc);
+      setCurrentSrc(optimizedSrc);
+      setStatus('loaded');
+    };
+    
+    img.onerror = () => {
+      // Пробуем оригинал если оптимизация не сработала
+      if (optimized && optimizedSrc !== src) {
+        const fallbackImg = new Image();
+        fallbackImg.crossOrigin = 'anonymous';
+        fallbackImg.onload = () => {
+          imageCache.set(src, src);
+          setCurrentSrc(src);
+          setStatus('loaded');
+        };
+        fallbackImg.onerror = () => setStatus('error');
+        fallbackImg.src = src;
+      } else {
+        setStatus('error');
+      }
+    };
+  }, [src, optimized, targetWidth, quality]);
+
   useEffect(() => {
     if (!src) {
       setStatus('error');
@@ -147,53 +193,7 @@ export const CoverImage = memo(function CoverImage({
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [src, priority, lazy]);
-
-  function loadImage() {
-    if (!src) return;
-    
-    setStatus('loading');
-    
-    // Оптимизированный URL
-    const optimizedSrc = optimized 
-      ? getOptimizedUrl(src, targetWidth * 2, quality) // 2x для retina
-      : src;
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    // Используем decode() для плавного появления
-    img.src = optimizedSrc;
-    
-    img.onload = async () => {
-      try {
-        // Ждём декодирования для плавности
-        await img.decode?.();
-      } catch {}
-      
-      // Сохраняем в кэш
-      imageCache.set(src, optimizedSrc);
-      setCurrentSrc(optimizedSrc);
-      setStatus('loaded');
-    };
-    
-    img.onerror = () => {
-      // Пробуем оригинал если оптимизация не сработала
-      if (optimized && optimizedSrc !== src) {
-        const fallbackImg = new Image();
-        fallbackImg.crossOrigin = 'anonymous';
-        fallbackImg.onload = () => {
-          imageCache.set(src, src);
-          setCurrentSrc(src);
-          setStatus('loaded');
-        };
-        fallbackImg.onerror = () => setStatus('error');
-        fallbackImg.src = src;
-      } else {
-        setStatus('error');
-      }
-    };
-  }
+  }, [src, priority, lazy, loadImage]);
 
   // Размеры иконки-заглушки
   const iconSizes = {

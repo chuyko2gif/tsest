@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase/client';
 import BalanceCard from './BalanceCard';
@@ -34,11 +34,7 @@ export default function FinanceTab({
   const isLight = themeName === 'light';
 
   // Загружаем баланс и транзакции из новых таблиц
-  useEffect(() => {
-    loadBalanceData();
-  }, [userId]);
-
-  const loadBalanceData = async () => {
+  const loadBalanceData = useCallback(async () => {
     if (!supabase) return;
     try {
       // Загружаем баланс из user_balances
@@ -67,7 +63,11 @@ export default function FinanceTab({
     } catch (error) {
       console.error('Ошибка загрузки баланса:', error);
     }
-  };
+  }, [userId, setBalance]);
+
+  useEffect(() => {
+    loadBalanceData();
+  }, [loadBalanceData]);
 
   // Обновляем данные после успешного пополнения
   const handleDepositClose = () => {

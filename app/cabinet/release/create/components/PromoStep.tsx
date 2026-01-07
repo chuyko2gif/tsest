@@ -60,6 +60,7 @@ export default function PromoStep({
   // Получаем userId при монтировании
   useEffect(() => {
     const getUser = async () => {
+      if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setUserId(user.id);
     };
@@ -160,7 +161,7 @@ export default function PromoStep({
 
       setUploadingPhoto(true);
       try {
-        if (!userId) {
+        if (!userId || !supabase) {
           showErrorToast('Ошибка авторизации. Перезагрузите страницу.');
           continue;
         }

@@ -2,6 +2,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Генерируем звёзды вне компонента
+function generateStars() {
+  return [...Array(100)].map((_, i) => ({
+    id: i,
+    width: Math.random() * 3 + 1,
+    height: Math.random() * 3 + 1,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    opacity: Math.random() * 0.8 + 0.2,
+    animDuration: Math.random() * 3 + 2,
+    animDelay: Math.random() * 2,
+  }));
+}
+
+const STARS = generateStars();
+
 export default function HomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -18,18 +34,18 @@ export default function HomePage() {
     <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden">
       {/* Звёздный фон */}
       <div className="absolute inset-0">
-        {mounted && [...Array(100)].map((_, i) => (
+        {mounted && STARS.map((star) => (
           <div
-            key={i}
+            key={star.id}
             className="absolute rounded-full bg-white"
             style={{
-              width: Math.random() * 3 + 1 + 'px',
-              height: Math.random() * 3 + 1 + 'px',
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              opacity: Math.random() * 0.8 + 0.2,
-              animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-              animationDelay: Math.random() * 2 + 's',
+              width: star.width + 'px',
+              height: star.height + 'px',
+              left: star.left + '%',
+              top: star.top + '%',
+              opacity: star.opacity,
+              animation: `twinkle ${star.animDuration}s ease-in-out infinite`,
+              animationDelay: star.animDelay + 's',
             }}
           />
         ))}
