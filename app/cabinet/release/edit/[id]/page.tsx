@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -18,7 +18,7 @@ import {
 import SendStep from '../../create/components/SendStep';
 
 // Компонент для редактирования Exclusive релиза
-function EditExclusiveReleasePageContent() {
+export default function EditExclusiveReleasePage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -646,7 +646,7 @@ function EditExclusiveReleasePageContent() {
         <aside className={`hidden lg:flex lg:w-64 w-full backdrop-blur-xl border rounded-3xl p-6 pb-8 flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl relative overflow-hidden ${
           isLight
             ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-            : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'
+            : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'
         }`}>
           {/* Декоративный градиент */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
@@ -963,7 +963,7 @@ function EditExclusiveReleasePageContent() {
           <div className={`backdrop-blur-xl border rounded-2xl shadow-lg relative overflow-hidden ${
             isLight
               ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-              : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/10'
+              : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/10'
           }`}>
             {/* Декоративный градиент */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
@@ -1086,7 +1086,7 @@ function EditExclusiveReleasePageContent() {
         <section className={`flex-1 backdrop-blur-xl border rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[600px] shadow-2xl ${
           isLight
             ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/5'
-            : 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border-white/10 shadow-purple-500/5'
+            : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-purple-500/5'
         }`}>
           {/* Кнопка сохранения сверху когда релиз на модерации */}
           {releaseStatus === 'pending' && currentStep !== 'send' && (
@@ -1309,13 +1309,5 @@ function EditExclusiveReleasePageContent() {
       )}
     </div>
     </>
-  );
-}
-
-export default function EditExclusiveReleasePage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
-      <EditExclusiveReleasePageContent />
-    </Suspense>
   );
 }

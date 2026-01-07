@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -126,7 +127,18 @@ function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const lastTapRef = useRef<{ time: number; messageId: string | null }>({ time: 0, messageId: null });
+  const localDivRef = useRef<HTMLDivElement>(null);
   const isSystemMessage = message.sender_id === '00000000-0000-0000-0000-000000000000';
+  
+  // Sync local ref to parent refs object
+  useEffect(() => {
+    if (localDivRef.current) {
+      messageRefs.current[message.id] = localDivRef.current;
+    }
+    return () => {
+      delete messageRefs.current[message.id];
+    };
+  }, [message.id, messageRefs]);
 
   // Определение мобильного устройства
   useEffect(() => {
@@ -263,8 +275,7 @@ function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo
         </div>
 
         <div 
-          // eslint-disable-next-line react-hooks/immutability
-          ref={(el) => { if (el) messageRefs.current[message.id] = el; }}
+          ref={localDivRef}
           className={`rounded-lg p-4 relative transition-all duration-300 ${
             message.is_admin
               ? isLight 

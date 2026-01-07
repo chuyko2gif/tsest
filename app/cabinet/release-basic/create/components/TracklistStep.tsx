@@ -274,7 +274,6 @@ export default function TracklistStep({
           onDragEnd={handleDragEnd}
           onNext={onNext}
           onBack={onBack}
-          isLight={isLight}
         />
       ) : (
         <TrackEditor
@@ -308,7 +307,6 @@ export default function TracklistStep({
           setTrackIsInstrumental={setTrackIsInstrumental}
           onSave={handleSaveTrack}
           onCancel={resetTrackForm}
-          isLight={isLight}
         />
       )}
     </div>

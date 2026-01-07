@@ -6,6 +6,7 @@ import { showSuccessToast, showErrorToast } from '@/lib/utils/showToast';
 import { CONTRIBUTOR_ROLES } from './ReleaseInfoStep';
 import { TrackAuthor, TRACK_AUTHOR_ROLES } from '@/components/ui/TrackAuthors';
 import { useTheme } from '@/contexts/ThemeContext';
+import { compressImage } from '@/lib/utils/imageOptimizer';
 
 // Хелпер для форматирования авторов трека
 const formatTrackAuthors = (authors: string | string[] | TrackAuthor[] | undefined): string => {
@@ -53,7 +54,6 @@ interface SendStepProps {
     title: string;
     link: string;
     audioFile?: File | null;
-    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;
@@ -69,6 +69,8 @@ interface SendStepProps {
     featuring?: string[];
     authors?: TrackAuthor[];
     isInstrumental?: boolean;
+    originalFileName?: string;
+    existingAudioUrl?: string;
   }>;
   platforms: string[];
   countries: string[];
@@ -1071,23 +1073,47 @@ export default function SendStep({
                       const { data: { user } } = await supabase.auth.getUser();
                       if (!user) throw new Error('Пользователь не авторизован');
                 
-                // Загрузка обложки
+                // Загрузка обложки (оригинал + сжатая)
                 let coverUrl = existingCoverUrl || '';
+                let coverUrlOriginal = existingCoverUrl || '';
+                
                 if (coverFile) {
                   const fileExt = coverFile.name.split('.').pop();
-                  const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                  const timestamp = Date.now();
                   
-                  const { data: uploadData, error: uploadError } = await supabase.storage
+                  // 1. Загружаем ОРИГИНАЛ (для админа)
+                  const originalFileName = `${user.id}/${timestamp}-original.${fileExt}`;
+                  const { data: originalUpload, error: originalError } = await supabase.storage
                     .from('release-covers')
-                    .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
+                    .upload(originalFileName, coverFile, { contentType: coverFile.type, upsert: true });
                   
-                  if (uploadError) throw uploadError;
+                  if (!originalError && originalUpload) {
+                    const { data: { publicUrl: originalUrl } } = supabase.storage
+                      .from('release-covers')
+                      .getPublicUrl(originalFileName);
+                    coverUrlOriginal = originalUrl;
+                  }
                   
-                  const { data: { publicUrl } } = supabase.storage
-                    .from('release-covers')
-                    .getPublicUrl(fileName);
+                  // 2. Создаём и загружаем СЖАТУЮ версию (для отображения)
+                  try {
+                    const compressedBlob = await compressImage(coverFile, 800, 0.85);
+                    const compressedFileName = `${user.id}/${timestamp}.webp`;
                     
-                  coverUrl = publicUrl;
+                    const { data: compressedUpload, error: compressedError } = await supabase.storage
+                      .from('release-covers')
+                      .upload(compressedFileName, compressedBlob, { contentType: 'image/webp', upsert: true });
+                    
+                    if (!compressedError && compressedUpload) {
+                      const { data: { publicUrl } } = supabase.storage
+                        .from('release-covers')
+                        .getPublicUrl(compressedFileName);
+                      coverUrl = publicUrl;
+                    } else {
+                      coverUrl = coverUrlOriginal;
+                    }
+                  } catch {
+                    coverUrl = coverUrlOriginal;
+                  }
                 }
                 
                 // Загрузка аудиофайлов треков
@@ -1182,6 +1208,7 @@ export default function SendStep({
                   title: releaseTitle,
                   artist_name: artistName || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Artist',
                   cover_url: coverUrl,
+                  cover_url_original: coverUrlOriginal, // Оригинал для админа
                   genre: genre,
                   subgenres: subgenres,
                   release_date: releaseDate,

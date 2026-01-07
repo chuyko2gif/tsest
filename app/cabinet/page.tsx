@@ -39,7 +39,6 @@ import { useNotifications } from './hooks/useNotifications';
 export default function CabinetPage() {
   const router = useRouter();
   const { theme, themeName } = useTheme();
-  const isLight = themeName === 'light';
   
   // Состояние скролла для эффекта слияния с хедером
   const [scrolled, setScrolled] = useState(false);
@@ -236,28 +235,19 @@ export default function CabinetPage() {
           }
         } else {
           // Загружаем данные из существующего профиля
-          console.log('🔍 Загружен профиль из БД:', existingProfile);
-          console.log('🔍 member_id из БД:', existingProfile.member_id);
-          
           setBalance(Number(existingProfile.balance) || 0);
           if (existingProfile.nickname) setNickname(existingProfile.nickname);
           
-          // КРИТИЧНО: Устанавливаем member_id из БД (правильный формат THQ-)
+          // Устанавливаем member_id из БД
           if (existingProfile.member_id) {
-            console.log('✅ Устанавливаем member_id:', existingProfile.member_id);
             setMemberId(existingProfile.member_id);
-          } else {
-            console.error('❌ member_id отсутствует в профиле БД!');
           }
           
           if (existingProfile.avatar) setAvatar(existingProfile.avatar);
           
           // Загружаем original_role
           if (existingProfile.original_role) {
-            console.log('✅ Загружена original_role:', existingProfile.original_role);
             setOriginalRole(existingProfile.original_role);
-          } else {
-            console.log('⚠️ original_role отсутствует в БД');
           }
           
           const dbRole = existingProfile.role as UserRole;
@@ -338,6 +328,13 @@ export default function CabinetPage() {
       }
     };
   }, [router]);
+
+  // Загружаем withdrawal_requests когда user доступен
+  useEffect(() => {
+    if (user?.id) {
+      loadWithdrawalRequests();
+    }
+  }, [user?.id, loadWithdrawalRequests]);
 
   // Polling для непрочитанных тикетов
   useEffect(() => {
@@ -478,14 +475,14 @@ export default function CabinetPage() {
 
   return (
     <>
-    <div className={`min-h-screen relative z-10 text-white`} style={{ paddingTop: '70px' }}>
+    <div className="min-h-screen relative z-10 text-heading" style={{ paddingTop: '70px' }}>
       <AnimatedBackground />
       
       {/* Декоративные элементы */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className={`absolute top-20 left-10 w-32 h-32 rounded-full blur-xl floating-element ${isLight ? 'bg-gradient-to-r from-purple-300/20 to-pink-300/20' : 'bg-gradient-to-r from-purple-400/10 to-pink-400/10'}`}></div>
-        <div className={`absolute top-60 right-20 w-24 h-24 rounded-full blur-lg floating-element ${isLight ? 'bg-gradient-to-r from-blue-300/20 to-cyan-300/20' : 'bg-gradient-to-r from-blue-400/10 to-cyan-400/10'}`} style={{animationDelay: '2s'}}></div>
-        <div className={`absolute bottom-40 left-1/4 w-16 h-16 rounded-full blur-md floating-element ${isLight ? 'bg-gradient-to-r from-indigo-300/20 to-purple-300/20' : 'bg-gradient-to-r from-indigo-400/10 to-purple-400/10'}`} style={{animationDelay: '4s'}}></div>
+        <div className="absolute top-20 left-10 w-32 h-32 rounded-full blur-xl floating-element floating-orb" style={{animationDelay: '0s'}}></div>
+        <div className="absolute top-60 right-20 w-24 h-24 rounded-full blur-lg floating-element floating-orb-alt" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-40 left-1/4 w-16 h-16 rounded-full blur-md floating-element floating-orb" style={{animationDelay: '4s'}}></div>
       </div>
       
       <div 
@@ -501,24 +498,15 @@ export default function CabinetPage() {
 
         {/* Сайдбар - скрыт на мобильных */}
         <aside 
-          className={`hidden lg:flex lg:w-64 w-full glass-card-hover interactive-glass flex-col lg:sticky ${isLight ? 'cabinet-sidebar-light' : 'glass-morphism-sidebar'}`}
+          className={`hidden lg:flex lg:w-64 w-full glass-card-hover interactive-glass flex-col lg:sticky cabinet-panel ${scrolled ? 'cabinet-panel-scrolled' : ''}`}
           style={{
-            borderRadius: scrolled ? '24px' : '16px 0 0 0',
+            borderRadius: scrolled ? '24px' : '24px 0 0 24px',
             top: '70px',
             padding: '24px',
             marginTop: '0px',
             height: 'calc(100vh - 70px)',
             minHeight: 'calc(100vh - 70px)',
             maxHeight: 'calc(100vh - 70px)',
-            borderTop: scrolled 
-              ? `1px solid ${isLight ? 'rgba(100,80,140,0.2)' : 'rgba(157, 141, 241, 0.15)'}` 
-              : '1px solid transparent',
-            borderRight: scrolled 
-              ? `1px solid ${isLight ? 'rgba(100,80,140,0.1)' : 'rgba(157, 141, 241, 0.08)'}` 
-              : '1px solid transparent',
-            borderBottom: scrolled 
-              ? `1px solid ${isLight ? 'rgba(255,255,255,0.1)' : 'rgba(157, 141, 241, 0.08)'}` 
-              : '1px solid transparent',
             boxSizing: 'border-box',
             transition: 'border-radius 0.3s ease, border-color 0.3s ease',
             willChange: 'transform',
@@ -546,7 +534,6 @@ export default function CabinetPage() {
               onShowAvatarModal={() => setShowAvatarModal(true)}
               onSupportToggle={() => supportWidget.toggle()}
               showToast={handleShowToast}
-              isLight={isLight}
             />
           )}
         </aside>
@@ -562,54 +549,27 @@ export default function CabinetPage() {
           }}
         >
           <div 
-            className="absolute inset-y-0 flex items-center justify-center transition-all duration-500"
-            style={{
-              width: '1px',
-              background: isLight 
-                ? 'linear-gradient(to bottom, transparent 0%, rgba(180,140,220,0.4) 10%, rgba(140,180,220,0.6) 50%, rgba(180,140,220,0.4) 90%, transparent 100%)'
-                : 'linear-gradient(to bottom, transparent 0%, rgba(157, 141, 241, 0.3) 10%, rgba(157, 141, 241, 0.5) 50%, rgba(157, 141, 241, 0.3) 90%, transparent 100%)',
-              boxShadow: isLight 
-                ? '0 0 20px rgba(180,140,220,0.3)'
-                : '0 0 20px rgba(157, 141, 241, 0.3)',
-            }}
+            className="cabinet-divider-line absolute inset-y-0 flex items-center justify-center transition-all duration-500"
           />
           {/* Декоративные точки */}
           <div 
-            className="absolute w-2 h-2 rounded-full animate-pulse"
+            className="cabinet-dot absolute w-2 h-2 rounded-full animate-pulse"
             style={{
               top: '20%',
-              background: isLight 
-                ? 'radial-gradient(circle, rgba(180,140,220,0.8) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
-              boxShadow: isLight 
-                ? '0 0 10px rgba(180,140,220,0.6)'
-                : '0 0 10px rgba(157, 141, 241, 0.6)',
               animation: 'pulse 3s ease-in-out infinite',
             }}
           />
           <div 
-            className="absolute w-2 h-2 rounded-full animate-pulse"
+            className="cabinet-dot absolute w-2 h-2 rounded-full animate-pulse"
             style={{
               top: '50%',
-              background: isLight 
-                ? 'radial-gradient(circle, rgba(180,140,220,0.8) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
-              boxShadow: isLight 
-                ? '0 0 10px rgba(180,140,220,0.6)'
-                : '0 0 10px rgba(157, 141, 241, 0.6)',
               animation: 'pulse 3s ease-in-out infinite 1s',
             }}
           />
           <div 
-            className="absolute w-2 h-2 rounded-full animate-pulse"
+            className="cabinet-dot absolute w-2 h-2 rounded-full animate-pulse"
             style={{
               top: '80%',
-              background: isLight 
-                ? 'radial-gradient(circle, rgba(180,140,220,0.8) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(157, 141, 241, 0.8) 0%, transparent 70%)',
-              boxShadow: isLight 
-                ? '0 0 10px rgba(180,140,220,0.6)'
-                : '0 0 10px rgba(157, 141, 241, 0.6)',
               animation: 'pulse 3s ease-in-out infinite 2s',
             }}
           />
@@ -617,20 +577,11 @@ export default function CabinetPage() {
 
         {/* Контент */}
         <section 
-          className={`flex-1 glass-card-hover interactive-glass p-4 sm:p-6 lg:p-10 ${isLight ? 'cabinet-content-light' : 'glass-morphism-card'}`}
+          className={`flex-1 interactive-glass p-4 sm:p-6 lg:p-10 cabinet-content ${scrolled ? 'cabinet-content-scrolled' : ''}`}
           style={{
             borderRadius: scrolled ? '24px' : '0 24px 24px 0',
             minHeight: 'calc(100vh - 70px)',
             marginTop: '0px',
-            borderTop: scrolled 
-              ? `1px solid ${isLight ? 'rgba(100,80,140,0.2)' : 'rgba(157, 141, 241, 0.15)'}` 
-              : '1px solid transparent',
-            borderLeft: scrolled 
-              ? `1px solid ${isLight ? 'rgba(100,80,140,0.1)' : 'rgba(157, 141, 241, 0.08)'}` 
-              : '1px solid transparent',
-            borderBottom: scrolled 
-              ? `1px solid ${isLight ? 'rgba(255,255,255,0.1)' : 'rgba(157, 141, 241, 0.08)'}` 
-              : '1px solid transparent',
             boxSizing: 'border-box',
             transition: 'border-radius 0.3s ease, border-color 0.3s ease',
           }}
@@ -754,16 +705,7 @@ export default function CabinetPage() {
     {portalContainer && !mobileSidebarOpen && createPortal(
       <button
         onClick={() => setMobileSidebarOpen(true)}
-        className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 ${
-          isLight 
-            ? 'bg-white/80 border border-[#8a63d2]/20 shadow-lg shadow-[#8a63d2]/10' 
-            : 'bg-white/10 border border-white/10 backdrop-blur-xl'
-        }`}
-        style={{
-          boxShadow: isLight 
-            ? '0 4px 20px rgba(138,99,210,0.15)' 
-            : '0 4px 20px rgba(0,0,0,0.3)',
-        }}
+        className="mobile-profile-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
       >
         {avatar ? (
           <img 
@@ -797,7 +739,6 @@ export default function CabinetPage() {
       onShowAvatarModal={() => setShowAvatarModal(true)}
       onSupportToggle={() => supportWidget.toggle()}
       showToast={handleShowToast}
-      isLight={isLight}
     />
     </>
   );

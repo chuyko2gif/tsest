@@ -118,14 +118,14 @@ export const SilverStarsGroup = memo(({
   variant?: 'default' | 'header' | 'sidebar' | 'card' | 'auth' | 'modal' | 'hero';
   className?: string;
 }) => {
-  interface StarConfig {
+  type StarConfig = {
     size: number;
     delay: number;
     top?: string;
     left?: string;
     right?: string;
     bottom?: string;
-  }
+  };
   
   const configs: Record<string, StarConfig[]> = {
     default: [

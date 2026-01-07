@@ -389,6 +389,32 @@
             border: none;
             cursor: pointer;
             transition: all var(--transition);
+            /* Улучшения для мобильных */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Увеличение области нажатия на мобильных */
+        @media (max-width: 768px) {
+            .btn {
+                min-height: 48px;
+                min-width: 48px;
+                padding: 14px 28px;
+            }
+            
+            .btn::after {
+                content: '';
+                position: absolute;
+                top: -8px;
+                left: -8px;
+                right: -8px;
+                bottom: -8px;
+                z-index: -1;
+            }
         }
 
         .btn--primary {
@@ -397,6 +423,7 @@
             box-shadow: 0 4px 20px rgba(96, 80, 186, 0.4);
             position: relative;
             overflow: hidden;
+            -webkit-user-drag: none;
         }
 
         .btn--primary::before {
@@ -408,15 +435,24 @@
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             transition: 0.5s;
+            pointer-events: none;
         }
 
         .btn--primary:hover::before {
             left: 100%;
         }
 
-        .btn--primary:hover {
+        .btn--primary:hover,
+        .btn--primary:active {
             transform: translateY(-3px);
             box-shadow: 0 8px 30px rgba(96, 80, 186, 0.5), var(--shadow-glow);
+        }
+        
+        /* Активное состояние для мобильных */
+        @media (max-width: 768px) {
+            .btn--primary:active {
+                transform: scale(0.98);
+            }
         }
 
         .btn--secondary {
@@ -428,11 +464,19 @@
             box-shadow: var(--shadow-soft);
         }
 
-        .btn--secondary:hover {
+        .btn--secondary:hover,
+        .btn--secondary:active {
             background: rgba(255, 255, 255, 0.6);
             border-color: rgba(96, 80, 186, 0.3);
             transform: translateY(-2px);
             box-shadow: var(--shadow-medium);
+        }
+        
+        /* Активное состояние для мобильных */
+        @media (max-width: 768px) {
+            .btn--secondary:active {
+                transform: scale(0.98);
+            }
         }
 
         /* ========================================

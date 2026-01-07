@@ -8,12 +8,6 @@ const seededRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-// Детекция Safari для отключения проблемных анимаций
-const checkIsSafari = () => {
-  if (typeof window === 'undefined') return false;
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-};
-
 // Хук для определения мобильного устройства
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -31,16 +25,13 @@ const useIsMobile = () => {
 };
 
 // Оптимизированные летающие 3D фигуры
-// ОТКЛЮЧЕНО НА SAFARI для предотвращения багов рендеринга
 export const FloatingShapes = memo(() => {
   const { themeName } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
   const isMobile = useIsMobile();
   
   useEffect(() => {
     setMounted(true);
-    setIsSafari(checkIsSafari());
   }, []);
 
   // На мобильных - 6 фигур, на ПК - 10
@@ -58,8 +49,7 @@ export const FloatingShapes = memo(() => {
     })),
   [shapeCount, isMobile]);
 
-  // На Safari отключаем полностью
-  if (!mounted || isSafari) return null;
+  if (!mounted) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -79,6 +69,9 @@ export const FloatingShapes = memo(() => {
             animationTimingFunction: 'linear',
             animationIterationCount: 'infinite',
             animationDelay: `${shape.delay}s`,
+            willChange: 'auto',
+            transform: 'translate3d(0,0,0)',
+            backfaceVisibility: 'hidden',
           }}
         />
       ))}
@@ -95,16 +88,13 @@ export const FloatingShapes = memo(() => {
 FloatingShapes.displayName = 'FloatingShapes';
 
 // Оптимизированные частицы - минимум на мобильных
-// ОТКЛЮЧЕНО НА SAFARI для предотвращения багов рендеринга
 export const FloatingParticles = memo(() => {
   const { themeName } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
   const isMobile = useIsMobile();
   
   useEffect(() => {
     setMounted(true);
-    setIsSafari(checkIsSafari());
   }, []);
   
   // На мобильных - 8 частиц, на ПК - 18
@@ -122,8 +112,7 @@ export const FloatingParticles = memo(() => {
     })),
   [particleCount, isMobile]);
 
-  // На Safari отключаем полностью
-  if (!mounted || isSafari) return null;
+  if (!mounted) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -143,6 +132,8 @@ export const FloatingParticles = memo(() => {
             animationTimingFunction: 'linear',
             animationIterationCount: 'infinite',
             animationDelay: `${p.delay}s`,
+            willChange: 'auto',
+            transform: 'translate3d(0,0,0)',
           }}
         />
       ))}
@@ -159,30 +150,20 @@ export const FloatingParticles = memo(() => {
 FloatingParticles.displayName = 'FloatingParticles';
 
 // Оптимизированный градиентный фон
-// ОТКЛЮЧЕНО НА SAFARI для предотвращения багов рендеринга
 export const ParallaxGradient = memo(() => {
   const { themeName } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
   const isMobile = useIsMobile();
-  
-  useEffect(() => {
-    setMounted(true);
-    setIsSafari(checkIsSafari());
-  }, []);
-  
-  // На Safari отключаем
-  if (!mounted || isSafari) return null;
   
   // На мобильных - без blur для производительности
   const blurAmount = isMobile ? 80 : 150;
   
   return (
-    <div className="fixed inset-0 pointer-events-none">
+    <div className="fixed inset-0 pointer-events-none" style={{ transform: 'translate3d(0,0,0)' }}>
       <div 
         className={`absolute top-0 left-1/4 ${isMobile ? 'w-[300px] h-[300px]' : 'w-[600px] h-[600px]'} ${themeName === 'light' ? 'bg-gray-300/15' : 'bg-[#6050ba]/08'} rounded-full`}
         style={{ 
           filter: `blur(${blurAmount}px)`,
+          willChange: 'auto',
         }}
       />
       {!isMobile && (
@@ -190,6 +171,7 @@ export const ParallaxGradient = memo(() => {
           className={`absolute bottom-1/4 right-1/4 w-[500px] h-[500px] ${themeName === 'light' ? 'bg-gray-400/10' : 'bg-[#9d8df1]/08'} rounded-full`}
           style={{ 
             filter: 'blur(120px)',
+            willChange: 'auto',
           }}
         />
       )}
@@ -200,25 +182,14 @@ export const ParallaxGradient = memo(() => {
 ParallaxGradient.displayName = 'ParallaxGradient';
 
 // Оптимизированный эффект стекла - упрощён для мобильных
-// ОТКЛЮЧЕНО НА SAFARI для предотвращения багов рендеринга
 export const GlassOverlay = memo(() => {
   const { themeName } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
   const isMobile = useIsMobile();
-  
-  useEffect(() => {
-    setMounted(true);
-    setIsSafari(checkIsSafari());
-  }, []);
-  
-  // На Safari отключаем
-  if (!mounted || isSafari) return null;
   
   // На мобильных - без backdrop-filter (очень тяжёлый для GPU)
   if (isMobile) {
     return (
-      <div className="fixed inset-0 pointer-events-none z-[1]">
+      <div className="fixed inset-0 pointer-events-none z-[1]" style={{ transform: 'translate3d(0,0,0)' }}>
         <div className={`absolute inset-0 ${themeName === 'dark' ? 'bg-black/50' : 'bg-white/40'}`} />
       </div>
     );

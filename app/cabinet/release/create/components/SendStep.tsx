@@ -53,7 +53,6 @@ interface SendStepProps {
     title: string;
     link: string;
     audioFile?: File | null;
-    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;
@@ -69,6 +68,7 @@ interface SendStepProps {
     featuring?: string[];
     authors?: TrackAuthor[];
     isInstrumental?: boolean;
+    originalFileName?: string;
   }>;
   platforms: string[];
   countries: string[];
@@ -76,7 +76,7 @@ interface SendStepProps {
   paymentReceiptUrl?: string;
   paymentComment?: string;
   draftId?: string | null;
-  onDeleteDraft?: () => Promise<void>;
+  onDeleteDraft?: () => void;
 }
 
 export default function SendStep({ 
@@ -1024,7 +1024,9 @@ export default function SendStep({
                     try {
                       if (!supabase) throw new Error('Supabase не инициализирован');
                       
-                      const { data: { user } } = await supabase.auth.getUser();
+                      const sb = supabase; // local alias for TypeScript
+                      
+                      const { data: { user } } = await sb.auth.getUser();
                       if (!user) throw new Error('Пользователь не авторизован');
                 
                 // Загрузка обложки
@@ -1033,13 +1035,13 @@ export default function SendStep({
                   const fileExt = coverFile.name.split('.').pop();
                   const fileName = `${user.id}/${Date.now()}.${fileExt}`;
                   
-                  const { data: uploadData, error: uploadError } = await supabase.storage
+                  const { data: uploadData, error: uploadError } = await sb.storage
                     .from('release-covers')
                     .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
                   
                   if (uploadError) throw uploadError;
                   
-                  const { data: { publicUrl } } = supabase.storage
+                  const { data: { publicUrl } } = sb.storage
                     .from('release-covers')
                     .getPublicUrl(fileName);
                     
@@ -1049,19 +1051,20 @@ export default function SendStep({
                 // Загрузка аудиофайлов треков
                 const tracksWithUrls = await Promise.all(tracks.map(async (track, index) => {
                   // Проверяем, что audioFile - это реальный File объект
-                  const isValidFile = track.audioFile && 
-                    track.audioFile instanceof File && 
-                    track.audioFile.size > 0;
+                  const audioFile = track.audioFile;
+                  const isValidFile = audioFile && 
+                    audioFile instanceof File && 
+                    audioFile.size > 0;
                   
-                  if (isValidFile && track.audioFile && supabase) {
+                  if (isValidFile && audioFile) {
                     try {
-                      const audioFileExt = track.audioFile.name.split('.').pop();
+                      const audioFileExt = audioFile.name.split('.').pop();
                       const audioFileName = `${user.id}/${Date.now()}-track-${index}.${audioFileExt}`;
                       
-                      const { data: audioUploadData, error: audioUploadError } = await supabase.storage
+                      const { data: audioUploadData, error: audioUploadError } = await sb.storage
                         .from('release-audio')
-                        .upload(audioFileName, track.audioFile, {
-                          contentType: track.audioFile.type,
+                        .upload(audioFileName, audioFile, {
+                          contentType: audioFile.type,
                           upsert: true
                         });
                       
@@ -1081,7 +1084,7 @@ export default function SendStep({
                         };
                       }
                       
-                      const { data: { publicUrl: audioUrl } } = supabase.storage
+                      const { data: { publicUrl: audioUrl } } = sb.storage
                         .from('release-audio')
                         .getPublicUrl(audioFileName);
                       

@@ -127,7 +127,7 @@ function StepsSidebar({
       <aside className={`hidden lg:flex lg:w-64 w-full backdrop-blur-xl border rounded-3xl p-6 pb-8 flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl relative overflow-hidden ${
         isLight
           ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-          : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'
+          : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'
       }`}>
         {/* Декоративный градиент */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
@@ -350,7 +350,7 @@ function StepsSidebar({
         <div className={`backdrop-blur-xl border rounded-2xl shadow-lg relative overflow-hidden ${
           isLight
             ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-            : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/10'
+            : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/10'
         }`}>
           {/* Декоративный градиент */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
@@ -624,6 +624,8 @@ export default function CreateReleasePage() {
   const saveDraft = async (showNotification = false) => {
     if (!user || !supabase || isSavingDraft) return null;
     
+    const sb = supabase; // local alias for TypeScript
+    
     // Сохраняем только если заполнен хотя бы первый шаг (релиз)
     if (!releaseTitle.trim() || !genre || !coverFile || !releaseDate) return null;
     
@@ -635,12 +637,12 @@ export default function CreateReleasePage() {
         const fileExt = coverFile.name.split('.').pop();
         // Путь: user_id/draft-timestamp.ext — соответствует политике RLS
         const fileName = `${user.id}/draft-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await sb.storage
           .from('release-covers')
           .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
         if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = supabase.storage
+          const { data: { publicUrl } } = sb.storage
             .from('release-covers')
             .getPublicUrl(fileName);
           coverUrl = publicUrl;
@@ -653,17 +655,17 @@ export default function CreateReleasePage() {
         let originalFileName = track.originalFileName || '';
         
         // Если есть аудио файл - ВСЕГДА загружаем его
-        if (track.audioFile && supabase) {
+        if (track.audioFile) {
           try {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await supabase.storage
+            const { error: audioError } = await sb.storage
               .from('release-audio')
               .upload(audioFileName, track.audioFile, { contentType: track.audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = supabase.storage
+              const { data: { publicUrl } } = sb.storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -818,6 +820,7 @@ export default function CreateReleasePage() {
     }
     
     setPrevStepsCompleted(currentCompleted);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [releaseTitle, genre, coverFile, releaseDate, tracks.length, excludedCountries.length, agreedToContract, selectedPlatforms, promoStatus]);
   
   // Ref для отслеживания предыдущего количества треков и авторов
@@ -953,7 +956,7 @@ export default function CreateReleasePage() {
         <section className={`flex-1 backdrop-blur-xl border rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[500px] shadow-2xl relative ${
           isLight
             ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-            : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'
+            : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'
         }`}>
           {/* Декоративный градиент */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />

@@ -71,20 +71,20 @@ export default function SupportSidebar({ isOpen, onClose, onOpen, unreadCount, o
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className="fixed top-0 right-0 h-full w-[380px] max-w-[90vw] z-[9999] transform transition-all duration-500 ease-in-out"
+        className="fixed top-0 right-0 h-full w-[380px] z-[9999] transform transition-all duration-500 ease-in-out"
         style={{
-          background: isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(14, 14, 18, 0.97)',
+          background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(24, 24, 27, 0.7)',
           borderLeft: isLight ? '1px solid rgba(96, 80, 186, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: isLight ? '0 8px 32px 0 rgba(96, 80, 186, 0.2)' : '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
+          boxShadow: isLight ? '0 8px 32px 0 rgba(96, 80, 186, 0.2)' : '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
         }}
       >

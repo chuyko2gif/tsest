@@ -111,7 +111,7 @@ export function GlobalPrefetch() {
       // На мощных устройствах - сразу prefetch
       executePrefetch(normalizedUrl);
     }
-  }, [processQueue, executePrefetch]);
+  }, [executePrefetch, processQueue]);
 
   useEffect(() => {
     // Throttled обработчик наведения

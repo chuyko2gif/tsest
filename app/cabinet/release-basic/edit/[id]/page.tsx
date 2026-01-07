@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import AnimatedBackground from '@/components/ui/AnimatedBackground';
@@ -82,7 +82,7 @@ function FullscreenLoadingOverlay({ message = "Сохраняем релиз" }:
 }
 
 // Компонент для редактирования Basic релиза
-function EditBasicReleasePageContent() {
+export default function EditBasicReleasePage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -374,6 +374,7 @@ function EditBasicReleasePageContent() {
   const handleAutoSave = async (stepName: string) => {
     if (!supabase || !releaseId || !userId || saving) return;
     
+    const sb = supabase; // local alias for TypeScript
     try {
       // Загружаем обложку если есть новая
       let coverUrl = existingCoverUrl;
@@ -381,12 +382,12 @@ function EditBasicReleasePageContent() {
         const fileExt = coverFile.name.split('.').pop();
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await sb.storage
           .from('release-covers')
           .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
+          const { data: { publicUrl } } = sb.storage
             .from('release-covers')
             .getPublicUrl(fileName);
           coverUrl = publicUrl;
@@ -404,18 +405,18 @@ function EditBasicReleasePageContent() {
         // Если есть новый аудио файл - ВСЕГДА загружаем его (даже если есть старый link)
         const hasAudioFile = !!(track as any).audioFile;
         
-        if (hasAudioFile && supabase) {
+        if (hasAudioFile) {
           try {
             const audioFile = (track as any).audioFile as File;
             const audioExt = audioFile.name.split('.').pop();
             const audioFileName = `${userId}/track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await supabase.storage
+            const { error: audioError } = await sb.storage
               .from('release-audio')
               .upload(audioFileName, audioFile, { contentType: audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = supabase.storage
+              const { data: { publicUrl } } = sb.storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -966,11 +967,8 @@ function EditBasicReleasePageContent() {
 
   // Шаг выбора типа релиза для черновиков (заблокирован после оплаты)
   if (isDraftMode && (releaseStatus === 'draft' || releaseStatus === 'awaiting_payment') && currentStep === 'type') {
-    // Если уже есть оплата, нельзя менять тип
-    if (paymentTransactionId) {
-      setCurrentStep('release');
-      return null;
-    }
+    // Если статус не draft/awaiting_payment, значит уже оплачено - нельзя менять тип
+    // (но это условие уже в if выше, поэтому здесь можно сразу показывать селектор)
     return (
       <ReleaseTypeSelector 
         onSelectType={async (type: 'single' | 'ep' | 'album') => {
@@ -1046,7 +1044,7 @@ function EditBasicReleasePageContent() {
         <div className="max-w-[1600px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 items-stretch relative z-10">
         
           {/* Боковая панель с шагами - Glassmorphism (как в создании релиза) - только для десктопа */}
-          <aside className={`hidden lg:flex lg:w-64 w-full backdrop-blur-xl border rounded-3xl p-6 pb-8 flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl relative overflow-hidden ${isLight ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10' : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'}`}>
+          <aside className={`hidden lg:flex lg:w-64 w-full backdrop-blur-xl border rounded-3xl p-6 pb-8 flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl relative overflow-hidden ${isLight ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10' : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'}`}>
             {/* Декоративный градиент */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
           
@@ -1371,7 +1369,7 @@ function EditBasicReleasePageContent() {
 
         {/* Мобильная версия - компактная полоса прогресса с раскрывающимся списком */}
         <div className="lg:hidden w-full mb-3 order-first">
-          <div className={`backdrop-blur-xl border rounded-2xl shadow-lg relative overflow-hidden ${isLight ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10' : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/10'}`}>
+          <div className={`backdrop-blur-xl border rounded-2xl shadow-lg relative overflow-hidden ${isLight ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10' : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/10'}`}>
             {/* Декоративный градиент */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
             
@@ -1489,7 +1487,7 @@ function EditBasicReleasePageContent() {
         </div>
 
         {/* Основной контент - Glassmorphism */}
-        <section className={`flex-1 backdrop-blur-xl border rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[600px] shadow-2xl ${isLight ? 'bg-white/80 border-gray-200 shadow-purple-500/5' : 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border-white/10 shadow-purple-500/5'}`}>
+        <section className={`flex-1 backdrop-blur-xl border rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[600px] shadow-2xl ${isLight ? 'bg-white/80 border-gray-200 shadow-purple-500/5' : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-purple-500/5'}`}>
           {/* Кнопка сохранения сверху когда релиз на модерации */}
           {releaseStatus === 'pending' && currentStep !== 'send' && currentStep !== 'payment' && (
             <div className={`mb-6 p-4 rounded-xl border flex items-center justify-between ${isLight ? 'bg-amber-50 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'}`}>
@@ -1755,13 +1753,5 @@ function EditBasicReleasePageContent() {
       )}
       </div>
     </>
-  );
-}
-
-export default function EditBasicReleasePage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
-      <EditBasicReleasePageContent />
-    </Suspense>
   );
 }

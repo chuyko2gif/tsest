@@ -93,6 +93,27 @@ export default function MobileSidebar({
         }`}
       >
         <div className="flex flex-col h-full p-5 overflow-y-auto relative z-10">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 text-white/60 hover:text-white group"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)',
+            }}
+            aria-label="Закрыть меню"
+          >
+            <svg 
+              className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           {/* Header */}
           <div className="flex items-center mb-6">
             <span className="mobile-sidebar-title text-sm font-bold uppercase tracking-wider">

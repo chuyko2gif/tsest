@@ -106,8 +106,6 @@ export default function AuthPage() {
         userEmail = (profile && typeof profile === 'object' && 'email' in profile) ? (profile as any).email : null;
       }
 
-      console.log('Отправка письма для восстановления пароля на:', userEmail);
-
       // Отправляем через наш серверный API
       const response = await fetch('/api/send-password-reset', {
         method: 'POST',
@@ -123,7 +121,6 @@ export default function AuthPage() {
         throw new Error(data.error || 'Не удалось отправить письмо');
       }
 
-      console.log('Письмо отправлено успешно');
       showNotification('Письмо со ссылкой для сброса пароля отправлено на почту', 'success');
       setMode('login');
       setEmail('');

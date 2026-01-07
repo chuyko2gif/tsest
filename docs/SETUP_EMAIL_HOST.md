@@ -19,8 +19,6 @@ https://thqlabel.ru/auth
 https://thqlabel.ru/auth/callback
 https://thqlabel.ru/reset-password
 https://thqlabel.ru/cabinet
-https://thqlabel.ru/change-email
-https://www.thqlabel.ru/**
 ```
 
 ---
@@ -239,7 +237,7 @@ Sender name: THQ Label
 ## 📋 Checklist
 
 - [ ] Site URL настроен (`https://thqlabel.ru`)
-- [ ] Redirect URLs добавлены (все 7 штук)
+- [ ] Redirect URLs добавлены (все 5 штук)
 - [ ] Email templates обновлены (русский текст + THQ Label)
 - [ ] Email confirmations включены
 - [ ] Проверена регистрация - письмо приходит

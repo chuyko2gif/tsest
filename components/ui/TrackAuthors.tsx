@@ -204,7 +204,7 @@ export default function TrackAuthors({
             className={`w-full sm:w-auto px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl text-sm flex items-center gap-2 transition min-w-[110px] sm:min-w-[130px] border ${
               isLight 
                 ? 'bg-white border-amber-300 hover:border-amber-400 shadow-sm' 
-                : 'bg-gradient-to-br from-white/[0.07] to-white/[0.03] border-white/10 hover:border-amber-400/30'
+                : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 hover:border-amber-400/30'
             }`}
           >
             <span className="flex-1 text-left text-xs font-medium" style={{ color: isLight ? '#1f2937' : '#e4e4e7' }}>{getRoleInfo(newRole).label}</span>
@@ -261,7 +261,11 @@ export default function TrackAuthors({
             }}
             placeholder="Фамилия Имя Отчество"
             disabled={authors.length >= maxAuthors}
-            className="flex-1 px-3 py-2 sm:py-2.5 bg-white dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.03] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600 rounded-xl border border-gray-200 dark:border-white/10 outline-none transition-all hover:border-amber-400 dark:hover:border-amber-400/30 focus:border-amber-400 dark:focus:border-amber-400/50 focus:shadow-lg focus:shadow-amber-500/5 disabled:opacity-50 text-sm"
+            className={`flex-1 px-3 py-2 sm:py-2.5 text-sm rounded-xl border outline-none transition-all disabled:opacity-50 ${
+              isLight
+                ? 'bg-white text-gray-900 placeholder:text-gray-400 border-gray-200 hover:border-amber-400 focus:border-amber-400'
+                : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 text-white placeholder:text-zinc-600 border-white/10 hover:border-amber-400/30 focus:border-amber-400/50 focus:shadow-lg focus:shadow-amber-500/5'
+            }`}
           />
 
           {/* Кнопка добавления */}

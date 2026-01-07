@@ -9,7 +9,7 @@ import { SilverStarsGroup } from '@/components/ui/SilverStars';
 const RELEASES = [
   { id: 1, title: 'НЕ В СЕТИ', artist: 'angelgrind', cover: 'https://t2.genius.com/unsafe/430x430/https%3A%2F%2Fimages.genius.com%2Fd4892b6202a4051f807a8a847f44adc0.1000x1000x1.png' },
   { id: 2, title: 'ЗАКОЛКИ & КОСТИ', artist: 'kweetee', cover: 'https://t2.genius.com/unsafe/600x600/https%3A%2F%2Fimages.genius.com%2F9fa9951f735a169c17e47baf71ab45c7.1000x1000x1.png' },
-  { id: 3, title: 'МЕХАНИЗМ', artist: 'athygue', cover: 'https://t2.genius.com/unsafe/430x430/https%3A%2F%2Fimages.genius.com%2Fa4b2333f9c0768cf4f07d1252caff125.1000x1000x1.png' },
+  { id: 3, title: 'МЕХАНИЗМ', artist: 'athysue', cover: 'https://t2.genius.com/unsafe/430x430/https%3A%2F%2Fimages.genius.com%2Fa4b2333f9c0768cf4f07d1252caff125.1000x1000x1.png' },
   { id: 4, title: 'ДЕВЧАЧИЙ РОК-АЛЬБОМ', artist: 'тенденция', cover: 'https://images.genius.com/2fa8d85da644fad7afc1ba3d40d0d513.1000x1000x1.png' },
   { id: 5, title: 'TIRED OF YOU / WHAT PAIN IS', artist: 'breakfall', cover: 'https://cdn-images.dzcdn.net/images/cover/7101d738b828553e74b9f0035a6dfa1a/500x500-000000-80-0-0.jpg' },
   { id: 6, title: 'hate&love', artist: 'frommee', cover: 'https://t2.genius.com/unsafe/430x430/https%3A%2F%2Fimages.genius.com%2F43f01d20830d2acedb8267d3ea7a21e8.1000x1000x1.png' },
@@ -430,7 +430,7 @@ const ServicesModal = memo(({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             </div>
             <div>
               <h3 className={`text-2xl font-black uppercase tracking-wider ${isLight ? 'text-[#2a2550]' : 'text-white'}`}>
-                Услуги <span className="text-[#6050ba]">Лейбла</span>
+                Услуги Лейбла
               </h3>
               <p className={`text-xs ${isLight ? 'text-[#5a5580]' : 'text-white/50'}`}>Полный спектр услуг для артистов</p>
             </div>
@@ -476,10 +476,11 @@ const ServicesModal = memo(({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           {/* Кнопка закрыть внизу */}
           <button
             onClick={onClose}
-            className="mt-6 w-full py-3.5 rounded-xl text-white font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] group relative overflow-hidden"
+            className="mt-6 w-full py-4 min-h-[52px] rounded-xl text-white font-bold uppercase tracking-wider transition-all duration-300 hover:scale-[1.02] active:scale-98 group relative overflow-hidden touch-manipulation select-none"
             style={{
               background: 'linear-gradient(135deg, #6050ba 0%, #9d8df1 100%)',
               boxShadow: '0 10px 30px -10px rgba(96, 80, 186, 0.5)',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -571,9 +572,9 @@ export default function FeedPage() {
   }, [checkMobile]);
 
   return (
-    <main className="min-h-screen overflow-hidden relative">
-      {/* Intro анимация - использует CSS классы для темы (НЕ JS) */}
-      {showIntro && (
+    <>
+      <main className="min-h-screen overflow-hidden relative">
+        {showIntro && (
         <div 
           className={`intro-screen fixed inset-0 z-[100] flex items-center justify-center transition-opacity duration-500 ${
             introReady ? 'opacity-100' : 'opacity-0'
@@ -937,12 +938,13 @@ export default function FeedPage() {
                 <div className="flex gap-2 lg:gap-3">
                   <Link 
                     href="/cabinet"
-                    className="flex-1 px-4 lg:px-5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider transition-all hover:scale-105 hover:shadow-2xl text-white shadow-lg text-center border-2 border-[#3a2a7a]"
+                    className="flex-1 px-4 lg:px-5 py-3 lg:py-3 min-h-[48px] rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-98 hover:shadow-2xl text-white shadow-lg text-center border-2 border-[#3a2a7a] touch-manipulation select-none flex items-center justify-center"
                     style={{
                       background: 'linear-gradient(135deg, #6050ba 0%, #9d8df1 100%)',
                       boxShadow: isLight 
                         ? '0 10px 40px rgba(96, 80, 186, 0.25)'
                         : '0 10px 40px rgba(96, 80, 186, 0.4)',
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                   >
                     Кабинет
@@ -950,7 +952,7 @@ export default function FeedPage() {
                   
                   <button 
                     onClick={() => setServicesModalOpen(true)}
-                    className={`group relative flex-1 px-4 lg:px-5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider transition-all hover:scale-105 overflow-hidden border-2 border-[#3a2a7a] ${
+                    className={`group relative flex-1 px-4 lg:px-5 py-3 lg:py-3 min-h-[48px] rounded-xl text-xs lg:text-sm font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-98 overflow-hidden border-2 border-[#3a2a7a] touch-manipulation select-none ${
                       isLight ? 'text-white' : 'text-white'
                     }`}
                     style={{
@@ -960,6 +962,7 @@ export default function FeedPage() {
                       boxShadow: isLight 
                         ? '0 4px 15px rgba(96, 80, 186, 0.3)'
                         : '0 0 20px rgba(157, 141, 241, 0.3), inset 0 0 20px rgba(157, 141, 241, 0.1)',
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                   >
                     <span className="relative z-10 flex items-center justify-center gap-1.5">
@@ -1037,11 +1040,11 @@ export default function FeedPage() {
           </div>
 
           {/* Центральная колонка - Планета Сатурн с логотипом */}
-          <div className="lg:col-span-6 flex flex-col justify-center items-center order-2 lg:order-none">
+          <div className="lg:col-span-6 flex flex-col justify-center items-center order-2 lg:order-none pointer-events-none">
             {/* Контейнер для Сатурна - БЕСКОНЕЧНАЯ АНИМАЦИЯ */}
             <div className={`relative mb-4 transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
               <div 
-                className="relative flex items-center justify-center"
+                className="relative flex items-center justify-center overflow-visible"
                 style={{
                   width: '400px',
                   height: '400px',
@@ -1457,5 +1460,6 @@ export default function FeedPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

@@ -36,7 +36,6 @@ interface TrackListViewProps {
   onDragEnd: () => void;
   onNext: () => void;
   onBack: () => void;
-  isLight?: boolean;
 }
 
 export function TrackListView({

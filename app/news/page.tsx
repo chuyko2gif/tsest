@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import AnimatedBackground from '@/components/ui/AnimatedBackground';
@@ -69,6 +69,11 @@ const NewsCard = ({ news, onClick, featured = false, isLight = false }: any) => 
 const NewsModal = ({ news, onClose, isLight = false }: any) => {
   const date = new Date(news.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
   
+  // Скролл вверх при открытии модалки (для мобильных)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-16 sm:pt-20 pb-4 sm:pb-6 animate-fadeIn news-modal" onClick={onClose}>
       <div className={`absolute inset-0 backdrop-blur-2xl ${isLight ? 'bg-black/50' : 'bg-black/85'}`} />
@@ -80,11 +85,18 @@ const NewsModal = ({ news, onClose, isLight = false }: any) => {
             <div className="w-full h-full bg-gradient-to-br from-[#6050ba]/40 via-[#9d8df1]/30 to-[#0a0a0c]" />
           )}
           <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? 'from-white via-transparent to-transparent' : 'from-[#0d0d0f] via-transparent to-transparent'}`} />
-          <button onClick={onClose} className="absolute top-4 sm:top-5 md:top-6 right-4 sm:right-5 md:right-6 w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-[#6050ba] to-[#8b7dd8] backdrop-blur-md rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 text-white group shadow-lg">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          
+          {/* Кнопка закрытия - на обложке справа */}
+          <button 
+            onClick={onClose} 
+            className="absolute top-4 right-4 z-10 w-12 h-12 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 text-gray-900 group shadow-2xl touch-manipulation border-2 border-white/50"
+            aria-label="Закрыть"
+          >
+            <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+          
           <div className="absolute bottom-4 sm:bottom-5 md:bottom-6 left-4 sm:left-5 md:left-6 flex items-center gap-3 sm:gap-4 flex-wrap">
             {news.category && <span className="px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-[#6050ba] to-[#8b7dd8] rounded-full text-[10px] sm:text-[11px] md:text-xs font-black uppercase tracking-widest shadow-lg" style={{ color: '#ffffff' }}>{news.category}</span>}
             <span className="text-[10px] sm:text-[11px] md:text-xs uppercase tracking-widest font-semibold backdrop-blur-sm bg-black/50 px-3 py-1.5 rounded-full shadow-lg" style={{ color: '#ffffff' }}>{date}</span>
@@ -148,7 +160,7 @@ const NewsModal = ({ news, onClose, isLight = false }: any) => {
   );
 };
 
-function NewsPageContent() {
+export default function NewsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { themeName } = useTheme();
@@ -162,6 +174,8 @@ function NewsPageContent() {
   const openNews = (newsItem: any) => {
     setSelectedNews(newsItem);
     router.push(`/news?id=${newsItem.id}`, { scroll: false });
+    // Скролл вверх для мобильных устройств
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Функция для закрытия новости с очисткой URL
@@ -394,13 +408,5 @@ function NewsPageContent() {
       </div>
       {selectedNews && <NewsModal news={selectedNews} onClose={closeNews} isLight={isLight} />}
     </main>
-  );
-}
-
-export default function NewsPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
-      <NewsPageContent />
-    </Suspense>
   );
 }

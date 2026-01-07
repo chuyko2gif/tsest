@@ -20,6 +20,7 @@ export default function ResetPasswordPage() {
     let cleanup = false;
 
     const handleAuthChange = async () => {
+      if (!supabase) return;
       // Проверяем есть ли сессия
       const { data: { session } } = await supabase.auth.getSession();
       // Не перенаправляем сразу, даем возможность работать с формой

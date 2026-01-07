@@ -161,10 +161,17 @@ export default function PromoStep({
 
       setUploadingPhoto(true);
       try {
-        if (!userId || !supabase) {
+        if (!userId) {
           showErrorToast('Ошибка авторизации. Перезагрузите страницу.');
           continue;
         }
+        
+        if (!supabase) {
+          showErrorToast('Ошибка подключения к базе данных.');
+          continue;
+        }
+        
+        const sb = supabase; // local alias for TypeScript
         
         // Генерируем уникальное имя файла с путём user_id для RLS
         const fileExt = file.name.split('.').pop();
@@ -172,7 +179,7 @@ export default function PromoStep({
         const filePath = `${userId}/${fileName}`;
 
         // Загружаем в Supabase Storage (bucket: release-promo)
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await sb.storage
           .from('release-promo')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -195,7 +202,7 @@ export default function PromoStep({
         }
 
         // Получаем публичный URL
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = sb.storage
           .from('release-promo')
           .getPublicUrl(filePath);
 

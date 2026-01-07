@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { 
@@ -75,7 +75,7 @@ const PAYMENT_METHODS = [
   },
 ];
 
-function BalancePageContent() {
+export default function BalancePage() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
@@ -105,8 +105,8 @@ function BalancePageContent() {
     let mounted = true;
     
     const init = async () => {
+      if (!supabase) return;
       try {
-        if (!supabase) return;
         const { data: { user } } = await supabase.auth.getUser();
         if (!mounted) return;
         
@@ -167,8 +167,8 @@ function BalancePageContent() {
   }, []);
 
   const loadBalance = useCallback(async () => {
+    if (!supabase) return;
     try {
-      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
@@ -185,12 +185,9 @@ function BalancePageContent() {
   }, []);
 
   const loadTransactions = useCallback(async () => {
+    if (!supabase) return;
     setTransactionsLoading(true);
     try {
-      if (!supabase) {
-        setTransactionsLoading(false);
-        return;
-      }
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
@@ -507,10 +504,7 @@ function BalancePageContent() {
           {/* Debug кнопка */}
           <button
             onClick={async () => {
-              if (!supabase) {
-                alert('Supabase не инициализирован!');
-                return;
-              }
+              if (!supabase) return;
               const { data: { session } } = await supabase.auth.getSession();
               const token = session?.access_token;
               if (!token) {
@@ -603,13 +597,5 @@ function BalancePageContent() {
         )}
       </div>
     </div>
-  );
-}
-
-export default function BalancePage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
-      <BalancePageContent />
-    </Suspense>
   );
 }

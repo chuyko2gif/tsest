@@ -10,6 +10,7 @@ import { getAllCountries } from '@/components/icons/CountryFlagsSVG';
 import { getPaymentTotal } from '@/lib/utils/calculatePayment';
 import DepositModal from '@/app/cabinet/components/finance/DepositModal';
 import { TrackAuthor } from '@/components/ui/TrackAuthors';
+import { compressImage } from '@/lib/utils/imageOptimizer';
 import {
   ReleaseInfoStep,
   TracklistStep,
@@ -232,7 +233,7 @@ function StepsSidebar({
       <aside className={`hidden lg:flex lg:w-64 w-full backdrop-blur-xl border rounded-3xl p-6 pb-8 flex-col lg:self-start lg:sticky lg:top-24 shadow-2xl relative overflow-hidden ${
         isLight
           ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-          : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'
+          : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'
       }`}>
         {/* Декоративный градиент */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
@@ -630,7 +631,6 @@ export default function CreateReleaseBasicPage() {
     title: string;
     link: string;
     audioFile?: File | null;
-    originalFileName?: string;
     audioMetadata?: {
       format: string;
       duration?: number;
@@ -646,6 +646,8 @@ export default function CreateReleaseBasicPage() {
     producers?: string[];
     featuring?: string[];
     isInstrumental?: boolean;
+    originalFileName?: string;
+    existingAudioUrl?: string;
   }>>([]);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [trackTitle, setTrackTitle] = useState('');
@@ -924,21 +926,50 @@ export default function CreateReleaseBasicPage() {
   const saveDraft = async () => {
     if (!user || !supabase || isSavingDraft) return null;
     
+    const sb = supabase; // local alias for TypeScript
     setIsSavingDraft(true);
     try {
       let coverUrl = null;
+      let coverUrlOriginal = null;
+      
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('releases')
-          .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
+        const timestamp = Date.now();
         
-        if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = supabase.storage
+        // 1. Загружаем ОРИГИНАЛ (для админа)
+        const originalFileName = `${user.id}-${timestamp}-original.${fileExt}`;
+        const { data: originalUpload, error: originalError } = await sb.storage
+          .from('releases')
+          .upload(originalFileName, coverFile, { contentType: coverFile.type, upsert: true });
+        
+        if (!originalError && originalUpload) {
+          const { data: { publicUrl: originalUrl } } = sb.storage
             .from('releases')
-            .getPublicUrl(fileName);
-          coverUrl = publicUrl;
+            .getPublicUrl(originalFileName);
+          coverUrlOriginal = originalUrl;
+        }
+        
+        // 2. Создаём и загружаем СЖАТУЮ версию (для отображения)
+        try {
+          const compressedBlob = await compressImage(coverFile, 800, 0.85);
+          const compressedFileName = `${user.id}-${timestamp}.webp`;
+          
+          const { data: compressedUpload, error: compressedError } = await sb.storage
+            .from('releases')
+            .upload(compressedFileName, compressedBlob, { contentType: 'image/webp', upsert: true });
+          
+          if (!compressedError && compressedUpload) {
+            const { data: { publicUrl } } = sb.storage
+              .from('releases')
+              .getPublicUrl(compressedFileName);
+            coverUrl = publicUrl;
+          } else {
+            // Fallback - используем оригинал
+            coverUrl = coverUrlOriginal;
+          }
+        } catch {
+          // Fallback - используем оригинал если сжатие не удалось
+          coverUrl = coverUrlOriginal;
         }
       }
       
@@ -949,17 +980,17 @@ export default function CreateReleaseBasicPage() {
         let originalFileName = track.originalFileName || '';
         
         // Если есть аудио файл - ВСЕГДА загружаем его
-        if (track.audioFile && supabase) {
+        if (track.audioFile) {
           try {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await supabase.storage
+            const { error: audioError } = await sb.storage
               .from('release-audio')
               .upload(audioFileName, track.audioFile, { contentType: track.audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = supabase.storage
+              const { data: { publicUrl } } = sb.storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -1003,6 +1034,7 @@ export default function CreateReleaseBasicPage() {
         title: releaseTitle || 'Без названия',
         artist_name: releaseArtists.length > 0 ? releaseArtists[0] : (artistName || nickname),
         cover_url: coverUrl,
+        cover_url_original: coverUrlOriginal, // Оригинал для админа
         genre: genre,
         subgenres: subgenres.length > 0 ? subgenres : null,
         release_date: releaseDate,
@@ -1026,7 +1058,7 @@ export default function CreateReleaseBasicPage() {
       };
       
       if (draftId) {
-        const { error } = await supabase
+        const { error } = await sb
           .from('releases_basic')
           .update(draftData)
           .eq('id', draftId);
@@ -1036,7 +1068,7 @@ export default function CreateReleaseBasicPage() {
         }
         return draftId;
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await sb
           .from('releases_basic')
           .insert([draftData])
           .select()
@@ -1082,20 +1114,46 @@ export default function CreateReleaseBasicPage() {
     try {
       if (!supabase) throw new Error('Supabase не инициализирован');
       
-      // Загружаем обложку
+      // Загружаем обложку (оригинал + сжатая)
       let coverUrl = null;
+      let coverUrlOriginal = null;
+      
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase!.storage
-          .from('releases')
-          .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
+        const timestamp = Date.now();
         
-        if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = supabase!.storage
+        // 1. Загружаем ОРИГИНАЛ (для админа)
+        const originalFileName = `${user.id}-${timestamp}-original.${fileExt}`;
+        const { data: originalUpload, error: originalError } = await supabase.storage
+          .from('releases')
+          .upload(originalFileName, coverFile, { contentType: coverFile.type, upsert: true });
+        
+        if (!originalError && originalUpload) {
+          const { data: { publicUrl: originalUrl } } = supabase.storage
             .from('releases')
-            .getPublicUrl(fileName);
-          coverUrl = publicUrl;
+            .getPublicUrl(originalFileName);
+          coverUrlOriginal = originalUrl;
+        }
+        
+        // 2. Создаём и загружаем СЖАТУЮ версию (для отображения)
+        try {
+          const compressedBlob = await compressImage(coverFile, 800, 0.85);
+          const compressedFileName = `${user.id}-${timestamp}.webp`;
+          
+          const { data: compressedUpload, error: compressedError } = await supabase.storage
+            .from('releases')
+            .upload(compressedFileName, compressedBlob, { contentType: 'image/webp', upsert: true });
+          
+          if (!compressedError && compressedUpload) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('releases')
+              .getPublicUrl(compressedFileName);
+            coverUrl = publicUrl;
+          } else {
+            coverUrl = coverUrlOriginal;
+          }
+        } catch {
+          coverUrl = coverUrlOriginal;
         }
       }
       
@@ -1152,6 +1210,7 @@ export default function CreateReleaseBasicPage() {
         title: releaseTitle,
         artist_name: releaseArtists.length > 0 ? releaseArtists[0] : (artistName || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Artist'),
         cover_url: coverUrl,
+        cover_url_original: coverUrlOriginal, // Оригинал для админа
         genre: genre,
         subgenres: subgenres,
         release_date: releaseDate,
@@ -1322,7 +1381,7 @@ export default function CreateReleaseBasicPage() {
         <section className={`flex-1 backdrop-blur-xl border rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-10 min-h-[500px] shadow-2xl relative overflow-hidden ${
           isLight
             ? 'bg-[rgba(255,255,255,0.45)] border-white/60 shadow-purple-500/10'
-            : 'bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-white/10 shadow-black/20'
+            : 'bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border-white/10 shadow-black/20'
         }`}>
           {/* Декоративный градиент */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />

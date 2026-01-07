@@ -19,6 +19,12 @@ export default function ChangeEmailPage() {
     
     const processEmailChange = async () => {
       if (processed) return;
+      if (!supabase) {
+        showNotification('Ошибка подключения к базе данных', 'error');
+        return;
+      }
+      
+      const sb = supabase; // local alias for TypeScript
       
       try {
         // Проверяем токен в URL
@@ -26,9 +32,9 @@ export default function ChangeEmailPage() {
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
         
-        if (accessToken && type === 'email_change' && supabase) {
+        if (accessToken && type === 'email_change') {
           // Устанавливаем сессию с токеном
-          const { data, error } = await supabase.auth.setSession({
+          const { data, error } = await sb.auth.setSession({
             access_token: accessToken,
             refresh_token: hashParams.get('refresh_token') || ''
           });
@@ -43,12 +49,10 @@ export default function ChangeEmailPage() {
             setLoading(false);
             
             // Обновляем email в profiles
-            if (supabase) {
-              await supabase
-                .from('profiles')
-                .update({ email: data.user.email })
-                .eq('id', data.user.id);
-            }
+            await sb
+              .from('profiles')
+              .update({ email: data.user.email })
+              .eq('id', data.user.id);
             
             showNotification(`Email успешно изменён на ${data.user.email}`, 'success');
             setTimeout(() => router.push('/cabinet'), 2000);
@@ -57,10 +61,7 @@ export default function ChangeEmailPage() {
         }
         
         // Если токена нет - пробуем получить текущую сессию
-        if (!supabase) {
-          throw new Error('Supabase не инициализирован');
-        }
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await sb.auth.getSession();
         
         if (session?.user) {
           processed = true;

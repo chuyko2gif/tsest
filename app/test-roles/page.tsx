@@ -24,8 +24,17 @@ export default function TestRoles() {
       };
 
       try {
+        if (!supabase) {
+          result.errors.push('Supabase client is null');
+          setInfo(result);
+          setLoading(false);
+          return;
+        }
+        
+        const sb = supabase; // local alias for TypeScript
+        
         // Проверка авторизации
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await sb.auth.getUser();
         result.auth = {
           isAuthenticated: !!user,
           email: user?.email,
@@ -35,7 +44,7 @@ export default function TestRoles() {
 
         if (user) {
           // Проверка профиля
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile, error: profileError } = await sb
             .from('profiles')
             .select('*')
             .eq('id', user.id)
