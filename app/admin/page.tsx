@@ -194,7 +194,7 @@ AccessDeniedScreen.displayName = 'AccessDeniedScreen';
 
 type Tab = 'releases' | 'contracts' | 'archive' | 'users' | 'news' | 'tickets' | 'withdrawals' | 'reports' | 'transactions';
 
-export default function AdminPage() {
+function AdminPageContent() {
   const { themeName } = useTheme();
   const isLight = themeName === 'light';
   const searchParams = useSearchParams();
@@ -501,5 +501,13 @@ export default function AdminPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
+      <AdminPageContent />
+    </Suspense>
   );
 }

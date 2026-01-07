@@ -37,6 +37,7 @@ export default function FinanceTab({
       <BalanceCard
         balance={balance}
         onWithdrawClick={() => setShowWithdrawalForm(true)}
+        onDepositClick={() => {}}
         showWithdrawalForm={showWithdrawalForm}
       />
       

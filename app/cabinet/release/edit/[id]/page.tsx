@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -18,7 +18,7 @@ import {
 import SendStep from '../../create/components/SendStep';
 
 // Компонент для редактирования Exclusive релиза
-export default function EditExclusiveReleasePage() {
+function EditExclusiveReleasePageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -1309,5 +1309,13 @@ export default function EditExclusiveReleasePage() {
       )}
     </div>
     </>
+  );
+}
+
+export default function EditExclusiveReleasePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>}>
+      <EditExclusiveReleasePageContent />
+    </Suspense>
   );
 }
