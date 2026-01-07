@@ -706,7 +706,7 @@ export default function CabinetPage() {
       {/* Toast уведомление о копировании */}
       <CopyToast show={showToast} />
       
-      {/* Уведомление сверху */}}
+      {/* Уведомление сверху */}
       <NotificationModal 
         show={notification.show} 
         message={notification.message} 
