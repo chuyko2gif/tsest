@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import AnimatedBackground from '@/components/ui/AnimatedBackground';
@@ -28,6 +28,36 @@ import { FinanceTab } from './components/finance';
 import { SettingsTab } from './components/settings';
 import AdminRoleHUD from './components/settings/AdminRoleHUD';
 
+// ============================================================================
+// KEEP-ALIVE TAB PANEL - Вкладки не размонтируются, только скрываются
+// ============================================================================
+const KeepAliveTabPanel = memo(function KeepAliveTabPanel({ 
+  isActive, 
+  hasBeenActive,
+  children 
+}: { 
+  isActive: boolean; 
+  hasBeenActive: boolean;
+  children: React.ReactNode;
+}) {
+  // Не рендерим если вкладка ни разу не была активна (ленивая загрузка)
+  if (!hasBeenActive) return null;
+  
+  return (
+    <div
+      className="transition-all duration-300 ease-out"
+      style={{ 
+        display: isActive ? 'block' : 'none',
+        // CSS containment для скрытых вкладок - экономит память и CPU
+        contain: isActive ? 'none' : 'strict',
+      }}
+      aria-hidden={!isActive}
+    >
+      {children}
+    </div>
+  );
+});
+
 // Компоненты сайдбара
 import ProfileSidebar from './components/sidebar/ProfileSidebar';
 import CreateReleaseSidebar from './components/sidebar/CreateReleaseSidebar';
@@ -49,6 +79,32 @@ export default function CabinetPage() {
   const [creatingRelease, setCreatingRelease] = useState(false);
   const [createTab, setCreateTab] = useState<'release'|'tracklist'|'countries'|'contract'|'platforms'|'localization'|'send'|'events'|'promo'>('release');
   const [showArchive, setShowArchive] = useState(false);
+  
+  // ============================================================================
+  // KEEP-ALIVE: Отслеживание какие вкладки были посещены
+  // Вкладка рендерится только после первого посещения, затем остаётся в памяти
+  // ============================================================================
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(['releases']));
+  
+  // При смене вкладки добавляем в visited
+  const handleTabChange = useCallback((newTab: 'releases' | 'finance' | 'settings') => {
+    setTab(newTab);
+    setVisitedTabs(prev => {
+      if (prev.has(newTab)) return prev;
+      return new Set([...prev, newTab]);
+    });
+  }, []);
+  
+  // ============================================================================
+  // HOVER PREFETCH: Предзагрузка вкладки при наведении (для сайдбаров)
+  // Делает переключение МГНОВЕННЫМ - контент уже загружен до клика
+  // ============================================================================
+  const handleTabHover = useCallback((tabId: string) => {
+    setVisitedTabs(prev => {
+      if (prev.has(tabId)) return prev;
+      return new Set([...prev, tabId]);
+    });
+  }, []);
   
   // Обработчик скролла с улучшенными эффектами и дебаунсингом
   useEffect(() => {
@@ -530,7 +586,8 @@ export default function CabinetPage() {
               avatar={avatar}
               activeTab={tab}
               unreadTicketsCount={unreadTicketsCount}
-              onTabChange={setTab}
+              onTabChange={handleTabChange}
+              onTabHover={handleTabHover}
               onShowAvatarModal={() => setShowAvatarModal(true)}
               onSupportToggle={() => supportWidget.toggle()}
               showToast={handleShowToast}
@@ -587,54 +644,66 @@ export default function CabinetPage() {
           }}
         >
           
-          {tab === 'releases' && (
-            <div className="transition-all duration-300 ease-out" style={{ opacity: 1 }}>
-              <UserReleases 
-                userId={user?.id} 
-                nickname={nickname} 
-                onOpenUpload={() => {
-                  // Basic пользователи идут на release-basic/create, остальные на release/create
-                  const createPath = role === 'basic' 
-                    ? '/cabinet/release-basic/create' 
-                    : '/cabinet/release/create';
-                  router.push(createPath);
-                }} 
-                userRole={role}
-                showNotification={showNotification}
-                onShowArchiveChange={setShowArchive}
-              />
-            </div>
-          )}
+          {/* ================================================================
+              KEEP-ALIVE TABS: Вкладки НЕ размонтируются!
+              Это обеспечивает мгновенное переключение без потери состояния.
+              Каждая вкладка загружается лениво при первом посещении.
+          ================================================================ */}
           
-          {tab === 'finance' && (
-            <div className="transition-all duration-300 ease-out" style={{ opacity: 1 }}>
-              <FinanceTab
-                userId={user?.id}
-                balance={balance}
-                setBalance={setBalance}
-                payouts={payouts}
-                withdrawalRequests={withdrawalRequests}
-                showNotification={showNotification}
-                reloadRequests={loadWithdrawalRequests}
-              />
-            </div>
-          )}
+          {/* Releases Tab - KEEP ALIVE */}
+          <KeepAliveTabPanel 
+            isActive={tab === 'releases'} 
+            hasBeenActive={visitedTabs.has('releases')}
+          >
+            <UserReleases 
+              userId={user?.id} 
+              nickname={nickname} 
+              onOpenUpload={() => {
+                const createPath = role === 'basic' 
+                  ? '/cabinet/release-basic/create' 
+                  : '/cabinet/release/create';
+                router.push(createPath);
+              }} 
+              userRole={role}
+              showNotification={showNotification}
+              onShowArchiveChange={setShowArchive}
+            />
+          </KeepAliveTabPanel>
           
-          {tab === 'settings' && (
-            <div className="transition-all duration-300 ease-out" style={{ opacity: 1 }}>
-              <SettingsTab
-                user={user}
-                nickname={nickname}
-                memberId={memberId}
-                role={role}
-                originalRole={originalRole}
-                avatar={avatar}
-                onSignOut={handleSignOut}
-                onShowAvatarModal={() => setShowAvatarModal(true)}
-                showToast={handleShowToast}
-              />
-            </div>
-          )}
+          {/* Finance Tab - KEEP ALIVE */}
+          <KeepAliveTabPanel 
+            isActive={tab === 'finance'} 
+            hasBeenActive={visitedTabs.has('finance')}
+          >
+            <FinanceTab
+              userId={user?.id}
+              balance={balance}
+              setBalance={setBalance}
+              payouts={payouts}
+              withdrawalRequests={withdrawalRequests}
+              showNotification={showNotification}
+              reloadRequests={loadWithdrawalRequests}
+            />
+          </KeepAliveTabPanel>
+          
+          {/* Settings Tab - KEEP ALIVE */}
+          <KeepAliveTabPanel 
+            isActive={tab === 'settings'} 
+            hasBeenActive={visitedTabs.has('settings')}
+          >
+            <SettingsTab
+              user={user}
+              nickname={nickname}
+              memberId={memberId}
+              role={role}
+              originalRole={originalRole}
+              avatar={avatar}
+              onSignOut={handleSignOut}
+              onShowAvatarModal={() => setShowAvatarModal(true)}
+              showToast={handleShowToast}
+            />
+          </KeepAliveTabPanel>
+          
         </section>
       </div>
 
@@ -735,7 +804,8 @@ export default function CabinetPage() {
       avatar={avatar}
       activeTab={tab}
       unreadTicketsCount={unreadTicketsCount}
-      onTabChange={setTab}
+      onTabChange={handleTabChange}
+      onTabHover={handleTabHover}
       onShowAvatarModal={() => setShowAvatarModal(true)}
       onSupportToggle={() => supportWidget.toggle()}
       showToast={handleShowToast}

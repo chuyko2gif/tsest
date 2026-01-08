@@ -164,7 +164,7 @@ const ReleaseCard = memo(function ReleaseCard({ release, onClick, onDelete, onDr
       pending: 'bg-yellow-400',
       approved: 'bg-violet-400',
       published: 'bg-green-400',
-      distributed: 'bg-blue-400',
+      distributed: 'bg-emerald-400',
       rejected: 'bg-red-400',
       draft: 'bg-zinc-400',
       awaiting_payment: 'bg-orange-400'

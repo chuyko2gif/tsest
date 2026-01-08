@@ -13,6 +13,7 @@ interface ProfileSidebarProps {
   activeTab: 'releases' | 'finance' | 'settings';
   unreadTicketsCount: number;
   onTabChange: (tab: 'releases' | 'finance' | 'settings') => void;
+  onTabHover?: (tab: string) => void; // HOVER PREFETCH: предзагрузка при наведении
   onShowAvatarModal: () => void;
   onSupportToggle: () => void;
   showToast: () => void;
@@ -28,6 +29,7 @@ export default function ProfileSidebar({
   activeTab,
   unreadTicketsCount,
   onTabChange,
+  onTabHover,
   onShowAvatarModal,
   onSupportToggle,
   showToast,
@@ -124,7 +126,9 @@ export default function ProfileSidebar({
       <nav className="space-y-2">
         {/* РЕЛИЗЫ - ПЕРВЫМИ! */}
         <button 
-          onClick={() => onTabChange('releases')} 
+          onClick={() => onTabChange('releases')}
+          onMouseEnter={() => onTabHover?.('releases')}
+          onTouchStart={() => onTabHover?.('releases')}
           className={`sidebar-nav-btn w-full text-left py-3.5 px-5 rounded-2xl ${activeTab === 'releases' ? 'active' : ''}`}
         >
           <div className="flex items-center gap-3">
@@ -137,7 +141,9 @@ export default function ProfileSidebar({
         
         {/* ФИНАНСЫ */}
         <button 
-          onClick={() => onTabChange('finance')} 
+          onClick={() => onTabChange('finance')}
+          onMouseEnter={() => onTabHover?.('finance')}
+          onTouchStart={() => onTabHover?.('finance')}
           className={`sidebar-nav-btn w-full text-left py-3.5 px-5 rounded-2xl ${activeTab === 'finance' ? 'active' : ''}`}
         >
           <div className="flex items-center gap-3">
@@ -170,7 +176,9 @@ export default function ProfileSidebar({
 
         {/* Кнопка настроек - ПОСЛЕДНЯЯ */}
         <button 
-          onClick={() => onTabChange('settings')} 
+          onClick={() => onTabChange('settings')}
+          onMouseEnter={() => onTabHover?.('settings')}
+          onTouchStart={() => onTabHover?.('settings')}
           className={`sidebar-nav-btn w-full text-left py-3.5 px-5 rounded-2xl ${activeTab === 'settings' ? 'active' : ''}`}
         >
           <div className="flex items-center gap-3">

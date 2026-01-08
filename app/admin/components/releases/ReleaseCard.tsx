@@ -1,11 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Release, statusConfig } from './types';
 
-// Функция для извлечения доминантного цвета из изображения
+// ============================================================================
+// ОПТИМИЗАЦИЯ: Глобальный кэш доминантных цветов для предотвращения повторных вычислений
+// ============================================================================
+const dominantColorCache = new Map<string, { r: number; g: number; b: number }>();
+
+// Функция для извлечения доминантного цвета из изображения - ОПТИМИЗИРОВАННАЯ
 function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: number }> {
+  // Проверяем кэш
+  const cached = dominantColorCache.get(imageUrl);
+  if (cached) return Promise.resolve(cached);
+  
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -17,7 +26,8 @@ function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: 
         return;
       }
       
-      const size = 50;
+      // Уменьшенный размер для скорости
+      const size = 20;
       canvas.width = size;
       canvas.height = size;
       ctx.drawImage(img, 0, 0, size, size);
@@ -25,6 +35,7 @@ function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: 
       const imageData = ctx.getImageData(0, 0, size, size).data;
       let r = 0, g = 0, b = 0, count = 0;
       
+      // Каждый 4-й пиксель для скорости
       for (let i = 0; i < imageData.length; i += 16) {
         const red = imageData[i];
         const green = imageData[i + 1];
@@ -39,11 +50,13 @@ function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: 
         }
       }
       
-      if (count > 0) {
-        resolve({ r: Math.round(r / count), g: Math.round(g / count), b: Math.round(b / count) });
-      } else {
-        resolve({ r: 139, g: 92, b: 246 });
-      }
+      const result = count > 0 
+        ? { r: Math.round(r / count), g: Math.round(g / count), b: Math.round(b / count) }
+        : { r: 139, g: 92, b: 246 };
+      
+      // Сохраняем в кэш
+      dominantColorCache.set(imageUrl, result);
+      resolve(result);
     };
     img.onerror = () => {
       resolve({ r: 139, g: 92, b: 246 });
@@ -61,7 +74,10 @@ interface ReleaseCardProps {
   showCheckbox?: boolean;
 }
 
-export default function ReleaseCard({
+// ============================================================================
+// ОПТИМИЗАЦИЯ: memo + useMemo + useCallback для предотвращения лишних ререндеров
+// ============================================================================
+const ReleaseCard = memo(function ReleaseCard({
   release,
   isSelected = false,
   onSelect,
@@ -84,7 +100,8 @@ export default function ReleaseCard({
     }
   }, [release.cover_url]);
   
-  const highlightMatch = (text: string) => {
+  // ОПТИМИЗАЦИЯ: Мемоизированная функция подсветки
+  const highlightMatch = useCallback((text: string) => {
     if (!searchQuery || !text) return text;
     const lower = text.toLowerCase();
     const query = searchQuery.toLowerCase();
@@ -92,15 +109,15 @@ export default function ReleaseCard({
       return <span className={`px-0.5 rounded ${isLight ? 'bg-yellow-200' : 'bg-yellow-500/30'}`}>{text}</span>;
     }
     return text;
-  };
+  }, [searchQuery, isLight]);
 
-  // Динамический стиль свечения
-  const dynamicStyle = dominantColor && release.cover_url ? {
+  // ОПТИМИЗАЦИЯ: Мемоизированный динамический стиль свечения
+  const dynamicStyle = useMemo(() => dominantColor && release.cover_url ? {
     boxShadow: isLight 
       ? `0 4px 20px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.12), 0 0 0 1px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.1)`
       : `0 0 25px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.15), 0 0 10px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.1)`,
     borderColor: `rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, ${isLight ? 0.25 : 0.2})`
-  } : {};
+  } : {}, [dominantColor, release.cover_url, isLight]);
 
   return (
     <div 
@@ -160,13 +177,16 @@ export default function ReleaseCard({
       )}
 
       <div className="flex gap-4">
-        {/* Обложка */}
+        {/* Обложка - ОПТИМИЗАЦИЯ: lazy loading + GPU-ускорение */}
         <div className="flex-shrink-0">
           {release.cover_url ? (
             <img 
               src={release.cover_url} 
               alt={release.title}
+              loading="lazy"
+              decoding="async"
               className="w-20 h-20 rounded-lg object-cover"
+              style={{ contentVisibility: 'auto' }}
             />
           ) : (
             <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
@@ -251,4 +271,9 @@ export default function ReleaseCard({
       </div>
     </div>
   );
-}
+});
+
+// Displayname для DevTools
+ReleaseCard.displayName = 'ReleaseCard';
+
+export default ReleaseCard;

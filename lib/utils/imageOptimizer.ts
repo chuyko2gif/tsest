@@ -127,9 +127,11 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-export default {
+const imageOptimizer = {
   compressImage,
   createThumbnail,
   supportsWebP,
   formatFileSize,
 };
+
+export default imageOptimizer;

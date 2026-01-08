@@ -342,14 +342,14 @@ export default function ReleaseDetailModal({
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
-      // 1. Скачиваем обложку (ОРИГИНАЛ если есть, иначе сжатую)
-      const coverUrlToDownload = release.cover_url_original || release.cover_url;
-      if (coverUrlToDownload) {
+      // 1. Скачиваем обложку (ОРИГИНАЛ если есть)
+      const coverUrl = (release as any).cover_url_original || release.cover_url;
+      if (coverUrl) {
         try {
-          const coverResponse = await fetch(coverUrlToDownload);
+          const coverResponse = await fetch(coverUrl);
           if (coverResponse.ok) {
             const coverBlob = await coverResponse.blob();
-            const coverExt = coverUrlToDownload.split('.').pop()?.split('?')[0] || 'jpg';
+            const coverExt = coverUrl.split('.').pop()?.split('?')[0] || 'jpg';
             zip.file(`cover.${coverExt}`, coverBlob);
           }
         } catch (e) {
@@ -839,53 +839,25 @@ export default function ReleaseDetailModal({
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                     />
                   </div>
-                  {/* Кнопки скачивания обложки */}
-                  <div className="absolute bottom-2 right-2 flex gap-1">
-                    {/* Скачать оригинал (если есть) */}
-                    {release.cover_url_original && (
-                      <button
-                        onClick={() => handleDownloadFile(release.cover_url_original!, `${release.title}_cover_ORIGINAL.jpg`)}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 group/dl ${
-                          isLight 
-                            ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 hover:border-emerald-300' 
-                            : 'bg-emerald-900/70 hover:bg-emerald-800/90 border-emerald-500/30 hover:border-emerald-400/50'
-                        }`}
-                        title="Скачать ОРИГИНАЛ (без сжатия)"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-colors ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="7 10 12 15 17 10"/>
-                          <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                      </button>
+                  <button
+                    onClick={() => handleDownloadFile(
+                      // ОПТИМИЗАЦИЯ: Используем оригинал для скачивания, если есть
+                      (release as any).cover_url_original || release.cover_url, 
+                      `${release.title}_cover.jpg`
                     )}
-                    {/* Скачать сжатую */}
-                    <button
-                      onClick={() => handleDownloadFile(release.cover_url, `${release.title}_cover.jpg`)}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 group/dl ${
-                        isLight 
-                          ? 'bg-white/90 hover:bg-white border-gray-200 hover:border-purple-300' 
-                          : 'bg-black/70 hover:bg-black/90 border-white/10 hover:border-white/30'
-                      }`}
-                      title={release.cover_url_original ? "Скачать сжатую версию" : "Скачать обложку"}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-colors ${isLight ? 'text-gray-500 group-hover/dl:text-purple-600' : 'text-white/60 group-hover/dl:text-white'}`}>
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                      </svg>
-                    </button>
-                  </div>
-                  {/* Бейдж "Оригинал доступен" */}
-                  {release.cover_url_original && (
-                    <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                    className={`absolute bottom-2 right-2 w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-200 group/dl ${
                       isLight 
-                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                        : 'bg-emerald-900/80 text-emerald-300 border border-emerald-500/30'
-                    }`}>
-                      HQ
-                    </div>
-                  )}
+                        ? 'bg-white/90 hover:bg-white border-gray-200 hover:border-purple-300' 
+                        : 'bg-black/70 hover:bg-black/90 border-white/10 hover:border-white/30'
+                    }`}
+                    title="Скачать обложку (оригинал)"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-colors ${isLight ? 'text-gray-500 group-hover/dl:text-purple-600' : 'text-white/60 group-hover/dl:text-white'}`}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
                 </div>
               )}
 

@@ -42,6 +42,7 @@ interface TrackEditorProps {
   setTrackIsInstrumental?: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
+  isLight?: boolean;
 }
 
 export function TrackEditor({

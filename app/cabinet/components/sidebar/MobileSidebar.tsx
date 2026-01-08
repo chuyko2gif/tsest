@@ -14,6 +14,7 @@ interface MobileSidebarProps {
   activeTab: 'releases' | 'finance' | 'settings';
   unreadTicketsCount: number;
   onTabChange: (tab: 'releases' | 'finance' | 'settings') => void;
+  onTabHover?: (tab: string) => void; // HOVER PREFETCH
   onShowAvatarModal: () => void;
   onSupportToggle: () => void;
   showToast: () => void;
@@ -31,6 +32,7 @@ export default function MobileSidebar({
   activeTab,
   unreadTicketsCount,
   onTabChange,
+  onTabHover,
   onShowAvatarModal,
   onSupportToggle,
   showToast,
@@ -194,7 +196,8 @@ export default function MobileSidebar({
           <nav className="space-y-2 flex-1">
             {/* Релизы */}
             <button 
-              onClick={() => handleTabChange('releases')} 
+              onClick={() => handleTabChange('releases')}
+              onTouchStart={() => onTabHover?.('releases')}
               className={`sidebar-nav-btn w-full text-left py-3 px-4 rounded-xl ${activeTab === 'releases' ? 'active' : ''}`}
             >
               <div className="flex items-center gap-3">
@@ -207,7 +210,8 @@ export default function MobileSidebar({
             
             {/* Финансы */}
             <button 
-              onClick={() => handleTabChange('finance')} 
+              onClick={() => handleTabChange('finance')}
+              onTouchStart={() => onTabHover?.('finance')}
               className={`sidebar-nav-btn w-full text-left py-3 px-4 rounded-xl ${activeTab === 'finance' ? 'active' : ''}`}
             >
               <div className="flex items-center gap-3">
@@ -240,7 +244,8 @@ export default function MobileSidebar({
 
             {/* Настройки */}
             <button 
-              onClick={() => handleTabChange('settings')} 
+              onClick={() => handleTabChange('settings')}
+              onTouchStart={() => onTabHover?.('settings')}
               className={`sidebar-nav-btn w-full text-left py-3 px-4 rounded-xl ${activeTab === 'settings' ? 'active' : ''}`}
             >
               <div className="flex items-center gap-3">

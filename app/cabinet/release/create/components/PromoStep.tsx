@@ -167,11 +167,9 @@ export default function PromoStep({
         }
         
         if (!supabase) {
-          showErrorToast('Ошибка подключения к базе данных.');
+          showErrorToast('Ошибка подключения. Перезагрузите страницу.');
           continue;
         }
-        
-        const sb = supabase; // local alias for TypeScript
         
         // Генерируем уникальное имя файла с путём user_id для RLS
         const fileExt = file.name.split('.').pop();
@@ -179,7 +177,7 @@ export default function PromoStep({
         const filePath = `${userId}/${fileName}`;
 
         // Загружаем в Supabase Storage (bucket: release-promo)
-        const { error: uploadError } = await sb.storage
+        const { error: uploadError } = await supabase.storage
           .from('release-promo')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -202,7 +200,7 @@ export default function PromoStep({
         }
 
         // Получаем публичный URL
-        const { data: urlData } = sb.storage
+        const { data: urlData } = supabase.storage
           .from('release-promo')
           .getPublicUrl(filePath);
 

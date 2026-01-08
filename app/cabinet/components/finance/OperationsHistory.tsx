@@ -281,7 +281,7 @@ export default function OperationsHistory({ payouts, withdrawalRequests, transac
   }, [searchedOperations, activeFilter]);
 
   // Подсчёт количества по категориям (мемоизировано)
-  const counts: Record<string, number> = useMemo(() => ({
+  const counts = useMemo(() => ({
     all: searchedOperations.length,
     income: searchedOperations.filter(op => ['payout', 'deposit', 'bonus', 'adjustment', 'correction', 'refund', 'unfreeze'].includes(op.type)).length,
     withdrawal: searchedOperations.filter(op => op.type === 'withdrawal').length,
@@ -328,8 +328,8 @@ export default function OperationsHistory({ payouts, withdrawalRequests, transac
   };
 
   // Фильтры категорий - SVG иконки
-  type FilterId = 'all' | 'purchase' | 'income' | 'withdrawal' | 'frozen';
-  const filterButtons: { id: FilterId; label: string; icon: React.ReactNode; color: string; lightColor: string; iconColor: string; lightIconColor: string }[] = [
+  type FilterId = 'all' | 'income' | 'withdrawal' | 'frozen' | 'purchase';
+  const filterButtons: Array<{ id: FilterId; label: string; icon: React.ReactNode; color: string; lightColor: string; iconColor: string; lightIconColor: string }> = [
     { id: 'all', label: 'Все', icon: (
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />

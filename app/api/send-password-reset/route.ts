@@ -66,10 +66,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Получаем URL хоста динамически или используем продакшн URL
-    const host = request.headers.get('host') || 'thqlabel.ru';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
-    const resetLink = `${protocol}://${host}/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
     
     // Отправляем email через Brevo
     const transporter = nodemailer.createTransport({

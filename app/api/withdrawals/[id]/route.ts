@@ -13,7 +13,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: withdrawalId } = await params;
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,6 +36,8 @@ export async function PATCH(
     if (!adminProfile || !['admin', 'owner'].includes(adminProfile.role)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
+
+    const withdrawalId = id;
     const body = await request.json();
     const { status, adminComment } = body;
 
@@ -208,7 +210,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: withdrawalId } = await params;
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -220,6 +222,8 @@ export async function DELETE(
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+
+    const withdrawalId = id;
 
     // Получаем заявку
     const { data: withdrawal, error: fetchError } = await supabaseAdmin

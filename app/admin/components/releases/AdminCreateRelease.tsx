@@ -774,7 +774,7 @@ function AdminSendStep({ supabase, selectedUser, releaseType, releaseTitle, arti
                           <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Авторы</p>
                           <p className="text-xs text-white mt-0.5 break-words">
                             {track.authors.filter(a => a && a.fullName).map(a => {
-                              const roleLabel = a.role || 'Автор';
+                              const roleLabel = a.role || 'other';
                               return `${a.fullName} (${roleLabel})`;
                             }).join('; ')}
                           </p>

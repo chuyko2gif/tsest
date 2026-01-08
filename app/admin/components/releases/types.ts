@@ -23,7 +23,8 @@ export interface Release {
   title: string;
   artist_name: string;
   cover_url: string;
-  cover_url_original?: string; // Оригинальная обложка (без сжатия) для скачивания
+  /** URL оригинальной обложки (без сжатия) для скачивания админом */
+  cover_url_original?: string;
   genre: string;
   subgenres?: string[];
   collaborators?: string[];

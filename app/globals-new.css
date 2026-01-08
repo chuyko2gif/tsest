@@ -14,8 +14,6 @@ html {
 a, button, [role="button"], [onclick] {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  /* Минимальная задержка касания на мобильных */
-  -webkit-touch-callout: none;
 }
 
 /* Оптимизация рендеринга страниц */
@@ -24,26 +22,15 @@ main, [role="main"], .page-content {
 }
 
 /* ========================================
-   ROCKET PERFORMANCE OPTIMIZATIONS 🚀
-   Критические оптимизации для Redmi A5 и слабых ПК
+   PERFORMANCE OPTIMIZATIONS
+   Критические оптимизации для слабых устройств
    ======================================== */
 
-/* GPU ускорение для всех анимируемых элементов */
-.gpu-accelerated,
-.animate-spin,
-.animate-pulse,
-.animate-bounce,
-[class*="transition-"],
-[class*="animate-"] {
+/* GPU ускорение для анимаций */
+.gpu-accelerated {
   transform: translateZ(0);
   backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-/* Ультра-быстрые переходы для интерактивных элементов */
-a, button, [role="button"] {
-  transform: translateZ(0);
-  will-change: opacity;
+  will-change: transform;
 }
 
 /* Оптимизация скролла - только для контейнеров */
@@ -51,7 +38,6 @@ a, button, [role="button"] {
   scroll-behavior: smooth;
 }
 
-/* === СЛАБЫЕ УСТРОЙСТВА (Redmi A5, старые ПК) === */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -63,137 +49,15 @@ a, button, [role="button"] {
   }
 }
 
-/* CSS для data-perf атрибута (устанавливается PerformanceOptimizer) */
-[data-perf="low"] *,
-[data-perf="low"] *::before,
-[data-perf="low"] *::after {
-  animation-duration: 0.15s !important;
-  transition-duration: 0.15s !important;
-}
-
-[data-perf="low"] .orb-animation,
-[data-perf="low"] .complex-gradient,
-[data-perf="low"] .heavy-blur {
-  animation: none !important;
-  opacity: 0.6 !important;
-}
-
-[data-perf="low"] [style*="backdrop-filter"],
-[data-perf="low"] .backdrop-blur-xl,
-[data-perf="low"] .backdrop-blur-2xl,
-[data-perf="low"] .backdrop-blur-3xl {
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-/* Средние устройства */
-[data-perf="medium"] .orb-animation {
-  animation-duration: 30s !important;
-}
-
-[data-perf="medium"] [style*="backdrop-filter"] {
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-}
-
-/* === ОПТИМИЗАЦИИ ВО ВРЕМЯ СКРОЛЛА === */
-html.is-scrolling .heavy-animation,
-html.is-scrolling .complex-gradient,
-html.is-scrolling .orb-animation {
-  animation-play-state: paused !important;
-  opacity: 0.5 !important;
-}
-
-html.is-scrolling [style*="blur"] {
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-/* === ULTRA PERFORMANCE LEVELS === */
-/* perf-ultra-low: Redmi A5, старые телефоны, слабые ПК */
-html.perf-ultra-low *,
-html.perf-ultra-low *::before,
-html.perf-ultra-low *::after {
-  animation-duration: 0.1s !important;
-  transition-duration: 0.1s !important;
-  animation-timing-function: linear !important;
-}
-
-html.perf-ultra-low .orb-animation,
-html.perf-ultra-low .complex-gradient,
-html.perf-ultra-low .heavy-animation,
-html.perf-ultra-low .floating-particle,
-html.perf-ultra-low .parallax-effect {
-  display: none !important;
-}
-
-html.perf-ultra-low [style*="backdrop-filter"],
-html.perf-ultra-low .backdrop-blur-xl,
-html.perf-ultra-low .backdrop-blur-2xl,
-html.perf-ultra-low .backdrop-blur-3xl {
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-}
-
-html.perf-ultra-low .shadow-2xl,
-html.perf-ultra-low .shadow-xl,
-html.perf-ultra-low .shadow-lg {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-}
-
-html.perf-ultra-low img {
-  image-rendering: optimizeSpeed;
-}
-
-/* perf-low: бюджетные устройства */
-html.perf-low * {
-  animation-duration: 0.15s !important;
-  transition-duration: 0.15s !important;
-}
-
-html.perf-low .orb-animation {
-  animation-duration: 60s !important;
-  opacity: 0.3 !important;
-}
-
-html.perf-low [style*="backdrop-filter"],
-html.perf-low .backdrop-blur-xl,
-html.perf-low .backdrop-blur-2xl {
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-html.perf-low .complex-gradient {
-  opacity: 0.5 !important;
-}
-
-/* perf-medium: средние устройства */
-html.perf-medium .orb-animation {
-  animation-duration: 30s !important;
-}
-
-html.perf-medium [style*="backdrop-filter"] {
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-}
-
-/* Упрощение на мобильных */
+/* Упрощение на слабых устройствах */
 @media (max-width: 640px) {
   .complex-animation {
-    animation-duration: 0.2s !important;
+    animation: none !important;
   }
   
-  .blur-heavy,
-  .backdrop-blur-2xl,
-  .backdrop-blur-3xl {
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-  }
-  
-  /* Упрощаем тени на мобильных */
-  .shadow-2xl,
-  .shadow-xl {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  .blur-heavy {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
   }
 }
 
@@ -206,21 +70,11 @@ html.perf-medium [style*="backdrop-filter"] {
 /* Ленивый рендеринг для списков */
 .lazy-render {
   contain: layout style paint;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 300px;
 }
 
 /* Оптимизация изображений */
 img {
   content-visibility: auto;
-  contain: layout;
-}
-
-/* === INSTANT CLICK FEEDBACK === */
-a:active, button:active, [role="button"]:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-  transition: transform 0.05s ease, opacity 0.05s ease !important;
 }
 
 /* ========================================
@@ -2861,147 +2715,4 @@ body[data-admin-sidebar-open="true"] .admin-page-content {
   .admin-has-action-bar {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 70px);
   }
-}
-/* ========================================
-   ROCKET PERFORMANCE v2.0 🚀
-   Дополнительные оптимизации для слабых устройств
-   ======================================== */
-
-/* Оптимизация фоновых анимаций */
-.orb-animation,
-[class*="orb-float"] {
-  will-change: transform;
-  contain: strict;
-  backface-visibility: hidden;
-}
-
-/* GPU-ускоренные элементы */
-.header-logo,
-.nav-slider,
-[class*="liquid-glass"],
-.modal-content,
-.sidebar-panel {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* Оптимизация backdrop-filter */
-[style*="backdrop-filter"],
-.glass-effect,
-.liquid-glass-modal,
-.liquid-glass-backdrop {
-  will-change: backdrop-filter;
-  transform: translateZ(0);
-}
-
-/* Оптимизация для списков и карточек */
-.card,
-.release-card,
-.track-item,
-.user-row,
-.news-item {
-  contain: layout style;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 100px;
-}
-
-/* Instant visual feedback для кликов */
-.clickable:active,
-.btn:active,
-.button:active {
-  transform: scale(0.97) !important;
-  transition: transform 0.05s ease !important;
-}
-
-/* Оптимизация hover эффектов на мобильных */
-@media (hover: none) {
-  .hover-effect:hover,
-  [class*=":hover"]:hover {
-    transform: none !important;
-    box-shadow: inherit !important;
-  }
-}
-
-/* Принудительное GPU-ускорение для важных элементов */
-.force-gpu {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-/* Оптимизация скролла */
-.scroll-container,
-.overflow-auto,
-.overflow-y-auto,
-.overflow-x-auto {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: auto;
-  overscroll-behavior: contain;
-}
-
-/* Слабые устройства - агрессивная оптимизация */
-[data-perf="low"] .orb-animation,
-[data-perf="low"] [class*="orb-float"] {
-  display: none !important;
-}
-
-[data-perf="low"] .star-twinkle,
-[data-perf="low"] .holographic-shift {
-  animation: none !important;
-  opacity: 0.4 !important;
-}
-
-[data-perf="low"] .grid-overlay {
-  opacity: 0.3 !important;
-}
-
-/* Средние устройства - умеренная оптимизация */
-[data-perf="medium"] .orb-animation {
-  opacity: 0.6 !important;
-}
-
-[data-perf="medium"] .star-twinkle {
-  animation-duration: 6s !important;
-}
-
-/* Отключение pointer-events для декоративных элементов */
-.decorative,
-.orb-animation,
-.star-twinkle,
-.grid-overlay,
-[class*="pointer-events-none"] {
-  pointer-events: none !important;
-}
-
-/* Оптимизация текста */
-body {
-  text-rendering: optimizeSpeed;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Превентивная загрузка шрифтов */
-@font-face {
-  font-display: swap;
-}
-
-/* Убираем layout shift при загрузке изображений */
-img, video {
-  background-color: transparent;
-  object-fit: cover;
-}
-
-/* Skeleton loading optimization */
-.skeleton {
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-}
-
-[data-perf="low"] .skeleton {
-  animation: none !important;
-  opacity: 0.5 !important;
-}
-
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
 }

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface RoyaltyData {
@@ -73,29 +73,6 @@ function PieChart({
   
   const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
   
-  // Рассчитываем сегменты (вызываем useMemo до условного возврата)
-  const segments = useMemo(() => {
-    if (total === 0 || data.length === 0) return [];
-    let runningAngle = -90; // Начинаем сверху
-    return data.slice(0, 8).map((item, index) => {
-      const value = item[valueKey] || 0;
-      const percentage = (value / total) * 100;
-      const angle = (value / total) * 360;
-      
-      const startAngle = runningAngle;
-      runningAngle += angle;
-      
-      return {
-        ...item,
-        color: CHART_COLORS[index % CHART_COLORS.length],
-        percentage,
-        startAngle,
-        endAngle: runningAngle,
-        value
-      };
-    });
-  }, [data, total, valueKey]);
-  
   if (total === 0 || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-4">
@@ -114,6 +91,27 @@ function PieChart({
       </div>
     );
   }
+
+  // Рассчитываем сегменты
+  const segments = data.slice(0, 8).reduce<Array<any>>((acc, item, index) => {
+    const value = item[valueKey] || 0;
+    const percentage = (value / total) * 100;
+    const angle = (value / total) * 360;
+    
+    const prevEndAngle = acc.length > 0 ? acc[acc.length - 1].endAngle : -90;
+    const startAngle = prevEndAngle;
+    const endAngle = startAngle + angle;
+    
+    acc.push({
+      ...item,
+      color: CHART_COLORS[index % CHART_COLORS.length],
+      percentage,
+      startAngle,
+      endAngle,
+      value
+    });
+    return acc;
+  }, []);
 
   // SVG paths для сегментов
   const createArcPath = (startAngle: number, endAngle: number, radius: number, innerRadius: number = 0) => {

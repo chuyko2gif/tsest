@@ -4,48 +4,33 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 /**
- * TURBO NAVIGATION v2.0 - РАКЕТНАЯ навигация
+ * TURBO NAVIGATION - УЛЬТРА-БЫСТРАЯ навигация
  * 
- * Стратегия МАКСИМАЛЬНОЙ скорости для слабых устройств:
- * 1. Предзагрузка КРИТИЧЕСКИХ страниц при старте (приоритет)
- * 2. Мгновенный prefetch при mousedown (ДО click!) - экономит 50-100ms
- * 3. Prefetch при движении мыши к ссылке (предсказание)
- * 4. Prefetch ВСЕХ ссылок на странице (фоновый режим)
- * 5. Idle-time prefetch - загружаем когда браузер свободен
- * 6. Touch-оптимизация для мобильных
- * 7. Memory-efficient кэш с LRU вытеснением
+ * Стратегия максимальной скорости:
+ * 1. Предзагрузка ВСЕХ страниц сайта при старте
+ * 2. Мгновенный prefetch при mousedown (до click!)
+ * 3. Prefetch при движении мыши к ссылке
+ * 4. Prefetch ВСЕХ ссылок на странице сразу
+ * 5. Перехват кликов для мгновенного перехода
  */
 
-// Детекция производительности устройства
-const isLowEndDevice = typeof window !== 'undefined' && (
-  navigator.hardwareConcurrency <= 4 ||
-  (navigator as any).deviceMemory <= 4 ||
-  /Android.*Chrome\/[.0-9]* Mobile/.test(navigator.userAgent) ||
-  /Redmi|POCO|Realme/i.test(navigator.userAgent)
-);
-
-// Глобальный кэш - храним навсегда в сессии (LRU на слабых устройствах)
+// Глобальный кэш - храним навсегда в сессии
 const prefetchedUrls = new Set<string>();
 const prefetchQueue: string[] = [];
 let isProcessing = false;
-const MAX_CACHE_SIZE = isLowEndDevice ? 20 : 50; // Ограничиваем на слабых устройствах
 
-// КРИТИЧЕСКИЕ маршруты - грузим первыми
-const CRITICAL_ROUTES = [
+// ВСЕ маршруты сайта для предзагрузки
+const ALL_ROUTES = [
   '/',
   '/feed',
-  '/cabinet',
-  '/auth',
-];
-
-// ВСЕ маршруты сайта для фоновой предзагрузки
-const ALL_ROUTES = [
   '/news',
   '/contacts',
   '/faq',
   '/offer',
   '/about',
+  '/auth',
   '/auth/register',
+  '/cabinet',
   '/cabinet/releases',
   '/cabinet/releases/drafts',
   '/cabinet/release-basic/create',
@@ -86,30 +71,16 @@ export function TurboNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const lastMousePos = useRef({ x: 0, y: 0 });
-  const idleCallbackId = useRef<number>(0);
-
-  // LRU кэш - удаляем старые записи на слабых устройствах
-  const addToCache = useCallback((url: string) => {
-    if (prefetchedUrls.has(url)) return false;
-    
-    // LRU вытеснение на слабых устройствах
-    if (isLowEndDevice && prefetchedUrls.size >= MAX_CACHE_SIZE) {
-      const firstItem = prefetchedUrls.values().next().value;
-      if (firstItem) prefetchedUrls.delete(firstItem);
-    }
-    
-    prefetchedUrls.add(url);
-    return true;
-  }, []);
 
   // Мгновенный prefetch - без задержек
   const prefetch = useCallback((url: string) => {
     const normalized = normalize(url);
-    if (!addToCache(normalized)) return;
+    if (prefetchedUrls.has(normalized)) return;
     
+    prefetchedUrls.add(normalized);
     // Микротаск - быстрее чем setTimeout(0)
     queueMicrotask(() => router.prefetch(normalized));
-  }, [router, addToCache]);
+  }, [router]);
 
   // Batch prefetch - обрабатываем очередь
   const processPrefetchQueue = useCallback(() => {
@@ -231,91 +202,45 @@ export function TurboNavigation() {
 
   // Инициализация
   useEffect(() => {
-    // 1. КРИТИЧЕСКИЕ маршруты - грузим СРАЗУ (высокий приоритет)
-    CRITICAL_ROUTES.forEach(route => {
-      if (!prefetchedUrls.has(route)) {
-        router.prefetch(route);
-        prefetchedUrls.add(route);
-      }
-    });
-    
-    // 2. Остальные маршруты - в очередь для фоновой загрузки
+    // 1. Предзагружаем ВСЕ критические маршруты сразу
     ALL_ROUTES.forEach(route => {
-      if (!prefetchedUrls.has(route) && !prefetchQueue.includes(route)) {
+      if (!prefetchedUrls.has(route)) {
         prefetchQueue.push(route);
       }
     });
+    processPrefetchQueue();
     
-    // На слабых устройствах не грузим всё сразу - только по мере необходимости
-    if (!isLowEndDevice) {
-      processPrefetchQueue();
-    }
+    // 2. Prefetch всех ссылок на текущей странице
+    // Небольшая задержка чтобы страница отрендерилась
+    const timer = setTimeout(prefetchAllLinks, 100);
     
-    // 3. Prefetch всех ссылок на текущей странице через requestIdleCallback
-    // Используем idle time для фоновой загрузки
-    const scheduleIdlePrefetch = () => {
-      if ('requestIdleCallback' in window) {
-        idleCallbackId.current = (window as any).requestIdleCallback(
-          (deadline: { timeRemaining: () => number }) => {
-            // Грузим пока есть свободное время
-            if (deadline.timeRemaining() > 10) {
-              prefetchAllLinks();
-            }
-            // Продолжаем если есть ещё что грузить
-            if (prefetchQueue.length > 0) {
-              scheduleIdlePrefetch();
-            }
-          },
-          { timeout: isLowEndDevice ? 2000 : 1000 }
-        );
-      } else {
-        // Fallback для старых браузеров
-        setTimeout(prefetchAllLinks, isLowEndDevice ? 500 : 100);
-      }
-    };
-    
-    scheduleIdlePrefetch();
-    
-    // 4. Event listeners с capture для максимальной скорости
+    // 3. Event listeners с capture для максимальной скорости
     const opts: AddEventListenerOptions = { passive: true, capture: true };
     
     document.addEventListener('mousedown', handleMouseDown, opts);
     document.addEventListener('mouseover', handleMouseOver, opts);
     document.addEventListener('touchstart', handleTouchStart, opts);
-    
-    // На слабых устройствах отключаем тяжёлые обработчики
-    if (!isLowEndDevice) {
-      document.addEventListener('mousemove', handleMouseMove, opts);
-    }
+    document.addEventListener('mousemove', handleMouseMove, opts);
     document.addEventListener('focusin', handleFocus, opts);
     
-    // 5. Observer для новых ссылок (throttled на слабых устройствах)
-    let mutationTimeout: ReturnType<typeof setTimeout>;
+    // 4. Observer для новых ссылок
     const observer = new MutationObserver(() => {
-      // Debounce mutations на слабых устройствах
-      clearTimeout(mutationTimeout);
-      mutationTimeout = setTimeout(() => {
-        requestAnimationFrame(prefetchAllLinks);
-      }, isLowEndDevice ? 200 : 50);
+      // Debounce через RAF
+      requestAnimationFrame(prefetchAllLinks);
     });
     
     observer.observe(document.body, { childList: true, subtree: true });
     
     return () => {
-      if (idleCallbackId.current && 'cancelIdleCallback' in window) {
-        (window as any).cancelIdleCallback(idleCallbackId.current);
-      }
-      clearTimeout(mutationTimeout);
+      clearTimeout(timer);
       document.removeEventListener('mousedown', handleMouseDown, opts as EventListenerOptions);
       document.removeEventListener('mouseover', handleMouseOver, opts as EventListenerOptions);
       document.removeEventListener('touchstart', handleTouchStart, opts as EventListenerOptions);
-      if (!isLowEndDevice) {
-        document.removeEventListener('mousemove', handleMouseMove, opts as EventListenerOptions);
-      }
+      document.removeEventListener('mousemove', handleMouseMove, opts as EventListenerOptions);
       document.removeEventListener('focusin', handleFocus, opts as EventListenerOptions);
       observer.disconnect();
     };
-  }, [handleMouseDown, handleMouseOver, handleTouchStart, handleMouseMove, handleFocus, prefetchAllLinks, processPrefetchQueue, router]);
+  }, [handleMouseDown, handleMouseOver, handleTouchStart, handleMouseMove, handleFocus, prefetchAllLinks, processPrefetchQueue]);
 
   // При смене страницы - prefetch новых ссылок
   useEffect(() => {

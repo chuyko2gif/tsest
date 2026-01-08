@@ -73,10 +73,10 @@ interface SendStepProps {
   platforms: string[];
   countries: string[];
   onBack: () => void;
+  onDeleteDraft?: () => Promise<void>;
   paymentReceiptUrl?: string;
   paymentComment?: string;
   draftId?: string | null;
-  onDeleteDraft?: () => void;
 }
 
 export default function SendStep({ 
@@ -1024,9 +1024,7 @@ export default function SendStep({
                     try {
                       if (!supabase) throw new Error('Supabase не инициализирован');
                       
-                      const sb = supabase; // local alias for TypeScript
-                      
-                      const { data: { user } } = await sb.auth.getUser();
+                      const { data: { user } } = await supabase.auth.getUser();
                       if (!user) throw new Error('Пользователь не авторизован');
                 
                 // Загрузка обложки
@@ -1035,13 +1033,13 @@ export default function SendStep({
                   const fileExt = coverFile.name.split('.').pop();
                   const fileName = `${user.id}/${Date.now()}.${fileExt}`;
                   
-                  const { data: uploadData, error: uploadError } = await sb.storage
+                  const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('release-covers')
                     .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
                   
                   if (uploadError) throw uploadError;
                   
-                  const { data: { publicUrl } } = sb.storage
+                  const { data: { publicUrl } } = supabase.storage
                     .from('release-covers')
                     .getPublicUrl(fileName);
                     
@@ -1049,6 +1047,7 @@ export default function SendStep({
                 }
                 
                 // Загрузка аудиофайлов треков
+                const storage = supabase.storage;
                 const tracksWithUrls = await Promise.all(tracks.map(async (track, index) => {
                   // Проверяем, что audioFile - это реальный File объект
                   const audioFile = track.audioFile;
@@ -1061,7 +1060,7 @@ export default function SendStep({
                       const audioFileExt = audioFile.name.split('.').pop();
                       const audioFileName = `${user.id}/${Date.now()}-track-${index}.${audioFileExt}`;
                       
-                      const { data: audioUploadData, error: audioUploadError } = await sb.storage
+                      const { data: audioUploadData, error: audioUploadError } = await storage
                         .from('release-audio')
                         .upload(audioFileName, audioFile, {
                           contentType: audioFile.type,
@@ -1084,7 +1083,7 @@ export default function SendStep({
                         };
                       }
                       
-                      const { data: { publicUrl: audioUrl } } = sb.storage
+                      const { data: { publicUrl: audioUrl } } = storage
                         .from('release-audio')
                         .getPublicUrl(audioFileName);
                       

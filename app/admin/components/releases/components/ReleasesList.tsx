@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Release } from '../types';
 
@@ -61,7 +61,10 @@ interface ReleaseCardCompactProps {
   isLight: boolean;
 }
 
-function ReleaseCardCompact({
+// ============================================================================
+// ОПТИМИЗАЦИЯ: memo для предотвращения ререндеров при скролле
+// ============================================================================
+const ReleaseCardCompact = memo(function ReleaseCardCompact({
   release,
   viewMode,
   isSelected,
@@ -108,7 +111,14 @@ function ReleaseCardCompact({
             )}
             <div className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 ${isLight ? 'bg-gray-100' : 'bg-white/5'}`}>
               {release.cover_url ? (
-                <img src={release.cover_url} alt={release.title} className="w-full h-full object-cover" />
+                <img 
+                  src={release.cover_url} 
+                  alt={release.title} 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover" 
+                  style={{ contentVisibility: 'auto' }}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <svg className={`w-6 h-6 ${isLight ? 'text-gray-400' : 'text-zinc-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,7 +212,14 @@ function ReleaseCardCompact({
           {/* Обложка */}
           <div className={`w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 ${isLight ? 'bg-gray-100' : 'bg-white/5'}`}>
             {release.cover_url ? (
-              <img src={release.cover_url} alt={release.title} className="w-full h-full object-cover" />
+              <img 
+                src={release.cover_url} 
+                alt={release.title} 
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+                style={{ contentVisibility: 'auto' }}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <svg className={`w-8 h-8 ${isLight ? 'text-gray-400' : 'text-zinc-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -273,7 +290,7 @@ function ReleaseCardCompact({
       </div>
     </div>
   );
-}
+});
 
 // Мобильные версии бейджей (более компактные)
 function StatusBadgeMobile({ status, isLight }: { status: string; isLight: boolean }) {
@@ -363,6 +380,8 @@ function StatusBadge({ status, isLight }: { status: string; isLight: boolean }) 
   );
 }
 
+// Displayname для DevTools
+ReleaseCardCompact.displayName = 'ReleaseCardCompact';
 function PaymentBadge({ paymentStatus, isLight }: { paymentStatus: string | null; isLight: boolean }) {
   const config: Record<string, { text: string; className: string }> = {
     pending: { text: 'Платеж на проверке', className: 'bg-yellow-500/20 text-yellow-500' },

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Toast from '@/components/ui/Toast';
@@ -23,6 +23,38 @@ const AdminTicketsPanel = lazy(() => import('./components/tickets/AdminTicketsPa
 const WithdrawalsTab = lazy(() => import('./components/withdrawals/WithdrawalsTab'));
 const ReportsTab = lazy(() => import('./components/reports/ReportsTab'));
 const TransactionsTab = lazy(() => import('./components/finance/TransactionsTab'));
+
+// ============================================================================
+// KEEP-ALIVE TAB PANEL - Вкладки не размонтируются, только скрываются
+// Обеспечивает МГНОВЕННОЕ переключение без потери состояния
+// ============================================================================
+const KeepAliveTabPanel = memo(function KeepAliveTabPanel({ 
+  isActive, 
+  hasBeenActive,
+  children 
+}: { 
+  isActive: boolean; 
+  hasBeenActive: boolean;
+  children: React.ReactNode;
+}) {
+  // Не рендерим если вкладка ни разу не была активна (ленивая загрузка)
+  if (!hasBeenActive) return null;
+  
+  return (
+    <div
+      style={{ 
+        display: isActive ? 'block' : 'none',
+        // CSS containment для скрытых вкладок - экономит память и CPU
+        contain: isActive ? 'none' : 'strict',
+      }}
+      aria-hidden={!isActive}
+    >
+      <Suspense fallback={<TabLoader />}>
+        {children}
+      </Suspense>
+    </div>
+  );
+});
 
 // Компонент загрузки для Suspense
 const TabLoader = memo(() => (
@@ -226,6 +258,42 @@ export default function AdminPage() {
   });
   const router = useRouter();
   
+  // ============================================================================
+  // KEEP-ALIVE: Отслеживание посещённых вкладок для ленивой загрузки
+  // ============================================================================
+  const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => {
+    const initial = new Set<Tab>(['users']); // users - дефолтная вкладка
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = urlParams.get('tab') as Tab;
+      if (tabFromUrl) initial.add(tabFromUrl);
+      const saved = localStorage.getItem('adminActiveTab') as Tab;
+      if (saved) initial.add(saved);
+    }
+    return initial;
+  });
+  
+  // При смене вкладки добавляем в visited
+  const handleTabChange = useCallback((newTab: Tab) => {
+    setActiveTab(newTab);
+    setVisitedTabs(prev => {
+      if (prev.has(newTab)) return prev;
+      return new Set([...prev, newTab]);
+    });
+  }, []);
+  
+  // ============================================================================
+  // HOVER PREFETCH: Предзагрузка вкладки при наведении
+  // Делает переключение МГНОВЕННЫМ - контент уже загружен до клика
+  // ============================================================================
+  const handleTabHover = useCallback((tabId: Tab) => {
+    // Добавляем в visited чтобы начать lazy load компонента
+    setVisitedTabs(prev => {
+      if (prev.has(tabId)) return prev;
+      return new Set([...prev, tabId]);
+    });
+  }, []);
+  
   const [toast, setToast] = useState<{show: boolean; message: string; type: 'success' | 'error' | 'info'}>({
     show: false,
     message: '',
@@ -340,7 +408,7 @@ export default function AdminPage() {
       {/* Mobile Navigation - только на мобильных */}
       <AdminMobileNav
         currentTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as Tab)}
+        onTabChange={(tab) => handleTabChange(tab as Tab)}
         tabs={tabs}
         userEmail={userEmail}
         userRole={currentUserRole}
@@ -431,7 +499,10 @@ export default function AdminPage() {
               return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
+                // HOVER PREFETCH: При наведении начинаем загружать контент вкладки
+                onMouseEnter={() => handleTabHover(tab.id)}
+                onTouchStart={() => handleTabHover(tab.id)}
                 className={`flex-shrink-0 lg:w-full text-left py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-2 sm:gap-3 transition-all duration-300 whitespace-nowrap ${
                   activeTab === tab.id 
                     ? isMainTab 
@@ -486,17 +557,57 @@ export default function AdminPage() {
           }`} 
           style={{ boxShadow: isLight ? '0 8px 32px rgba(96, 80, 186, 0.1)' : '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}
         >
-          <Suspense fallback={<TabLoader />}>
-            {activeTab === 'releases' && supabase && <ReleasesModeration supabase={supabase} onSidebarCollapse={setSidebarCollapsed} />}
-            {activeTab === 'news' && supabase && <NewsTab supabase={supabase} />}
-            {activeTab === 'withdrawals' && supabase && <WithdrawalsTab supabase={supabase} currentUserRole={currentUserRole} />}
-            {activeTab === 'tickets' && supabase && <AdminTicketsPanel supabase={supabase} initialTicketId={initialTicketId} onTicketOpened={() => setInitialTicketId(null)} />}
-            {activeTab === 'users' && supabase && <UsersTab supabase={supabase} currentUserRole={currentUserRole} />}
-            {activeTab === 'contracts' && <ContractsTab />}
-            {activeTab === 'archive' && supabase && <ArchiveTab supabase={supabase} />}
-            {activeTab === 'reports' && supabase && <ReportsTab supabase={supabase} />}
-            {activeTab === 'transactions' && supabase && <TransactionsTab supabase={supabase} currentUserRole={currentUserRole} />}
-          </Suspense>
+          {/* ================================================================
+              KEEP-ALIVE TABS: Вкладки НЕ размонтируются!
+              Это обеспечивает МГНОВЕННОЕ переключение без потери состояния.
+              Каждая вкладка загружается лениво при первом посещении.
+          ================================================================ */}
+          
+          {/* Users Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'users'} hasBeenActive={visitedTabs.has('users')}>
+            {supabase && <UsersTab supabase={supabase} currentUserRole={currentUserRole} />}
+          </KeepAliveTabPanel>
+          
+          {/* Releases Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'releases'} hasBeenActive={visitedTabs.has('releases')}>
+            {supabase && <ReleasesModeration supabase={supabase} onSidebarCollapse={setSidebarCollapsed} />}
+          </KeepAliveTabPanel>
+          
+          {/* Tickets Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'tickets'} hasBeenActive={visitedTabs.has('tickets')}>
+            {supabase && <AdminTicketsPanel supabase={supabase} initialTicketId={initialTicketId} onTicketOpened={() => setInitialTicketId(null)} />}
+          </KeepAliveTabPanel>
+          
+          {/* Transactions Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'transactions'} hasBeenActive={visitedTabs.has('transactions')}>
+            {supabase && <TransactionsTab supabase={supabase} currentUserRole={currentUserRole} />}
+          </KeepAliveTabPanel>
+          
+          {/* Withdrawals Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'withdrawals'} hasBeenActive={visitedTabs.has('withdrawals')}>
+            {supabase && <WithdrawalsTab supabase={supabase} currentUserRole={currentUserRole} />}
+          </KeepAliveTabPanel>
+          
+          {/* News Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'news'} hasBeenActive={visitedTabs.has('news')}>
+            {supabase && <NewsTab supabase={supabase} />}
+          </KeepAliveTabPanel>
+          
+          {/* Contracts Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'contracts'} hasBeenActive={visitedTabs.has('contracts')}>
+            <ContractsTab />
+          </KeepAliveTabPanel>
+          
+          {/* Reports Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'reports'} hasBeenActive={visitedTabs.has('reports')}>
+            {supabase && <ReportsTab supabase={supabase} />}
+          </KeepAliveTabPanel>
+          
+          {/* Archive Tab */}
+          <KeepAliveTabPanel isActive={activeTab === 'archive'} hasBeenActive={visitedTabs.has('archive')}>
+            {supabase && <ArchiveTab supabase={supabase} />}
+          </KeepAliveTabPanel>
+          
         </section>
 
       </div>

@@ -10,7 +10,6 @@ import { getAllCountries } from '@/components/icons/CountryFlagsSVG';
 import { getPaymentTotal } from '@/lib/utils/calculatePayment';
 import DepositModal from '@/app/cabinet/components/finance/DepositModal';
 import { TrackAuthor } from '@/components/ui/TrackAuthors';
-import { compressImage } from '@/lib/utils/imageOptimizer';
 import {
   ReleaseInfoStep,
   TracklistStep,
@@ -647,7 +646,6 @@ export default function CreateReleaseBasicPage() {
     featuring?: string[];
     isInstrumental?: boolean;
     originalFileName?: string;
-    existingAudioUrl?: string;
   }>>([]);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [trackTitle, setTrackTitle] = useState('');
@@ -926,55 +924,27 @@ export default function CreateReleaseBasicPage() {
   const saveDraft = async () => {
     if (!user || !supabase || isSavingDraft) return null;
     
-    const sb = supabase; // local alias for TypeScript
     setIsSavingDraft(true);
     try {
       let coverUrl = null;
-      let coverUrlOriginal = null;
-      
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
-        const timestamp = Date.now();
-        
-        // 1. Загружаем ОРИГИНАЛ (для админа)
-        const originalFileName = `${user.id}-${timestamp}-original.${fileExt}`;
-        const { data: originalUpload, error: originalError } = await sb.storage
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('releases')
-          .upload(originalFileName, coverFile, { contentType: coverFile.type, upsert: true });
+          .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
-        if (!originalError && originalUpload) {
-          const { data: { publicUrl: originalUrl } } = sb.storage
+        if (!uploadError && uploadData) {
+          const { data: { publicUrl } } = supabase.storage
             .from('releases')
-            .getPublicUrl(originalFileName);
-          coverUrlOriginal = originalUrl;
-        }
-        
-        // 2. Создаём и загружаем СЖАТУЮ версию (для отображения)
-        try {
-          const compressedBlob = await compressImage(coverFile, 800, 0.85);
-          const compressedFileName = `${user.id}-${timestamp}.webp`;
-          
-          const { data: compressedUpload, error: compressedError } = await sb.storage
-            .from('releases')
-            .upload(compressedFileName, compressedBlob, { contentType: 'image/webp', upsert: true });
-          
-          if (!compressedError && compressedUpload) {
-            const { data: { publicUrl } } = sb.storage
-              .from('releases')
-              .getPublicUrl(compressedFileName);
-            coverUrl = publicUrl;
-          } else {
-            // Fallback - используем оригинал
-            coverUrl = coverUrlOriginal;
-          }
-        } catch {
-          // Fallback - используем оригинал если сжатие не удалось
-          coverUrl = coverUrlOriginal;
+            .getPublicUrl(fileName);
+          coverUrl = publicUrl;
         }
       }
       
       // Подготавливаем треки для сохранения
       // Загружаем аудио файлы в storage если есть
+      const storage = supabase.storage;
       const tracksForSave = await Promise.all(tracks.map(async (track, index) => {
         let audioUrl = track.link || '';
         let originalFileName = track.originalFileName || '';
@@ -985,12 +955,12 @@ export default function CreateReleaseBasicPage() {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await sb.storage
+            const { error: audioError } = await storage
               .from('release-audio')
               .upload(audioFileName, track.audioFile, { contentType: track.audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = sb.storage
+              const { data: { publicUrl } } = storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -1034,7 +1004,6 @@ export default function CreateReleaseBasicPage() {
         title: releaseTitle || 'Без названия',
         artist_name: releaseArtists.length > 0 ? releaseArtists[0] : (artistName || nickname),
         cover_url: coverUrl,
-        cover_url_original: coverUrlOriginal, // Оригинал для админа
         genre: genre,
         subgenres: subgenres.length > 0 ? subgenres : null,
         release_date: releaseDate,
@@ -1058,7 +1027,7 @@ export default function CreateReleaseBasicPage() {
       };
       
       if (draftId) {
-        const { error } = await sb
+        const { error } = await supabase
           .from('releases_basic')
           .update(draftData)
           .eq('id', draftId);
@@ -1068,7 +1037,7 @@ export default function CreateReleaseBasicPage() {
         }
         return draftId;
       } else {
-        const { data, error } = await sb
+        const { data, error } = await supabase
           .from('releases_basic')
           .insert([draftData])
           .select()
@@ -1114,46 +1083,20 @@ export default function CreateReleaseBasicPage() {
     try {
       if (!supabase) throw new Error('Supabase не инициализирован');
       
-      // Загружаем обложку (оригинал + сжатая)
+      // Загружаем обложку
       let coverUrl = null;
-      let coverUrlOriginal = null;
-      
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
-        const timestamp = Date.now();
-        
-        // 1. Загружаем ОРИГИНАЛ (для админа)
-        const originalFileName = `${user.id}-${timestamp}-original.${fileExt}`;
-        const { data: originalUpload, error: originalError } = await supabase.storage
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase!.storage
           .from('releases')
-          .upload(originalFileName, coverFile, { contentType: coverFile.type, upsert: true });
+          .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
-        if (!originalError && originalUpload) {
-          const { data: { publicUrl: originalUrl } } = supabase.storage
+        if (!uploadError && uploadData) {
+          const { data: { publicUrl } } = supabase!.storage
             .from('releases')
-            .getPublicUrl(originalFileName);
-          coverUrlOriginal = originalUrl;
-        }
-        
-        // 2. Создаём и загружаем СЖАТУЮ версию (для отображения)
-        try {
-          const compressedBlob = await compressImage(coverFile, 800, 0.85);
-          const compressedFileName = `${user.id}-${timestamp}.webp`;
-          
-          const { data: compressedUpload, error: compressedError } = await supabase.storage
-            .from('releases')
-            .upload(compressedFileName, compressedBlob, { contentType: 'image/webp', upsert: true });
-          
-          if (!compressedError && compressedUpload) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('releases')
-              .getPublicUrl(compressedFileName);
-            coverUrl = publicUrl;
-          } else {
-            coverUrl = coverUrlOriginal;
-          }
-        } catch {
-          coverUrl = coverUrlOriginal;
+            .getPublicUrl(fileName);
+          coverUrl = publicUrl;
         }
       }
       
@@ -1210,7 +1153,6 @@ export default function CreateReleaseBasicPage() {
         title: releaseTitle,
         artist_name: releaseArtists.length > 0 ? releaseArtists[0] : (artistName || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Artist'),
         cover_url: coverUrl,
-        cover_url_original: coverUrlOriginal, // Оригинал для админа
         genre: genre,
         subgenres: subgenres,
         release_date: releaseDate,

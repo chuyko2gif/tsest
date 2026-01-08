@@ -186,7 +186,7 @@ export function ContributorsSection({ release }: { release: Release }) {
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${isLight ? 'bg-rose-100' : 'bg-rose-500/20'}`}>
-          <svg width="12" height="12" className={`sm:w-4 sm:h-4 ${isLight ? 'text-rose-600' : 'text-rose-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`sm:w-4 sm:h-4 ${isLight ? 'text-rose-600' : 'text-rose-400'}`}>
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>

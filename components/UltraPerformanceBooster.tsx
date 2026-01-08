@@ -234,6 +234,7 @@ const UltraPerformanceBooster = memo(() => {
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameCount = useRef(0);
   const lastFrameTime = useRef(0);
+  const rafIdRef = useRef<number>(0);
 
   // Оптимизация во время скролла
   const handleScrollStart = useCallback(() => {
@@ -257,6 +258,41 @@ const UltraPerformanceBooster = memo(() => {
     const delay = perfLevel === 'ultra-low' ? 50 : perfLevel === 'low' ? 100 : 150;
     scrollTimeout.current = setTimeout(handleScrollEnd, delay);
   }, [handleScrollStart, handleScrollEnd]);
+
+  // Frame rate monitoring и throttling
+  const monitorFrameRate = useCallback(function frameMonitor() {
+    const now = performance.now();
+    
+    if (lastFrameTime.current) {
+      const delta = now - lastFrameTime.current;
+      
+      // Если frame rate падает ниже 30fps (33ms per frame)
+      if (delta > 33 && perfLevel !== 'ultra-low') {
+        frameCount.current++;
+        
+        // Если несколько фреймов подряд медленные - понижаем уровень
+        if (frameCount.current > 10) {
+          console.log('[UltraPerf] Low FPS detected, reducing quality');
+          const levels: PerfLevel[] = ['ultra-low', 'low', 'medium', 'high'];
+          const currentIndex = levels.indexOf(perfLevel);
+          if (currentIndex > 0) {
+            perfLevel = levels[currentIndex - 1];
+            applyOptimizations(perfLevel);
+          }
+          frameCount.current = 0;
+        }
+      } else {
+        frameCount.current = Math.max(0, frameCount.current - 1);
+      }
+    }
+    
+    lastFrameTime.current = now;
+    
+    // Продолжаем мониторинг только на не ultra-low
+    if (perfLevel !== 'ultra-low') {
+      rafIdRef.current = requestAnimationFrame(frameMonitor);
+    }
+  }, []);
 
   // Очистка памяти
   const cleanupMemory = useCallback(() => {
@@ -285,6 +321,11 @@ const UltraPerformanceBooster = memo(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log(`[UltraPerf] Performance level: ${perfLevel}`);
       console.log(`[UltraPerf] Cores: ${navigator.hardwareConcurrency}, Memory: ${(navigator as any).deviceMemory || 'unknown'}GB`);
+    }
+    
+    // Запускаем мониторинг FPS (только не на ultra-low)
+    if (perfLevel !== 'ultra-low') {
+      requestAnimationFrame(monitorFrameRate);
     }
     
     // Scroll optimization с passive listener
@@ -327,7 +368,7 @@ const UltraPerformanceBooster = memo(() => {
       clearInterval(memoryCleanupInterval);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-  }, [handleScroll, cleanupMemory]);
+  }, [handleScroll, monitorFrameRate, cleanupMemory]);
 
   return null;
 });

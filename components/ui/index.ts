@@ -8,3 +8,10 @@ export { CoverImage, usePreloadCovers } from './CoverImage';
 export { default as ReleaseArtists } from './ReleaseArtists';
 export { default as ReleaseContributors, CONTRIBUTOR_ROLES } from './ReleaseContributors';
 export type { Contributor } from './ReleaseContributors';
+// SMART COVER IMAGE - оптимизированные обложки
+export { 
+  SmartCoverImage, 
+  useOriginalCoverUrl, 
+  usePreloadSmartCovers,
+  SmartImageCache 
+} from './SmartCoverImage';

@@ -31,37 +31,6 @@ const TurboNavigation = dynamic(
   () => import('../components/TurboNavigation'),
   { ssr: false }
 );
-// PERFORMANCE OPTIMIZER - МАКСИМАЛЬНАЯ производительность для слабых устройств
-const PerformanceOptimizer = dynamic(
-  () => import('../components/PerformanceOptimizer'),
-  { ssr: false }
-);
-// ROCKET PREFETCH - АГРЕССИВНАЯ предзагрузка для мгновенных переходов
-const RocketPrefetch = dynamic(
-  () => import('../components/RocketPrefetch'),
-  { ssr: false }
-);
-// ULTRA PERFORMANCE BOOSTER - Экстремальная оптимизация
-const UltraPerformanceBooster = dynamic(
-  () => import('../components/UltraPerformanceBooster'),
-  { ssr: false }
-);
-// INSTANT PAGE LOADER - Мгновенная загрузка страниц
-const InstantPageLoader = dynamic(
-  () => import('../components/InstantPageLoader'),
-  { ssr: false }
-);
-// LAZY IMAGE OPTIMIZER - Оптимизация изображений
-const LazyImageOptimizer = dynamic(
-  () => import('../components/LazyImageOptimizer'),
-  { ssr: false }
-);
-
-// SKELETON STYLES - Стили для skeleton-лоадеров
-const SkeletonStyles = dynamic(
-  () => import('../components/SkeletonStyles'),
-  { ssr: false }
-);
 
 // Отключаем автоматическое восстановление позиции скролла
 if (typeof window !== 'undefined') {
@@ -325,15 +294,12 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
 
   // Загрузка данных пользователя для мобильного меню
   useEffect(() => {
-    if (!supabase) return;
-    
-    const sb = supabase; // local alias for TypeScript
-    
     const loadUserData = async () => {
+      if (!supabase) return;
       try {
-        const { data: { user } } = await sb.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await sb
+          const { data: profile } = await supabase
             .from('profiles')
             .select('nickname, role, avatar, member_id, email')
             .eq('id', user.id)
@@ -356,8 +322,10 @@ function BodyContent({ children, pathname }: { children: React.ReactNode; pathna
     
     loadUserData();
     
+    if (!supabase) return;
+    
     // Подписка на изменения авторизации
-    const { data: { subscription } } = sb.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       loadUserData();
     });
     
@@ -1014,20 +982,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NotificationProvider>
             <SupportWidgetProvider>
               <CacheBuster />
-              {/* ULTRA PERFORMANCE BOOSTER - Экстремальная оптимизация */}
-              <UltraPerformanceBooster />
-              {/* LAZY IMAGE OPTIMIZER - Оптимизация изображений */}
-              <LazyImageOptimizer />
-              {/* PERFORMANCE OPTIMIZER - МАКСИМАЛЬНАЯ производительность */}
-              <PerformanceOptimizer />
               {/* TURBO NAVIGATION - УЛЬТРА-быстрые переходы */}
               <TurboNavigation />
-              {/* ROCKET PREFETCH - АГРЕССИВНАЯ предзагрузка */}
-              <RocketPrefetch />
-              {/* INSTANT PAGE LOADER - Мгновенная загрузка страниц */}
-              <InstantPageLoader />
-              {/* SKELETON STYLES - Стили skeleton-лоадеров */}
-              <SkeletonStyles />
               <BodyContent pathname={pathname}>
                 {children}
               </BodyContent>

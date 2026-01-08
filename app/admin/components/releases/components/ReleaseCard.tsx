@@ -1,10 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { Release } from '../types';
 
-// Функция для извлечения доминантного цвета из изображения
+// ============================================================================
+// ОПТИМИЗАЦИЯ: Глобальный кэш доминантных цветов
+// ============================================================================
+const dominantColorCache = new Map<string, { r: number; g: number; b: number }>();
+
+// Функция для извлечения доминантного цвета из изображения - ОПТИМИЗИРОВАННАЯ
 function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: number }> {
+  // Проверяем кэш
+  const cached = dominantColorCache.get(imageUrl);
+  if (cached) return Promise.resolve(cached);
+  
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -16,7 +25,8 @@ function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: 
         return;
       }
       
-      const size = 50;
+      // Уменьшенный размер для скорости
+      const size = 20;
       canvas.width = size;
       canvas.height = size;
       ctx.drawImage(img, 0, 0, size, size);
@@ -38,11 +48,13 @@ function getDominantColor(imageUrl: string): Promise<{ r: number; g: number; b: 
         }
       }
       
-      if (count > 0) {
-        resolve({ r: Math.round(r / count), g: Math.round(g / count), b: Math.round(b / count) });
-      } else {
-        resolve({ r: 139, g: 92, b: 246 });
-      }
+      const result = count > 0 
+        ? { r: Math.round(r / count), g: Math.round(g / count), b: Math.round(b / count) }
+        : { r: 139, g: 92, b: 246 };
+      
+      // Сохраняем в кэш
+      dominantColorCache.set(imageUrl, result);
+      resolve(result);
     };
     img.onerror = () => {
       resolve({ r: 139, g: 92, b: 246 });
@@ -59,7 +71,10 @@ interface ReleaseCardProps {
   onView: (id: string, type: 'basic' | 'exclusive') => void;
 }
 
-export default function ReleaseCard({
+// ============================================================================
+// ОПТИМИЗАЦИЯ: memo для предотвращения лишних ререндеров при скролле
+// ============================================================================
+const ReleaseCard = memo(function ReleaseCard({
   release,
   viewMode,
   isSelected,
@@ -77,11 +92,11 @@ export default function ReleaseCard({
     }
   }, [release.cover_url]);
 
-  // Динамический стиль свечения
-  const dynamicStyle = dominantColor && release.cover_url ? {
+  // ОПТИМИЗАЦИЯ: Мемоизированный динамический стиль свечения
+  const dynamicStyle = useMemo(() => dominantColor && release.cover_url ? {
     boxShadow: `0 0 25px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.12), 0 0 10px rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.08)`,
     borderColor: `rgba(${dominantColor.r}, ${dominantColor.g}, ${dominantColor.b}, 0.15)`
-  } : {};
+  } : {}, [dominantColor, release.cover_url]);
 
   return (
     <div
@@ -130,10 +145,17 @@ export default function ReleaseCard({
           </label>
         )}
 
-        {/* Обложка */}
+        {/* Обложка - ОПТИМИЗАЦИЯ: lazy loading */}
         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">
           {release.cover_url ? (
-            <img src={release.cover_url} alt={release.title} className="w-full h-full object-cover" />
+            <img 
+              src={release.cover_url} 
+              alt={release.title} 
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+              style={{ contentVisibility: 'auto' }}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <svg className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,7 +223,7 @@ export default function ReleaseCard({
       </div>
     </div>
   );
-}
+});
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { text: string; className: string; showSpinner?: boolean; showX?: boolean; showCheck?: boolean }> = {
@@ -259,3 +281,7 @@ function PaymentBadge({ paymentStatus }: { paymentStatus: string | null }) {
     </span>
   );
 }
+// Displayname для DevTools
+ReleaseCard.displayName = 'ReleaseCard';
+
+export default ReleaseCard;

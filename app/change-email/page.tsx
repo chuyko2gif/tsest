@@ -20,11 +20,10 @@ export default function ChangeEmailPage() {
     const processEmailChange = async () => {
       if (processed) return;
       if (!supabase) {
-        showNotification('Ошибка подключения к базе данных', 'error');
+        showNotification('Ошибка подключения. Перезагрузите страницу.', 'error');
+        setLoading(false);
         return;
       }
-      
-      const sb = supabase; // local alias for TypeScript
       
       try {
         // Проверяем токен в URL
@@ -34,7 +33,7 @@ export default function ChangeEmailPage() {
         
         if (accessToken && type === 'email_change') {
           // Устанавливаем сессию с токеном
-          const { data, error } = await sb.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: hashParams.get('refresh_token') || ''
           });
@@ -49,7 +48,7 @@ export default function ChangeEmailPage() {
             setLoading(false);
             
             // Обновляем email в profiles
-            await sb
+            await supabase
               .from('profiles')
               .update({ email: data.user.email })
               .eq('id', data.user.id);
@@ -61,7 +60,7 @@ export default function ChangeEmailPage() {
         }
         
         // Если токена нет - пробуем получить текущую сессию
-        const { data: { session } } = await sb.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
           processed = true;

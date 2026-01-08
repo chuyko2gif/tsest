@@ -31,10 +31,8 @@ export default function TestRoles() {
           return;
         }
         
-        const sb = supabase; // local alias for TypeScript
-        
         // Проверка авторизации
-        const { data: { user }, error: authError } = await sb.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         result.auth = {
           isAuthenticated: !!user,
           email: user?.email,
@@ -44,7 +42,7 @@ export default function TestRoles() {
 
         if (user) {
           // Проверка профиля
-          const { data: profile, error: profileError } = await sb
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)

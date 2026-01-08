@@ -1,9 +1,9 @@
 "use client";
 import React, { ReactNode } from 'react';
-import { Release, Track } from './types';
-import { STATUS_BADGE_STYLES, formatDate, formatDateFull, getTracksWord, copyToClipboard } from './constants';
-import { PlatformBadge, MAIN_PLATFORMS } from './PlatformIcons';
-import AudioPlayer from '@/components/AudioPlayer';
+import { Release, Track } from '@/app/cabinet/components/releases/types';
+import { STATUS_BADGE_STYLES, formatDate, formatDateFull, getTracksWord, copyToClipboard } from '@/app/cabinet/components/releases/constants';
+import { PlatformBadge, MAIN_PLATFORMS } from '@/app/cabinet/components/releases/PlatformIcons';
+import AudioPlayer from '@/components/ui/AudioPlayer';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 interface ReleaseDetailViewProps {

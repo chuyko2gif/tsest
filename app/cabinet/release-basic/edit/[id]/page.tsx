@@ -374,7 +374,6 @@ export default function EditBasicReleasePage() {
   const handleAutoSave = async (stepName: string) => {
     if (!supabase || !releaseId || !userId || saving) return;
     
-    const sb = supabase; // local alias for TypeScript
     try {
       // Загружаем обложку если есть новая
       let coverUrl = existingCoverUrl;
@@ -382,12 +381,12 @@ export default function EditBasicReleasePage() {
         const fileExt = coverFile.name.split('.').pop();
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
         
-        const { error: uploadError } = await sb.storage
+        const { error: uploadError } = await supabase.storage
           .from('release-covers')
           .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
         if (!uploadError) {
-          const { data: { publicUrl } } = sb.storage
+          const { data: { publicUrl } } = supabase.storage
             .from('release-covers')
             .getPublicUrl(fileName);
           coverUrl = publicUrl;
@@ -398,6 +397,7 @@ export default function EditBasicReleasePage() {
       
       // Подготавливаем треки для сохранения - загружаем аудио файлы если есть
       
+      const storage = supabase.storage;
       const tracksForSave = await Promise.all(tracks.map(async (track, index) => {
         let audioUrl = track.link || '';
         let originalFileName = track.originalFileName || '';
@@ -411,12 +411,12 @@ export default function EditBasicReleasePage() {
             const audioExt = audioFile.name.split('.').pop();
             const audioFileName = `${userId}/track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await sb.storage
+            const { error: audioError } = await storage
               .from('release-audio')
               .upload(audioFileName, audioFile, { contentType: audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = sb.storage
+              const { data: { publicUrl } } = storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -967,8 +967,11 @@ export default function EditBasicReleasePage() {
 
   // Шаг выбора типа релиза для черновиков (заблокирован после оплаты)
   if (isDraftMode && (releaseStatus === 'draft' || releaseStatus === 'awaiting_payment') && currentStep === 'type') {
-    // Если статус не draft/awaiting_payment, значит уже оплачено - нельзя менять тип
-    // (но это условие уже в if выше, поэтому здесь можно сразу показывать селектор)
+    // Если уже есть оплата, нельзя менять тип
+    if (isPaid) {
+      setCurrentStep('release');
+      return null;
+    }
     return (
       <ReleaseTypeSelector 
         onSelectType={async (type: 'single' | 'ep' | 'album') => {

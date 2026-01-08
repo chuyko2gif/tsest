@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Получаем URL хоста динамически или используем продакшн URL
-    const host = request.headers.get('host') || 'thqlabel.ru';
+    // Получаем URL хоста динамически
+    const host = request.headers.get('host') || 'localhost:3000';
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const verificationLink = `${protocol}://${host}/api/verify-email?token=${verificationToken}`;
     

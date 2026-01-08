@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/immutability */
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TicketAvatar from '@/components/icons/TicketAvatar';
 import { TicketMessage as TicketMessageType, MessageReaction } from '../types';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -43,6 +42,15 @@ export default function MessageList({
   const messageRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
   const { themeName } = useTheme();
   const isLight = themeName === 'light';
+  
+  // Функция регистрации ref для сообщений (обходит ограничения React Compiler)
+  const registerMessageRef = useCallback((messageId: string, el: HTMLDivElement | null) => {
+    if (el) {
+      messageRefs.current[messageId] = el;
+    } else {
+      delete messageRefs.current[messageId];
+    }
+  }, []);
 
   const scrollToMessage = (messageId: string) => {
     setHighlightedMessageId(messageId);
@@ -71,7 +79,7 @@ export default function MessageList({
           releaseInfo={releaseInfo}
           onToggleReaction={onToggleReaction}
           highlightedMessageId={highlightedMessageId}
-          messageRefs={messageRefs}
+          registerRef={registerMessageRef}
           scrollToMessage={scrollToMessage}
           onReply={onReply}
           onDeleteMessage={onDeleteMessage}
@@ -116,29 +124,23 @@ interface MessageBubbleProps {
   onReply?: (message: TicketMessageType) => void;
   onDeleteMessage?: (messageId: string) => void;
   highlightedMessageId: string | null;
-  messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  registerRef: (messageId: string, el: HTMLDivElement | null) => void;
   scrollToMessage: (messageId: string) => void;
   isLight: boolean;
 }
 
-function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo, onToggleReaction, onReply, onDeleteMessage, highlightedMessageId, messageRefs, scrollToMessage, isLight }: MessageBubbleProps) {
+function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo, onToggleReaction, onReply, onDeleteMessage, highlightedMessageId, registerRef, scrollToMessage, isLight }: MessageBubbleProps) {
+  "use no memo";
   const [showActions, setShowActions] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const lastTapRef = useRef<{ time: number; messageId: string | null }>({ time: 0, messageId: null });
-  const localDivRef = useRef<HTMLDivElement>(null);
   const isSystemMessage = message.sender_id === '00000000-0000-0000-0000-000000000000';
-  
-  // Sync local ref to parent refs object
-  useEffect(() => {
-    if (localDivRef.current) {
-      messageRefs.current[message.id] = localDivRef.current;
-    }
-    return () => {
-      delete messageRefs.current[message.id];
-    };
-  }, [message.id, messageRefs]);
+  // Callback ref для регистрации элемента
+  const setRef = useCallback((el: HTMLDivElement | null) => {
+    registerRef(message.id, el);
+  }, [message.id, registerRef]);
 
   // Определение мобильного устройства
   useEffect(() => {
@@ -275,7 +277,7 @@ function MessageBubble({ message, currentUserId, isFirstUserMessage, releaseInfo
         </div>
 
         <div 
-          ref={localDivRef}
+          ref={setRef}
           className={`rounded-lg p-4 relative transition-all duration-300 ${
             message.is_admin
               ? isLight 

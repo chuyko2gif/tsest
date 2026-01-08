@@ -33,56 +33,46 @@ export default function FinanceTab({
   const { themeName } = useTheme();
   const isLight = themeName === 'light';
 
+  const loadBalanceData = async () => {
+    if (!supabase) return;
+    try {
+      // Загружаем баланс из user_balances
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('user_balances')
+        .select('balance, frozen_balance, total_deposited, total_withdrawn')
+        .eq('user_id', userId)
+        .single();
+
+      if (balanceData) {
+        setCurrentBalance(balanceData.balance || 0);
+        setBalance(balanceData.balance || 0);
+      }
+
+      // Загружаем транзакции из новой таблицы
+      const { data: txData, error: txError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (txData) {
+        setTransactions(txData);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки баланса:', error);
+    }
+  };
+
   // Загружаем баланс и транзакции из новых таблиц
   useEffect(() => {
-    const loadBalanceData = async () => {
-      if (!supabase) return;
-      try {
-        // Загружаем баланс из user_balances
-        const { data: balanceData } = await supabase
-          .from('user_balances')
-          .select('balance, frozen_balance, total_deposited, total_withdrawn')
-          .eq('user_id', userId)
-          .single();
-
-        if (balanceData) {
-          setCurrentBalance(balanceData.balance || 0);
-          setBalance(balanceData.balance || 0);
-        }
-
-        // Загружаем транзакции из новой таблицы
-        const { data: txData } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (txData) {
-          setTransactions(txData);
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки баланса:', error);
-      }
-    };
-    
     loadBalanceData();
-  }, [userId, setBalance]);
+  }, [userId]);
 
   // Обновляем данные после успешного пополнения
-  const handleDepositClose = async () => {
+  const handleDepositClose = () => {
     setShowDepositModal(false);
-    // Перезагружаем данные
-    if (!supabase) return;
-    const { data: balanceData } = await supabase
-      .from('user_balances')
-      .select('balance')
-      .eq('user_id', userId)
-      .single();
-    if (balanceData) {
-      setCurrentBalance(balanceData.balance || 0);
-      setBalance(balanceData.balance || 0);
-    }
+    loadBalanceData();
   };
 
   return (

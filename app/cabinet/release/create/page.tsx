@@ -624,8 +624,6 @@ export default function CreateReleasePage() {
   const saveDraft = async (showNotification = false) => {
     if (!user || !supabase || isSavingDraft) return null;
     
-    const sb = supabase; // local alias for TypeScript
-    
     // Сохраняем только если заполнен хотя бы первый шаг (релиз)
     if (!releaseTitle.trim() || !genre || !coverFile || !releaseDate) return null;
     
@@ -637,12 +635,12 @@ export default function CreateReleasePage() {
         const fileExt = coverFile.name.split('.').pop();
         // Путь: user_id/draft-timestamp.ext — соответствует политике RLS
         const fileName = `${user.id}/draft-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await sb.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('release-covers')
           .upload(fileName, coverFile, { contentType: coverFile.type, upsert: true });
         
         if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = sb.storage
+          const { data: { publicUrl } } = supabase.storage
             .from('release-covers')
             .getPublicUrl(fileName);
           coverUrl = publicUrl;
@@ -650,6 +648,7 @@ export default function CreateReleasePage() {
       }
       
       // Подготавливаем треки - загружаем аудио файлы в storage если есть
+      const storage = supabase.storage;
       const tracksData = await Promise.all(tracks.map(async (track, index) => {
         let audioUrl = track.link || '';
         let originalFileName = track.originalFileName || '';
@@ -660,12 +659,12 @@ export default function CreateReleasePage() {
             const audioExt = track.audioFile.name.split('.').pop();
             const audioFileName = `${user.id}/draft-track-${Date.now()}-${index}.${audioExt}`;
             
-            const { error: audioError } = await sb.storage
+            const { error: audioError } = await storage
               .from('release-audio')
               .upload(audioFileName, track.audioFile, { contentType: track.audioFile.type, upsert: true });
             
             if (!audioError) {
-              const { data: { publicUrl } } = sb.storage
+              const { data: { publicUrl } } = storage
                 .from('release-audio')
                 .getPublicUrl(audioFileName);
               audioUrl = publicUrl;
@@ -820,7 +819,6 @@ export default function CreateReleasePage() {
     }
     
     setPrevStepsCompleted(currentCompleted);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [releaseTitle, genre, coverFile, releaseDate, tracks.length, excludedCountries.length, agreedToContract, selectedPlatforms, promoStatus]);
   
   // Ref для отслеживания предыдущего количества треков и авторов

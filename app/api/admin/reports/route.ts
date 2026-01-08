@@ -1182,7 +1182,7 @@ export async function GET(request: NextRequest) {
         // Группируем по релизам
         const releaseMap = new Map<string, {
           releaseId: string | null;
-          releaseType?: string;
+          releaseType: string | null;
           releaseTitle: string;
           artistName: string;
           isMatched: boolean;
@@ -1336,7 +1336,6 @@ export async function GET(request: NextRequest) {
           .eq('report_id', reportId)
           .order('amount', { ascending: false });
         
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const userPayouts = (payouts || []).map((p: any) => ({
           userId: p.user_id,
           artistName: p.profiles?.artist_name || 'Неизвестный артист',

@@ -105,8 +105,8 @@ export default function BalancePage() {
     let mounted = true;
     
     const init = async () => {
-      if (!supabase) return;
       try {
+        if (!supabase) return;
         const { data: { user } } = await supabase.auth.getUser();
         if (!mounted) return;
         
@@ -167,8 +167,8 @@ export default function BalancePage() {
   }, []);
 
   const loadBalance = useCallback(async () => {
-    if (!supabase) return;
     try {
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) return;
@@ -185,9 +185,12 @@ export default function BalancePage() {
   }, []);
 
   const loadTransactions = useCallback(async () => {
-    if (!supabase) return;
     setTransactionsLoading(true);
     try {
+      if (!supabase) {
+        setTransactionsLoading(false);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       

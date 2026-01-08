@@ -176,11 +176,12 @@ const PerformanceOptimizer = memo(() => {
   }, [handleScrollStart, handleScrollEnd]);
 
   // Оптимизация resize
-  const handleResize = useCallback(() => {
+  // eslint-disable-next-line react-hooks/use-memo
+  const handleResize = useCallback(debounce(() => {
     // Пересчитываем только критические элементы
     const event = new CustomEvent('optimized-resize');
     window.dispatchEvent(event);
-  }, []);
+  }, isLowEndDevice ? 200 : 100), []);
 
   // Intersection Observer для lazy-rendering
   const setupIntersectionObserver = useCallback(() => {
