@@ -135,15 +135,22 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV === 'development';
     
     return [
-      // HTML страницы - умеренный кэш с revalidate
+      // HTML страницы - БЕЗ КЭША чтобы всегда получать свежую версию
+      // Это критично для обновлений - клиент получает новый HTML с новыми ссылками на JS
       {
         source: '/((?!_next/static|_next/image|api|favicon.ico|.*\\.(?:svg|jpg|png|webp|avif|woff|woff2|ico)).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: isDev 
-              ? 'no-cache, no-store, must-revalidate'
-              : 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
           // Prefetch hint
           {
@@ -153,7 +160,7 @@ const nextConfig: NextConfig = {
         ],
       },
       
-      // Статичные ассеты - максимальный кэш
+      // Статичные ассеты (изображения, шрифты) - максимальный кэш
       {
         source: '/:all*(svg|jpg|png|webp|avif|woff|woff2|ico|mp3|wav)',
         headers: [
@@ -166,7 +173,8 @@ const nextConfig: NextConfig = {
         ],
       },
       
-      // Next.js static assets - максимальный кэш
+      // Next.js static assets (JS/CSS с хэшами) - максимальный кэш
+      // Эти файлы имеют уникальные хэши, поэтому можно кэшировать вечно
       {
         source: '/_next/static/:path*',
         headers: [
@@ -179,7 +187,7 @@ const nextConfig: NextConfig = {
         ],
       },
       
-      // API с умеренным кэшем для GET запросов
+      // API - без кэша
       {
         source: '/api/:path*',
         headers: [
@@ -208,5 +216,3 @@ const nextConfig: NextConfig = {
     ];
   },
 };
-
-export default nextConfig;
