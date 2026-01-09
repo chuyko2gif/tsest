@@ -27,6 +27,10 @@ const CacheBuster = dynamic(
   () => import('../components/CacheBuster'),
   { ssr: false }
 );
+const CookieCleaner = dynamic(
+  () => import('../components/CookieCleaner'),
+  { ssr: false }
+);
 // TURBO NAVIGATION - УЛЬТРА-быстрые переходы
 const TurboNavigation = dynamic(
   () => import('../components/TurboNavigation'),
@@ -1037,6 +1041,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <NotificationProvider>
             <SupportWidgetProvider>
+              <CookieCleaner />
               <CacheBuster />
               {/* TURBO NAVIGATION - УЛЬТРА-быстрые переходы */}
               <TurboNavigation />

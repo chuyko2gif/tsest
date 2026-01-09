@@ -217,15 +217,22 @@ export default function SettingsTab({
       
       setEmailSuccess('Письмо с подтверждением отправлено на новый email! Проверьте почту.');
       setNewEmail('');
-      setEmailLoading(false); // Явно сбрасываем loading сразу
       setTimeout(() => {
         setShowEmailChange(false);
         setEmailSuccess('');
       }, 5000);
     } catch (err: any) {
       console.error('Ошибка смены email:', err);
-      setEmailError(translateError(err.message) || 'Не удалось отправить письмо');
-      setEmailLoading(false); // Явно сбрасываем loading при ошибке
+      // Переводим известные ошибки
+      let errorMsg = translateError(err.message);
+      if (err.message?.includes('rate limit') || err.message?.includes('exceeded')) {
+        errorMsg = 'Превышен лимит запросов. Подождите несколько минут и попробуйте снова.';
+      } else if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
+        errorMsg = 'Этот email уже используется другим аккаунтом';
+      }
+      setEmailError(errorMsg || 'Не удалось отправить письмо');
+    } finally {
+      setEmailLoading(false); // ВСЕГДА сбрасываем loading
     }
   };
 

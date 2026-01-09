@@ -1,11 +1,19 @@
 import type { NextConfig } from "next";
 
+// Уникальное время билда для очистки кэша у всех клиентов
+const BUILD_TIME = new Date().toISOString();
+
 const nextConfig: NextConfig = {
   /* TURBO OPTIMIZED CONFIG - МАКСИМАЛЬНАЯ скорость переходов */
   devIndicators: false,
   
   // Очистка при сборке
   cleanDistDir: true,
+  
+  // Переменные среды доступные в браузере
+  env: {
+    NEXT_PUBLIC_BUILD_TIME: BUILD_TIME,
+  },
   
   // =============================================
   // TURBO ПРОИЗВОДИТЕЛЬНОСТЬ

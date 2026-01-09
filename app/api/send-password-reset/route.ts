@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
     }
     
+    console.log('=== SEND PASSWORD RESET ===');
+    console.log('Email:', email);
     console.log('Создан токен восстановления в БД:', resetToken);
     
     // Очищаем истекшие токены (фоновая очистка)
@@ -75,11 +77,15 @@ export async function POST(request: NextRequest) {
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const resetLink = `${protocol}://${host}/reset-password?token=${resetToken}`;
     
+    console.log('Reset link:', resetLink);
+    
     // Проверяем наличие SMTP настроек
     if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.error('SMTP настройки не указаны');
       return NextResponse.json({ error: 'Ошибка конфигурации email' }, { status: 500 });
     }
+    
+    console.log('SMTP настройки OK, отправляем письмо...');
 
     // Отправляем email через SMTP
     const transporter = nodemailer.createTransport({

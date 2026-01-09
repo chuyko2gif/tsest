@@ -4,6 +4,24 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
+// Перевод ошибок Supabase
+function translateError(message: string): string {
+  const translations: Record<string, string> = {
+    'Email rate limit exceeded': 'Превышен лимит запросов. Подождите несколько минут.',
+    'rate limit exceeded': 'Превышен лимит запросов. Подождите несколько минут.',
+    'Invalid token': 'Недействительная или истекшая ссылка',
+    'Token expired': 'Срок действия ссылки истёк',
+    'Email link is invalid or has expired': 'Ссылка недействительна или истекла',
+  };
+  
+  for (const [eng, rus] of Object.entries(translations)) {
+    if (message.toLowerCase().includes(eng.toLowerCase())) {
+      return rus;
+    }
+  }
+  return message;
+}
+
 export default function ChangeEmailPage() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -40,6 +58,18 @@ export default function ChangeEmailPage() {
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
+        const errorCode = hashParams.get('error_code');
+        const errorDescription = hashParams.get('error_description');
+        
+        // Проверяем ошибку в URL (rate limit и т.д.)
+        if (errorCode || errorDescription) {
+          console.log('Error in URL:', errorCode, errorDescription);
+          const errorMsg = translateError(errorDescription || errorCode || 'Неизвестная ошибка');
+          showNotification(errorMsg, 'error');
+          setLoading(false);
+          setTimeout(() => router.push('/cabinet'), 3000);
+          return;
+        }
         
         console.log('Type:', type);
         console.log('Has access token:', !!accessToken);
