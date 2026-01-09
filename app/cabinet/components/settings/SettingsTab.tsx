@@ -158,17 +158,16 @@ export default function SettingsTab({
 
     setPasswordLoading(true);
     try {
-      // Используем наш кастомный API для отправки письма сброса пароля
-      const response = await fetch('/api/send-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email })
+      // Используем встроенный Supabase для сброса пароля - у них хорошая репутация email серверов
+      if (!supabase) {
+        throw new Error('Ошибка инициализации');
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: 'https://thqlabel.ru/reset-password'
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Не удалось отправить письмо');
+      if (error) {
+        throw error;
       }
 
       setPasswordSuccess('Письмо со ссылкой для смены пароля отправлено на вашу почту!');
