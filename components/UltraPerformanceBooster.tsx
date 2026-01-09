@@ -259,39 +259,12 @@ const UltraPerformanceBooster = memo(() => {
     scrollTimeout.current = setTimeout(handleScrollEnd, delay);
   }, [handleScrollStart, handleScrollEnd]);
 
-  // Frame rate monitoring и throttling
+  // Frame rate monitoring - ОТКЛЮЧЕНО ДЛЯ ЭКОНОМИИ CPU
+  // Постоянный RAF loop съедал 90% CPU на слабых устройствах
   const monitorFrameRate = useCallback(function frameMonitor() {
-    const now = performance.now();
-    
-    if (lastFrameTime.current) {
-      const delta = now - lastFrameTime.current;
-      
-      // Если frame rate падает ниже 30fps (33ms per frame)
-      if (delta > 33 && perfLevel !== 'ultra-low') {
-        frameCount.current++;
-        
-        // Если несколько фреймов подряд медленные - понижаем уровень
-        if (frameCount.current > 10) {
-          console.log('[UltraPerf] Low FPS detected, reducing quality');
-          const levels: PerfLevel[] = ['ultra-low', 'low', 'medium', 'high'];
-          const currentIndex = levels.indexOf(perfLevel);
-          if (currentIndex > 0) {
-            perfLevel = levels[currentIndex - 1];
-            applyOptimizations(perfLevel);
-          }
-          frameCount.current = 0;
-        }
-      } else {
-        frameCount.current = Math.max(0, frameCount.current - 1);
-      }
-    }
-    
-    lastFrameTime.current = now;
-    
-    // Продолжаем мониторинг только на не ultra-low
-    if (perfLevel !== 'ultra-low') {
-      rafIdRef.current = requestAnimationFrame(frameMonitor);
-    }
+    // ОТКЛЮЧЕНО - слишком ресурсоёмко
+    // Вместо постоянного мониторинга используем CSS will-change: auto
+    return;
   }, []);
 
   // Очистка памяти
@@ -323,16 +296,14 @@ const UltraPerformanceBooster = memo(() => {
       console.log(`[UltraPerf] Cores: ${navigator.hardwareConcurrency}, Memory: ${(navigator as any).deviceMemory || 'unknown'}GB`);
     }
     
-    // Запускаем мониторинг FPS (только не на ultra-low)
-    if (perfLevel !== 'ultra-low') {
-      requestAnimationFrame(monitorFrameRate);
-    }
+    // ОТКЛЮЧЕНО: monitorFrameRate - бесконечный RAF loop съедал CPU
+    // Вместо этого полагаемся на CSS оптимизации
     
     // Scroll optimization с passive listener
     window.addEventListener('scroll', handleScroll, { passive: true });
     
-    // Периодическая очистка памяти (каждые 30 сек)
-    const memoryCleanupInterval = setInterval(cleanupMemory, 30000);
+    // ОТКЛЮЧЕНО: Периодическая очистка памяти - не критично, но грузит CPU
+    // const memoryCleanupInterval = setInterval(cleanupMemory, 30000);
     
     // Battery API - если батарея низкая, снижаем качество
     if ('getBattery' in navigator) {
@@ -365,10 +336,10 @@ const UltraPerformanceBooster = memo(() => {
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearInterval(memoryCleanupInterval);
+      // clearInterval удалён - интервал больше не создаётся
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-  }, [handleScroll, monitorFrameRate, cleanupMemory]);
+  }, [handleScroll, cleanupMemory]);
 
   return null;
 });

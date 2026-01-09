@@ -40,9 +40,18 @@ interface SmartCoverImageProps {
   forDownload?: boolean;
 }
 
-// Глобальный кэш загруженных изображений
+// Глобальный кэш загруженных изображений - ОГРАНИЧЕННЫЙ РАЗМЕР
 const imageCache = new Map<string, string>();
 const loadingPromises = new Map<string, Promise<string>>();
+const MAX_CACHE_SIZE = 100;
+
+// Функция очистки старых записей из кэша
+function limitCacheSize<K, V>(cache: Map<K, V>, maxSize: number) {
+  if (cache.size > maxSize) {
+    const keysToDelete = Array.from(cache.keys()).slice(0, cache.size - maxSize);
+    keysToDelete.forEach(key => cache.delete(key));
+  }
+}
 
 // Размеры для разных устройств
 const SIZE_MAP = {
@@ -111,6 +120,7 @@ function preloadImage(url: string): Promise<string> {
       } catch {}
       
       imageCache.set(url, url);
+      limitCacheSize(imageCache, MAX_CACHE_SIZE); // Ограничиваем размер кэша
       loadingPromises.delete(url);
       resolve(url);
     };

@@ -41,29 +41,15 @@ export default function CacheBuster() {
   }, []);
 
   useEffect(() => {
-    // Очищаем при монтировании
+    // Очищаем ТОЛЬКО при монтировании - один раз
     clearAllCaches();
     
-    // Очищаем при фокусе окна (когда возвращаешься на вкладку)
-    const handleFocus = () => clearAllCaches();
-    window.addEventListener('focus', handleFocus);
+    // УБРАЛИ постоянную очистку - она грузила CPU:
+    // - clearInterval каждые 30 сек
+    // - handleFocus при каждом возврате на вкладку
+    // - visibilitychange listener
     
-    // Очищаем каждые 30 секунд
-    const interval = setInterval(clearAllCaches, 30000);
-    
-    // Очищаем при visibility change
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        clearAllCaches();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(interval);
-    };
+    return () => {};
   }, [clearAllCaches]);
 
   return (

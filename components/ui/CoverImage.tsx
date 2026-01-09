@@ -28,11 +28,22 @@ interface CoverImageProps {
  * - Оптимизация для слабых устройств (Redmi A5)
  */
 
-// Глобальный кэш загруженных изображений
+// Глобальный кэш загруженных изображений - ОГРАНИЧЕННЫЙ РАЗМЕР
 const imageCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 100; // Максимум 100 изображений в кэше
 
-// Кэш для blur data URL (микро-превью)
+// Кэш для blur data URL (микро-превью) - ОГРАНИЧЕННЫЙ РАЗМЕР
 const blurCache = new Map<string, string>();
+const MAX_BLUR_CACHE_SIZE = 50;
+
+// Функция очистки старых записей из кэша (LRU-подобная)
+function limitCacheSize<K, V>(cache: Map<K, V>, maxSize: number) {
+  if (cache.size > maxSize) {
+    // Удаляем первые (самые старые) записи
+    const keysToDelete = Array.from(cache.keys()).slice(0, cache.size - maxSize);
+    keysToDelete.forEach(key => cache.delete(key));
+  }
+}
 
 // Размеры для оптимизации
 const SIZE_MAP = {
@@ -121,8 +132,9 @@ export const CoverImage = memo(function CoverImage({
         await img.decode?.();
       } catch {}
       
-      // Сохраняем в кэш
+      // Сохраняем в кэш с лимитом размера
       imageCache.set(src, optimizedSrc);
+      limitCacheSize(imageCache, MAX_CACHE_SIZE);
       setCurrentSrc(optimizedSrc);
       setStatus('loaded');
     };

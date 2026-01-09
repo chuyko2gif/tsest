@@ -55,30 +55,16 @@ function initElitePerformance() {
     handleConnectionChange();
   }
   
-  // 4. 💾 Memory pressure handling
+  // 4. 💾 Memory pressure handling - проверяем только один раз при загрузке
+  // УБРАЛИ постоянный setInterval - он грузил CPU!
   if ('memory' in performance) {
-    const checkMemory = () => {
-      const memory = (performance as any).memory;
-      const usedRatio = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
-      
-      // При использовании >80% памяти включаем режим экономии
-      if (usedRatio > 0.8) {
-        document.documentElement.classList.add('low-memory');
-        // Очищаем кэши изображений
-        if ('caches' in window) {
-          caches.keys().then(names => {
-            names.forEach(name => {
-              if (name.includes('image')) {
-                caches.delete(name);
-              }
-            });
-          });
-        }
-      }
-    };
+    const memory = (performance as any).memory;
+    const usedRatio = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
     
-    // Проверяем каждые 30 секунд
-    setInterval(checkMemory, 30000);
+    // При использовании >80% памяти включаем режим экономии
+    if (usedRatio > 0.8) {
+      document.documentElement.classList.add('low-memory');
+    }
   }
   
   // 5. 🖼 Image loading optimization

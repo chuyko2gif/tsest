@@ -194,7 +194,7 @@ const FloatingShapes = memo(({ isLight }: { isLight?: boolean }) => {
 
 FloatingShapes.displayName = 'FloatingShapes';
 
-// Оптимизированные летающие частицы (уменьшено количество с 40 до 20)
+// Оптимизированные летающие частицы (уменьшено количество с 40 до 30)
 const FloatingParticles = memo(({ isLight }: { isLight?: boolean }) => {
   const [mounted, setMounted] = useState(false);
   

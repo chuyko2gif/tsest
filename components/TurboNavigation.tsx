@@ -14,10 +14,19 @@ import { useRouter, usePathname } from 'next/navigation';
  * 5. Перехват кликов для мгновенного перехода
  */
 
-// Глобальный кэш - храним навсегда в сессии
+// Глобальный кэш - ОГРАНИЧЕННЫЙ РАЗМЕР для предотвращения утечки памяти
 const prefetchedUrls = new Set<string>();
 const prefetchQueue: string[] = [];
 let isProcessing = false;
+const MAX_PREFETCH_CACHE = 50;
+
+// Очистка кэша если слишком большой
+function limitPrefetchCache() {
+  if (prefetchedUrls.size > MAX_PREFETCH_CACHE) {
+    const arr = Array.from(prefetchedUrls);
+    arr.slice(0, arr.length - MAX_PREFETCH_CACHE).forEach(url => prefetchedUrls.delete(url));
+  }
+}
 
 // ВСЕ маршруты сайта для предзагрузки
 const ALL_ROUTES = [
@@ -70,7 +79,7 @@ function normalize(url: string): string {
 export function TurboNavigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const lastMousePos = useRef({ x: 0, y: 0 });
+  // lastMousePos больше не используется - mousemove убран для экономии CPU
 
   // Мгновенный prefetch - без задержек
   const prefetch = useCallback((url: string) => {
@@ -78,6 +87,7 @@ export function TurboNavigation() {
     if (prefetchedUrls.has(normalized)) return;
     
     prefetchedUrls.add(normalized);
+    limitPrefetchCache(); // Ограничиваем размер кэша
     // Микротаск - быстрее чем setTimeout(0)
     queueMicrotask(() => router.prefetch(normalized));
   }, [router]);
@@ -96,6 +106,7 @@ export function TurboNavigation() {
       const url = prefetchQueue.shift()!;
       if (!prefetchedUrls.has(url)) {
         prefetchedUrls.add(url);
+        limitPrefetchCache(); // Ограничиваем размер кэша
         router.prefetch(url);
       }
       
@@ -159,35 +170,7 @@ export function TurboNavigation() {
     }
   }, [prefetch]);
 
-  // Mouse move - предсказываем куда движется курсор
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const dx = e.clientX - lastMousePos.current.x;
-    const dy = e.clientY - lastMousePos.current.y;
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
-    
-    // Скорость движения
-    const speed = Math.sqrt(dx * dx + dy * dy);
-    if (speed < 5) return; // Слишком медленно
-    
-    // Предсказываем позицию через 150мс
-    const futureX = e.clientX + dx * 5;
-    const futureY = e.clientY + dy * 5;
-    
-    const element = document.elementFromPoint(
-      Math.max(0, Math.min(futureX, window.innerWidth - 1)),
-      Math.max(0, Math.min(futureY, window.innerHeight - 1))
-    );
-    
-    if (!element) return;
-    
-    const link = element.closest('a[href]');
-    if (!link) return;
-    
-    const href = link.getAttribute('href');
-    if (href && isInternal(href)) {
-      prefetch(href);
-    }
-  }, [prefetch]);
+  // УБРАН handleMouseMove - слишком ресурсоёмкий, грузил CPU на каждое движение мыши
 
   // Focus - prefetch при keyboard navigation
   const handleFocus = useCallback((e: FocusEvent) => {
@@ -202,45 +185,37 @@ export function TurboNavigation() {
 
   // Инициализация
   useEffect(() => {
-    // 1. Предзагружаем ВСЕ критические маршруты сразу
-    ALL_ROUTES.forEach(route => {
+    // 1. Предзагружаем только основные маршруты (не все сразу)
+    const CRITICAL_ROUTES = ['/feed', '/cabinet', '/news', '/auth'];
+    CRITICAL_ROUTES.forEach(route => {
       if (!prefetchedUrls.has(route)) {
         prefetchQueue.push(route);
       }
     });
     processPrefetchQueue();
     
-    // 2. Prefetch всех ссылок на текущей странице
-    // Небольшая задержка чтобы страница отрендерилась
-    const timer = setTimeout(prefetchAllLinks, 100);
+    // 2. Prefetch всех ссылок на текущей странице - только один раз!
+    const timer = setTimeout(prefetchAllLinks, 500);
     
-    // 3. Event listeners с capture для максимальной скорости
+    // 3. Event listeners - только критичные, без mousemove (слишком тяжело)
     const opts: AddEventListenerOptions = { passive: true, capture: true };
     
     document.addEventListener('mousedown', handleMouseDown, opts);
     document.addEventListener('mouseover', handleMouseOver, opts);
     document.addEventListener('touchstart', handleTouchStart, opts);
-    document.addEventListener('mousemove', handleMouseMove, opts);
+    // УБРАН mousemove - слишком нагружает CPU
     document.addEventListener('focusin', handleFocus, opts);
     
-    // 4. Observer для новых ссылок
-    const observer = new MutationObserver(() => {
-      // Debounce через RAF
-      requestAnimationFrame(prefetchAllLinks);
-    });
-    
-    observer.observe(document.body, { childList: true, subtree: true });
+    // УБРАН MutationObserver - вызывал бесконечный цикл prefetch
     
     return () => {
       clearTimeout(timer);
       document.removeEventListener('mousedown', handleMouseDown, opts as EventListenerOptions);
       document.removeEventListener('mouseover', handleMouseOver, opts as EventListenerOptions);
       document.removeEventListener('touchstart', handleTouchStart, opts as EventListenerOptions);
-      document.removeEventListener('mousemove', handleMouseMove, opts as EventListenerOptions);
       document.removeEventListener('focusin', handleFocus, opts as EventListenerOptions);
-      observer.disconnect();
     };
-  }, [handleMouseDown, handleMouseOver, handleTouchStart, handleMouseMove, handleFocus, prefetchAllLinks, processPrefetchQueue]);
+  }, [handleMouseDown, handleMouseOver, handleTouchStart, handleFocus, prefetchAllLinks, processPrefetchQueue]);
 
   // При смене страницы - prefetch новых ссылок
   useEffect(() => {
