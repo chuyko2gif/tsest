@@ -205,18 +205,24 @@ export default function SettingsTab({
 
     setEmailLoading(true);
     try {
+      console.log('Attempting to change email to:', newEmail);
+      
       const { data, error } = await supabase.auth.updateUser(
         { email: newEmail },
         { emailRedirectTo: `${window.location.origin}/change-email` }
       );
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       // Проверяем результат - Supabase может вернуть user с new_email
       console.log('Email change result:', data);
       
       setEmailSuccess('Письмо с подтверждением отправлено на новый email! Проверьте почту.');
       setNewEmail('');
+      setEmailLoading(false); // Сбрасываем loading сразу после успеха
       setTimeout(() => {
         setShowEmailChange(false);
         setEmailSuccess('');

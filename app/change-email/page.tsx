@@ -52,8 +52,31 @@ export default function ChangeEmailPage() {
         console.log('=== Processing email change ===');
         console.log('Full URL:', window.location.href);
         console.log('Hash:', window.location.hash);
+        console.log('Search:', window.location.search);
         
-        // Проверяем токен в URL hash
+        // Проверяем ошибку в query параметрах (после ?)
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryError = urlParams.get('error');
+        const queryErrorCode = urlParams.get('error_code');
+        const queryErrorDesc = urlParams.get('error_description');
+        
+        if (queryError || queryErrorCode || queryErrorDesc) {
+          console.log('Error in query params:', queryError, queryErrorCode, queryErrorDesc);
+          let errorMsg = 'Ссылка недействительна или истекла';
+          if (queryErrorCode === 'otp_expired' || queryErrorDesc?.includes('expired')) {
+            errorMsg = 'Ссылка недействительна или истекла. Запросите смену email повторно.';
+          } else if (queryErrorCode === 'access_denied') {
+            errorMsg = 'Доступ запрещён. Попробуйте запросить смену email повторно.';
+          } else {
+            errorMsg = translateError(queryErrorDesc || queryErrorCode || queryError || errorMsg);
+          }
+          showNotification(errorMsg, 'error');
+          setLoading(false);
+          setTimeout(() => router.push('/cabinet'), 3000);
+          return;
+        }
+        
+        // Проверяем токен в URL hash (после #)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -61,9 +84,9 @@ export default function ChangeEmailPage() {
         const errorCode = hashParams.get('error_code');
         const errorDescription = hashParams.get('error_description');
         
-        // Проверяем ошибку в URL (rate limit и т.д.)
+        // Проверяем ошибку в hash (rate limit и т.д.)
         if (errorCode || errorDescription) {
-          console.log('Error in URL:', errorCode, errorDescription);
+          console.log('Error in URL hash:', errorCode, errorDescription);
           const errorMsg = translateError(errorDescription || errorCode || 'Неизвестная ошибка');
           showNotification(errorMsg, 'error');
           setLoading(false);
