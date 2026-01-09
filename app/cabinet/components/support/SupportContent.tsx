@@ -153,7 +153,7 @@ export default function SupportContent({ onClose, onUpdateUnreadCount, isLight =
         </div>
       ) : tickets.length === 0 ? (
         <div 
-          className="text-center py-12 space-y-3 rounded-2xl"
+          className="text-center py-12 space-y-3 rounded-2xl flex flex-col items-center justify-center"
           style={{
             background: isLight 
               ? 'linear-gradient(135deg, rgba(96, 80, 186, 0.08) 0%, rgba(157, 141, 241, 0.12) 100%)' 
@@ -165,7 +165,59 @@ export default function SupportContent({ onClose, onUpdateUnreadCount, isLight =
             backdropFilter: 'blur(40px) saturate(180%)',
           }}
         >
-          <div className="text-4xl">📭</div>
+          <div className="relative">
+            <svg 
+              className="w-16 h-16" 
+              viewBox="0 0 64 64" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Envelope body */}
+              <rect 
+                x="6" 
+                y="16" 
+                width="52" 
+                height="36" 
+                rx="4" 
+                fill={isLight ? "url(#envelope-gradient-light)" : "url(#envelope-gradient-dark)"}
+                stroke={isLight ? "#9d8df1" : "#a78bfa"}
+                strokeWidth="2"
+              />
+              {/* Envelope flap */}
+              <path 
+                d="M6 20L32 38L58 20" 
+                stroke={isLight ? "#9d8df1" : "#a78bfa"}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Inner shadow line */}
+              <path 
+                d="M10 24L32 40L54 24" 
+                stroke={isLight ? "rgba(157, 141, 241, 0.3)" : "rgba(167, 139, 250, 0.3)"}
+                strokeWidth="1"
+                strokeLinecap="round"
+              />
+              {/* Sparkle 1 */}
+              <circle cx="52" cy="12" r="2" fill={isLight ? "#9d8df1" : "#a78bfa"} className="animate-pulse" />
+              {/* Sparkle 2 */}
+              <circle cx="12" cy="10" r="1.5" fill={isLight ? "#c4b5fd" : "#c4b5fd"} className="animate-pulse" style={{animationDelay: '0.5s'}} />
+              {/* Sparkle 3 */}
+              <circle cx="56" cy="24" r="1" fill={isLight ? "#ddd6fe" : "#ddd6fe"} className="animate-pulse" style={{animationDelay: '1s'}} />
+              
+              {/* Gradients */}
+              <defs>
+                <linearGradient id="envelope-gradient-light" x1="6" y1="16" x2="58" y2="52" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#f3f0ff" />
+                  <stop offset="1" stopColor="#ede9fe" />
+                </linearGradient>
+                <linearGradient id="envelope-gradient-dark" x1="6" y1="16" x2="58" y2="52" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#3b2d6b" />
+                  <stop offset="1" stopColor="#2a1f54" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
           <p className={`text-sm font-medium ${isLight ? 'text-[#6050ba]' : 'text-purple-300'}`}>У вас пока нет тикетов</p>
           <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-zinc-500'}`}>Создайте первый тикет, чтобы связаться с поддержкой</p>
         </div>

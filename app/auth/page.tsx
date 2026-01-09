@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { SilverStarsGroup } from '@/components/ui/SilverStars';
@@ -52,7 +52,7 @@ const FloatingParticles = () => {
   );
 };
 
-export default function AuthPage() {
+function AuthPage() {
   const { themeName } = useTheme();
   const isLight = themeName === 'light';
   const [mode, setMode] = useState<'login' | 'signup' | 'waiting-confirmation' | 'forgot-password'>('login');
@@ -66,6 +66,34 @@ export default function AuthPage() {
   const [resendTimer, setResendTimer] = useState(0);
   const [notification, setNotification] = useState<{show: boolean; message: string; type: 'success' | 'error'}>({show: false, message: '', type: 'success'});
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({show: true, message, type});
+    setTimeout(() => setNotification(prev => ({...prev, show: false})), 4000);
+  };
+
+  // Проверка URL параметров при загрузке (verified, error)
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const error = searchParams.get('error');
+    
+    if (verified === 'true') {
+      showNotification('🎉 Email успешно подтверждён! Теперь вы можете войти в аккаунт.', 'success');
+      // Убираем параметр из URL
+      window.history.replaceState({}, '', '/auth');
+    } else if (error) {
+      const errorMessages: { [key: string]: string } = {
+        'token_expired': 'Ссылка для подтверждения истекла. Зарегистрируйтесь снова.',
+        'invalid_token': 'Недействительная ссылка. Зарегистрируйтесь снова.',
+        'registration_failed': 'Ошибка при создании аккаунта. Попробуйте снова.',
+        'verification_failed': 'Ошибка подтверждения. Попробуйте снова.'
+      };
+      showNotification(errorMessages[error] || 'Произошла ошибка', 'error');
+      window.history.replaceState({}, '', '/auth');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Очистка невалидных сессий при загрузке страницы авторизации
   useEffect(() => {
@@ -116,11 +144,6 @@ export default function AuthPage() {
       return () => clearTimeout(timer);
     }
   }, [resendTimer]);
-
-  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
-    setNotification({show: true, message, type});
-    setTimeout(() => setNotification(prev => ({...prev, show: false})), 4000);
-  };
 
   const handleForgotPassword = async () => {
     if (!supabase || !email) {
@@ -203,7 +226,8 @@ export default function AuthPage() {
           body: JSON.stringify({ 
             email, 
             password,
-            nickname: nickname || email.split('@')[0]
+            nickname: nickname || email.split('@')[0],
+            telegram: telegram || null
           })
         });
         
@@ -648,5 +672,18 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Экспорт с Suspense для useSearchParams
+export default function AuthPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0c0c0e] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#6050ba] border-t-transparent"></div>
+      </div>
+    }>
+      <AuthPage />
+    </Suspense>
   );
 }

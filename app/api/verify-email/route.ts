@@ -73,7 +73,8 @@ export async function GET(request: NextRequest) {
       user_metadata: {
         nickname: tokenData.nickname,
         display_name: tokenData.nickname,
-        full_name: tokenData.nickname
+        full_name: tokenData.nickname,
+        telegram: tokenData.telegram || null
       }
     });
 
@@ -82,6 +83,32 @@ export async function GET(request: NextRequest) {
       // Помечаем токен как использованный даже при ошибке
       await supabase.from('email_tokens').update({ used: true }).eq('id', tokenData.id);
       return NextResponse.redirect(new URL('/auth?error=registration_failed', baseUrl));
+    }
+
+    // Явно создаём профиль (fallback если триггер не сработал)
+    if (authData?.user) {
+      const memberId = 'THQ-' + Math.floor(1000 + Math.random() * 9000).toString();
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          email: tokenData.email,
+          nickname: tokenData.nickname || tokenData.email.split('@')[0],
+          telegram: tokenData.telegram || null,
+          member_id: memberId,
+          role: 'basic',
+          balance: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      
+      if (profileError) {
+        console.error('Ошибка создания профиля:', profileError);
+        // Продолжаем, профиль может быть создан триггером
+      } else {
+        console.log('Профиль создан:', tokenData.email, 'member_id:', memberId);
+      }
     }
 
     // Помечаем токен как использованный

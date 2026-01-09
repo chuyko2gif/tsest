@@ -1029,7 +1029,7 @@ export default function ReleaseDetailModal({
                     <div className="flex-1 min-w-0">
                       {(release as any).bandlink ? (
                         <a 
-                          href={((release as any).bandlink as string).startsWith('http') ? (release as any).bandlink : `https://${(release as any).bandlink}`}
+                          href={((release as any).bandlink as string).startsWith('http://') || ((release as any).bandlink as string).startsWith('https://') ? (release as any).bandlink : `https://${(release as any).bandlink}`}
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-sm font-semibold truncate text-cyan-500 hover:text-cyan-400 transition-colors block"

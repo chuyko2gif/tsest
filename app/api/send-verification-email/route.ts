@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
   console.log('SMTP_PASS exists:', !!process.env.SMTP_PASS);
   
   try {
-    const { email, password, nickname } = await request.json();
-    console.log('Request data - email:', email, 'nickname:', nickname);
+    const { email, password, nickname, telegram } = await request.json();
+    console.log('Request data - email:', email, 'nickname:', nickname, 'telegram:', telegram);
     
     if (!email || !password) {
       return NextResponse.json({ error: 'Email и пароль обязательны' }, { status: 400 });
@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
         email,
         password_hash: password, // В production лучше хешировать
         nickname: nickname || email.split('@')[0],
+        telegram: telegram || null,
         expires_at: expiresAt.toISOString()
       });
     

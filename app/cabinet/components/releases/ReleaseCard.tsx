@@ -449,7 +449,7 @@ const ReleaseCard = memo(function ReleaseCard({ release, onClick, onDelete, onDr
             </svg>
             <span className="text-sm sm:text-base font-bold text-white">Отклонён</span>
           </div>
-          <div className="text-xs sm:text-sm text-white font-medium text-center leading-relaxed bg-red-600/80 px-3 py-2 rounded-lg max-w-full">
+          <div className="text-xs sm:text-sm text-red-200/80 font-medium text-center leading-relaxed bg-red-900/60 px-3 py-2 rounded-lg max-w-full border border-red-500/30">
             {release.rejection_reason.length > 80 
               ? release.rejection_reason.slice(0, 80) + '...' 
               : release.rejection_reason}

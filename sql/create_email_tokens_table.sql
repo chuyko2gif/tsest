@@ -10,10 +10,14 @@ CREATE TABLE IF NOT EXISTS email_tokens (
   email TEXT NOT NULL,
   password_hash TEXT, -- только для verification токенов
   nickname TEXT, -- только для verification токенов
+  telegram TEXT, -- телеграм пользователя (только для verification)
   expires_at TIMESTAMPTZ NOT NULL,
   used BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Добавляем колонку telegram если таблица уже существует
+ALTER TABLE email_tokens ADD COLUMN IF NOT EXISTS telegram TEXT;
 
 -- Индекс для быстрого поиска по токену
 CREATE INDEX IF NOT EXISTS idx_email_tokens_token ON email_tokens(token);
@@ -26,6 +30,9 @@ CREATE INDEX IF NOT EXISTS idx_email_tokens_expires_at ON email_tokens(expires_a
 
 -- Включаем RLS (Row Level Security)
 ALTER TABLE email_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Удаляем старую политику если есть
+DROP POLICY IF EXISTS "Service role full access to email_tokens" ON email_tokens;
 
 -- Политика: только service role может работать с токенами
 CREATE POLICY "Service role full access to email_tokens"

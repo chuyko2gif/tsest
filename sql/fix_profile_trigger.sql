@@ -1,5 +1,5 @@
 -- Исправляем триггер для автоматического создания профиля при регистрации
--- Этот триггер создаёт профиль с nickname, member_id и balance
+-- Этот триггер создаёт профиль с nickname, member_id, telegram и balance
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -10,7 +10,7 @@ BEGIN
   new_member_id := 'THQ-' || LPAD(FLOOR(1000 + RANDOM() * 9000)::TEXT, 4, '0');
   
   -- Создаём профиль с полными данными
-  INSERT INTO public.profiles (id, email, nickname, member_id, role, balance, created_at, updated_at)
+  INSERT INTO public.profiles (id, email, nickname, telegram, member_id, role, balance, created_at, updated_at)
   VALUES (
     NEW.id,
     NEW.email,
@@ -20,6 +20,7 @@ BEGIN
       NEW.raw_user_meta_data->>'full_name',
       SPLIT_PART(NEW.email, '@', 1)
     ),
+    NEW.raw_user_meta_data->>'telegram',
     new_member_id,
     'basic', -- роль по умолчанию
     0, -- начальный баланс
@@ -29,6 +30,7 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     nickname = COALESCE(profiles.nickname, EXCLUDED.nickname),
+    telegram = COALESCE(profiles.telegram, EXCLUDED.telegram),
     member_id = COALESCE(profiles.member_id, EXCLUDED.member_id),
     updated_at = NOW();
   

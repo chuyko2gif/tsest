@@ -4,7 +4,7 @@ import { Release } from './types';
 import { STATUS_BADGE_STYLES, formatDate, formatDateFull, getTracksWord, copyToClipboard } from './constants';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { MetadataItem, InfoBadge, CopyrightSection, CountriesSection, TracklistSection } from './ReleaseDetailComponents';
-import { PlatformsSection, PromoSection, ContributorsSection, AdditionalInfoSection, SocialLinksSection, BandlinkSection } from './ReleaseDetailSections';
+import { PlatformsSection, PromoSection, ContributorsSection, AdditionalInfoSection, SocialLinksSection } from './ReleaseDetailSections';
 import ReleaseStatistics from './ReleaseStatistics';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -46,11 +46,12 @@ export default function ReleaseDetailView({ release, onBack, showCopyToast, setS
 
       {/* Причина отклонения - для отклонённых релизов */}
       {release.status === 'rejected' && release.rejection_reason && (
-        <RejectionReasonBlock reason={release.rejection_reason} />
+        <RejectionReasonBlock 
+          reason={release.rejection_reason} 
+          releaseId={release.id}
+          releaseType={release.release_type || 'basic'}
+        />
       )}
-
-      {/* Bandlink для опубликованных релизов - сразу после шапки */}
-      <BandlinkSection release={release} />
 
       {/* Copyright */}
       {release.copyright && <CopyrightSection copyright={release.copyright} />}
@@ -90,6 +91,142 @@ export default function ReleaseDetailView({ release, onBack, showCopyToast, setS
   );
 }
 
+// Компонент BandLink - компактный на мобилке, внизу обложки на ПК
+function BandlinkBadge({ bandlink, isLight }: { bandlink: string; isLight: boolean }) {
+  const [copied, setCopied] = React.useState(false);
+  
+  // Формируем полный URL - проверяем наличие протокола http:// или https://
+  const fullUrl = bandlink.startsWith('http://') || bandlink.startsWith('https://') 
+    ? bandlink 
+    : `https://${bandlink}`;
+  
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="hidden sm:flex absolute top-4 right-4 z-10 items-center gap-2">
+      {/* Кнопка копирования - только иконка */}
+      <button
+        onClick={handleCopy}
+        className={`group p-2 rounded-xl transition-all duration-300 ${
+          copied
+            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+            : isLight
+              ? 'bg-white/90 hover:bg-white text-gray-500 hover:text-emerald-600 border border-gray-200 hover:border-emerald-300 shadow-sm hover:shadow-md'
+              : 'bg-zinc-800/90 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 border border-zinc-700 hover:border-emerald-500/50'
+        }`}
+        title={copied ? 'Скопировано!' : 'Копировать BandLink'}
+      >
+        {copied ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        )}
+      </button>
+      
+      {/* Кнопка открытия ссылки */}
+      <a
+        href={fullUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`group px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 ${
+          isLight
+            ? 'bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
+            : 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40'
+        }`}
+        title="Открыть BandLink"
+      >
+        <svg className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <span>BandLink</span>
+        <svg className="w-3 h-3 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path d="M7 17L17 7M17 7H7M17 7v10"/>
+        </svg>
+      </a>
+    </div>
+  );
+}
+
+// Мобильный компонент BandLink - под информацией о релизе
+function MobileBandlinkBadge({ bandlink, isLight }: { bandlink: string; isLight: boolean }) {
+  const [copied, setCopied] = React.useState(false);
+  
+  const fullUrl = bandlink.startsWith('http://') || bandlink.startsWith('https://') 
+    ? bandlink 
+    : `https://${bandlink}`;
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="sm:hidden mt-4 flex items-center gap-2">
+      {/* Кнопка копирования - только иконка */}
+      <button
+        onClick={handleCopy}
+        className={`p-2.5 rounded-xl transition-all ${
+          copied
+            ? 'bg-emerald-500 text-white'
+            : isLight
+              ? 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+              : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400'
+        }`}
+        title={copied ? 'Скопировано!' : 'Копировать'}
+      >
+        {copied ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        )}
+      </button>
+      
+      {/* Кнопка открытия */}
+      <a
+        href={fullUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-center transition-all flex items-center justify-center gap-2 ${
+          isLight
+            ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-md'
+            : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/20'
+        }`}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <span>Открыть BandLink</span>
+      </a>
+    </div>
+  );
+}
+
 // Шапка релиза
 function ReleaseHeader({ release, handleCopyUPC }: { release: Release; handleCopyUPC: (upc: string) => void }) {
   const { themeName } = useTheme();
@@ -103,6 +240,11 @@ function ReleaseHeader({ release, handleCopyUPC }: { release: Release; handleCop
         : 'bg-gradient-to-br from-zinc-900/90 via-zinc-800/90 to-zinc-900/90 border-white/10'
     }`}>
       <div className={`absolute inset-0 ${isLight ? 'bg-gradient-to-br from-purple-100/50 via-transparent to-blue-100/50' : 'bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5'}`} />
+      
+      {/* BandLink в правом верхнем углу */}
+      {release.status === 'published' && (release as any).bandlink && (
+        <BandlinkBadge bandlink={(release as any).bandlink} isLight={isLight} />
+      )}
       
       <div className="relative grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 sm:gap-8 p-4 sm:p-8">
         {/* Обложка */}
@@ -230,6 +372,11 @@ function ReleaseHeader({ release, handleCopyUPC }: { release: Release; handleCop
             {release.language && <InfoBadge label="Язык" value={release.language} isLight={isLight} />}
             {release.created_at && <InfoBadge label="Создан" value={formatDate(release.created_at)} isLight={isLight} />}
           </div>
+          
+          {/* Mobile BandLink */}
+          {release.status === 'published' && (release as any).bandlink && (
+            <MobileBandlinkBadge bandlink={(release as any).bandlink} isLight={isLight} />
+          )}
         </div>
       </div>
     </div>
@@ -247,12 +394,17 @@ function getStatusText(status: string, short: boolean): string {
 }
 
 // Блок с причиной отклонения релиза
-function RejectionReasonBlock({ reason }: { reason: string }) {
+function RejectionReasonBlock({ reason, releaseId, releaseType }: { reason: string; releaseId: string; releaseType: string }) {
   const { themeName } = useTheme();
   const isLight = themeName === 'light';
   
+  // Формируем URL для редактирования
+  const editUrl = releaseType === 'basic' 
+    ? `/cabinet/release-basic/edit/${releaseId}`
+    : `/cabinet/release/edit/${releaseId}`;
+  
   return (
-    <div className={`mb-4 sm:mb-6 p-4 sm:p-6 rounded-2xl border-2 animate-pulse-slow ${
+    <div className={`mb-4 sm:mb-6 p-4 sm:p-6 rounded-2xl border-2 ${
       isLight 
         ? 'bg-gradient-to-br from-red-50 via-red-100/50 to-orange-50 border-red-300 shadow-lg shadow-red-200/30' 
         : 'bg-gradient-to-br from-red-950/40 via-red-900/30 to-red-950/20 border-red-500/40 shadow-lg shadow-red-900/20'
@@ -293,21 +445,27 @@ function RejectionReasonBlock({ reason }: { reason: string }) {
           <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">Причина отклонения:</span>
         </div>
         <p className={`text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words ${
-          isLight ? 'text-gray-800' : 'text-gray-200'
+          isLight ? 'text-red-700/80' : 'text-red-300/70'
         }`}>
           {reason}
         </p>
       </div>
       
-      {/* Подсказка */}
-      <div className={`mt-3 sm:mt-4 flex items-center gap-2 text-[10px] sm:text-xs ${
-        isLight ? 'text-red-600/60' : 'text-red-400/50'
-      }`}>
-        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* Кнопка редактирования */}
+      <a
+        href={editUrl}
+        className={`mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all ${
+          isLight
+            ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
+            : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+        }`}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
-        <span>Отредактируйте релиз и нажмите «Отправить на модерацию» снова</span>
-      </div>
+        Редактировать и отправить снова
+      </a>
     </div>
   );
 }

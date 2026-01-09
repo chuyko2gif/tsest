@@ -511,6 +511,9 @@ export default function FeedPage() {
   const rafRef = useRef<number | null>(null);
   const [showIntro, setShowIntro] = useState(true);
   const [introReady, setIntroReady] = useState(false);
+  
+  // Капибара пасхалка
+  const [kapibaraHovered, setKapibaraHovered] = useState(false);
 
   // Оптимизированная проверка размера экрана
   const checkMobile = useCallback(() => {
@@ -1345,7 +1348,7 @@ export default function FeedPage() {
                 Новости
               </h2>
               <div className="space-y-2">
-                {news.length > 0 ? news.map((item) => (
+                {news.length > 0 ? news.slice(0, 5).map((item) => (
                   <Link
                     key={item.id}
                     href={`/news?id=${item.id}`}
@@ -1454,9 +1457,50 @@ export default function FeedPage() {
                   </>
                 )}
               </div>
+
+              {/* Пасхалка - Капибара под новостями */}
+              <div className="mt-4 flex justify-center">
+                <div className="text-center">
+                  <p className={`text-[9px] font-medium ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                    🦫
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
+        </div>
+      </div>
+
+      {/* Капибара - fixed справа внизу */}
+      <div 
+        className="fixed bottom-0 right-4 z-[9999] cursor-pointer group"
+        onMouseEnter={() => setKapibaraHovered(true)}
+        onMouseLeave={() => setKapibaraHovered(false)}
+      >
+        <div className="relative flex flex-col items-center">
+          {/* Текст сверху */}
+          <div className={`absolute -top-7 right-0 flex items-center gap-1
+                          transition-all duration-300 pointer-events-none
+                          text-[12px] font-medium text-white/90 whitespace-nowrap
+                          ${kapibaraHovered ? 'opacity-100' : 'opacity-0'}`}>
+            <span>От КВЭЛА</span>
+            <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </div>
+          {/* Картинка */}
+          <img 
+            src="/kapibara.gif" 
+            alt="kapibara"
+            className="rounded-xl object-cover opacity-60 group-hover:opacity-100 
+                       transition-all duration-300 ease-out
+                       group-hover:scale-105
+                       active:scale-95"
+            style={{ width: '64px', height: '64px', maxWidth: '64px', maxHeight: '64px' }}
+            loading="lazy"
+            decoding="async"
+          />
         </div>
       </div>
     </main>

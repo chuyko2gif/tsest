@@ -98,6 +98,7 @@ function EditBasicReleasePageContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
   const [releaseStatus, setReleaseStatus] = useState('');
+  const [rejectionReason, setRejectionReason] = useState(''); // Причина отклонения
   
   // isDraftMode - true если это черновик ИЛИ релиз ожидающий оплаты
   const isDraftMode = isDraftModeFromUrl || releaseStatus === 'draft' || releaseStatus === 'awaiting_payment';
@@ -561,11 +562,11 @@ function EditBasicReleasePageContent() {
         return;
       }
 
-      // Обычные пользователи могут редактировать только pending, draft и awaiting_payment релизы
+      // Обычные пользователи могут редактировать только pending, draft, awaiting_payment и rejected релизы
       // Админы могут редактировать любые релизы
-      const editableStatuses = ['pending', 'draft', 'awaiting_payment'];
+      const editableStatuses = ['pending', 'draft', 'awaiting_payment', 'rejected'];
       if (!userIsAdmin && !editableStatuses.includes(release.status)) {
-        alert('Редактирование возможно только для релизов на модерации, черновиков или ожидающих оплаты');
+        alert('Редактирование возможно только для релизов на модерации, черновиков, ожидающих оплаты или отклонённых');
         router.push('/cabinet');
         return;
       }
@@ -603,6 +604,7 @@ function EditBasicReleasePageContent() {
       setAlbumDescription(release.album_description || '');
       setPromoPhotos(release.promo_photos || []);
       setReleaseStatus(release.status || '');
+      setRejectionReason(release.rejection_reason || ''); // Сохраняем причину отклонения
       setUpc(release.upc || '');
       
       // Загружаем ID транзакции оплаты (если оплачено через баланс)
@@ -790,9 +792,16 @@ function EditBasicReleasePageContent() {
         updated_at: new Date().toISOString()
       };
       
-      // ТОЛЬКО при отправке на модерацию меняем статус draft -> pending
+      // При отправке на модерацию меняем статус draft -> pending
+      // Также при сохранении rejected релиза автоматически отправляем на повторную модерацию
       if (submitToModeration && releaseStatus === 'draft') {
         updateData.status = 'pending';
+      }
+      
+      // Отклонённые релизы при сохранении автоматически отправляются на повторную модерацию
+      if (releaseStatus === 'rejected') {
+        updateData.status = 'pending';
+        updateData.rejection_reason = null; // Очищаем причину отклонения
       }
       
       // Всегда сохраняем cover_url (или существующий, или новый)
@@ -1358,14 +1367,14 @@ function EditBasicReleasePageContent() {
             <div className="space-y-2 mt-3 relative z-10">
               <button
                 onClick={() => handleSave(false)}
-                disabled={saving}
+                disabled={saving || completedSteps < totalSteps}
                 className={`relative w-full py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition overflow-hidden group flex items-center justify-center gap-2 ${
-                  saving
+                  saving || completedSteps < totalSteps
                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-lg shadow-emerald-500/20'
                 }`}
               >
-                {!saving && (
+                {!(saving || completedSteps < totalSteps) && (
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 )}
                 <span className="relative flex items-center gap-2">
@@ -1377,14 +1386,54 @@ function EditBasicReleasePageContent() {
                   {saving ? 'Сохранение...' : 'Сохранить изменения'}
                 </span>
               </button>
-              <p className="text-xs text-amber-400 text-center flex items-center justify-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+              {completedSteps < totalSteps ? (
+                <p className="text-xs text-red-400 text-center flex items-center justify-center gap-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Заполните все обязательные поля
+                </p>
+              ) : (
+                <p className="text-xs text-amber-400 text-center flex items-center justify-center gap-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  На модерации
+                </p>
+              )}
+            </div>
+          ) : releaseStatus === 'rejected' ? (
+            <div className="space-y-2 mt-3 relative z-10">
+              {/* Кнопка отправки на повторную модерацию */}
+              <button
+                onClick={() => handleSave(false)}
+                disabled={saving || completedSteps < totalSteps}
+                className={`w-full py-3 sm:py-4 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
+                  saving || completedSteps < totalSteps
+                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    : isLight
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
+                      : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                 </svg>
-                На модерации
-              </p>
+                {saving ? 'Отправка...' : 'Отправить снова'}
+              </button>
+              {completedSteps < totalSteps ? (
+                <p className="text-xs text-red-400 text-center">
+                  Заполните все обязательные поля для отправки
+                </p>
+              ) : (
+                <p className="text-xs text-zinc-500 text-center">
+                  Релиз будет отправлен на повторную модерацию
+                </p>
+              )}
             </div>
           ) : currentStep !== 'payment' && currentStep !== 'send' && (
             <button
@@ -1562,6 +1611,30 @@ function EditBasicReleasePageContent() {
                 </svg>
                 {saving ? 'Сохранение...' : 'Сохранить'}
               </button>
+            </div>
+          )}
+          
+          {/* Баннер для отклонённых релизов */}
+          {releaseStatus === 'rejected' && currentStep !== 'send' && currentStep !== 'payment' && (
+            <div className={`mb-6 p-4 rounded-xl border ${isLight ? 'bg-red-50 border-red-200' : 'bg-red-500/10 border-red-500/30'}`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isLight ? 'bg-red-100' : 'bg-red-500/20'}`}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={isLight ? 'text-red-600' : 'text-red-400'}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-semibold ${isLight ? 'text-red-800' : 'text-red-300'}`}>Релиз отклонён</p>
+                  {rejectionReason && (
+                    <p className={`text-sm mt-1 ${isLight ? 'text-red-600' : 'text-red-400/80'}`}>
+                      <span className="font-medium">Причина:</span> {rejectionReason}
+                    </p>
+                  )}
+                  <p className={`text-sm mt-2 ${isLight ? 'text-red-500' : 'text-red-400/60'}`}>
+                    Отредактируйте релиз и нажмите "Отправить на повторную модерацию"
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           
