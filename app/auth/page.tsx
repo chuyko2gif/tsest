@@ -196,71 +196,25 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        // РЕГИСТРАЦИЯ с обязательным подтверждением email
-        const { data: authData, error: authError } = await supabase.auth.signUp({ 
-          email, 
-          password, 
-          options: { 
-            emailRedirectTo: `${window.location.origin}/cabinet`,
-            data: { 
-              nickname: nickname || email.split('@')[0],
-              display_name: nickname || email.split('@')[0],
-              full_name: nickname || email.split('@')[0],
-              telegram: telegram ? telegram.replace('@', '').trim() : null
-            } 
-          } 
+        // РЕГИСТРАЦИЯ через наш API с SMTP (Brevo)
+        const response = await fetch('/api/send-verification-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email, 
+            password,
+            nickname: nickname || email.split('@')[0]
+          })
         });
         
-        if (authError) {
-          // Если ошибка "Database error saving new user" - пробуем создать профиль вручную
-          if (authError.message?.includes('Database error')) {
-            console.error('Database trigger error, trying manual profile creation...');
-            throw new Error('Ошибка базы данных. Пожалуйста, обратитесь в поддержку.');
-          }
-          // Если ошибка говорит что пользователь уже существует
-          if (authError.message?.includes('User already registered') || 
-              authError.message?.includes('already registered')) {
-            // Пробуем отправить письмо повторно
-            const { error: resendError } = await supabase.auth.resend({
-              type: 'signup',
-              email: email,
-            });
-            
-            if (resendError) {
-              throw new Error('Email уже зарегистрирован. Проверьте почту или восстановите пароль.');
-            }
-            
-            showNotification('Письмо с подтверждением отправлено повторно. Проверьте почту.', 'success');
-          } else {
-            throw authError;
-          }
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Ошибка регистрации');
         }
         
-        // Если пользователь создан - создаём профиль вручную (триггер отключён)
-        if (authData?.user) {
-          try {
-            const memberId = 'THQ-' + Math.floor(1000 + Math.random() * 9000);
-            await supabase.from('profiles').upsert({
-              id: authData.user.id,
-              email: authData.user.email,
-              nickname: nickname || email.split('@')[0],
-              member_id: memberId,
-              role: 'basic',
-              balance: 0,
-              telegram: telegram ? telegram.replace('@', '').trim() : null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'id' });
-          } catch (profileErr) {
-            console.warn('Profile creation error (non-critical):', profileErr);
-            // Не блокируем регистрацию если профиль не создался
-          }
-        }
-        
-        // Выходим из системы (на случай если автоматически вошли)
-        await supabase.auth.signOut();
-        
-        // Переходим на экран ожидания подтверждения
+        // Успешно отправлено письмо
+        showNotification('Письмо для подтверждения отправлено на ' + email, 'success');
         setMode('waiting-confirmation');
         setPassword('');
         
