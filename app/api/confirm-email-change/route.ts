@@ -9,8 +9,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
     
+    // Используем правильный базовый URL
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thqlabel.ru';
+    
     if (!token) {
-      return NextResponse.redirect(new URL('/change-email?error=missing_token', request.url));
+      return NextResponse.redirect(`${baseUrl}/change-email?error=missing_token`);
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -26,19 +29,19 @@ export async function GET(request: NextRequest) {
     
     if (tokenError || !tokenData) {
       console.error('Токен не найден:', tokenError);
-      return NextResponse.redirect(new URL('/change-email?error=invalid_token', request.url));
+      return NextResponse.redirect(`${baseUrl}/change-email?error=invalid_token`);
     }
     
     // Проверяем срок действия
     if (new Date(tokenData.expires_at) < new Date()) {
-      return NextResponse.redirect(new URL('/change-email?error=expired_token', request.url));
+      return NextResponse.redirect(`${baseUrl}/change-email?error=expired_token`);
     }
     
     const newEmail = tokenData.new_email;
     const userId = tokenData.user_id;
     
     if (!newEmail || !userId) {
-      return NextResponse.redirect(new URL('/change-email?error=invalid_data', request.url));
+      return NextResponse.redirect(`${baseUrl}/change-email?error=invalid_data`);
     }
     
     // Меняем email пользователя через admin API
@@ -49,7 +52,7 @@ export async function GET(request: NextRequest) {
     
     if (updateError) {
       console.error('Ошибка обновления email:', updateError);
-      return NextResponse.redirect(new URL('/change-email?error=update_failed', request.url));
+      return NextResponse.redirect(`${baseUrl}/change-email?error=update_failed`);
     }
     
     // Обновляем профиль
@@ -70,10 +73,10 @@ export async function GET(request: NextRequest) {
     console.log('Email успешно изменён на:', newEmail);
     
     // Перенаправляем на страницу успеха
-    return NextResponse.redirect(new URL(`/change-email?success=true&email=${encodeURIComponent(newEmail)}`, request.url));
+    return NextResponse.redirect(`${baseUrl}/change-email?success=true&email=${encodeURIComponent(newEmail)}`);
 
   } catch (error: any) {
     console.error('Ошибка подтверждения смены email:', error);
-    return NextResponse.redirect(new URL('/change-email?error=server_error', request.url));
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://thqlabel.ru'}/change-email?error=server_error`);
   }
 }

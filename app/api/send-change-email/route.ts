@@ -122,13 +122,19 @@ export async function POST(request: NextRequest) {
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
     
     const mailOptions = {
-      from: `"THQ Label" <${fromEmail}>`,
+      from: `"thqlabel" <${fromEmail}>`,
       to: newEmail, // Отправляем ТОЛЬКО на новую почту!
       replyTo: fromEmail,
-      subject: 'Подтверждение смены email | THQ Label',
+      subject: 'Подтвердите смену email | thqlabel',
+      // Важные заголовки для доставляемости
+      headers: {
+        'X-Entity-Ref-ID': changeToken,
+        'Precedence': 'bulk',
+        'X-Mailer': 'thqlabel-mailer',
+      },
       text: `Здравствуйте!
 
-Вы запросили смену email для вашего аккаунта на THQ Label.
+Вы запросили смену email для вашего аккаунта на thqlabel.
 
 Новый email: ${newEmail}
 
@@ -140,7 +146,7 @@ ${confirmLink}
 Если вы не запрашивали смену email, просто проигнорируйте это письмо.
 
 С уважением,
-Команда THQ Label
+Команда thqlabel
 https://thqlabel.ru`,
       html: `
         <!DOCTYPE html>
@@ -148,7 +154,7 @@ https://thqlabel.ru`,
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Подтверждение смены email - THQ Label</title>
+            <title>Подтверждение смены email - thqlabel</title>
         </head>
         <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff;" bgcolor="#ffffff">
             <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #ffffff; padding: 40px 20px;" bgcolor="#ffffff">
@@ -219,7 +225,7 @@ https://thqlabel.ru`,
                             <tr>
                                 <td style="background: rgba(255, 255, 255, 0.02); padding: 30px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                                     <p style="margin: 0 0 10px 0; color: rgba(255, 255, 255, 0.4); font-size: 12px;">
-                                        © 2026 THQ Label. Все права защищены.
+                                        © 2026 thqlabel. Все права защищены.
                                     </p>
                                     <p style="margin: 0; color: rgba(255, 255, 255, 0.3); font-size: 11px;">
                                         Это автоматическое письмо, пожалуйста, не отвечайте на него.

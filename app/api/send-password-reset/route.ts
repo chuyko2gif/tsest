@@ -102,24 +102,24 @@ export async function POST(request: NextRequest) {
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
     
     const mailOptions = {
-      from: `"THQ Label" <${fromEmail}>`,
+      from: `"thqlabel" <${fromEmail}>`,
       to: email,
       replyTo: fromEmail,
-      subject: 'Восстановление пароля | THQ Label',
+      subject: 'Сменить пароль для thqlabel',
       // Текстовая версия для лучшей доставляемости
       text: `Здравствуйте!
 
-Вы запросили восстановление пароля для вашего аккаунта на THQ Label.
+Вы запросили смену пароля для вашего аккаунта на thqlabel.
 
 Для установки нового пароля перейдите по ссылке:
 ${resetLink}
 
 Ссылка действительна 60 минут.
 
-Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
+Если вы не запрашивали смену пароля, просто проигнорируйте это письмо.
 
 С уважением,
-Команда THQ Label
+Команда thqlabel
 https://thqlabel.ru`,
       html: `
         <!DOCTYPE html>
@@ -127,7 +127,7 @@ https://thqlabel.ru`,
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Восстановление пароля - THQ Label</title>
+            <title>Смена пароля - thqlabel</title>
         </head>
         <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff;" bgcolor="#ffffff">
             <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #ffffff; padding: 40px 20px;" bgcolor="#ffffff">
@@ -152,7 +152,7 @@ https://thqlabel.ru`,
                             <tr>
                                 <td style="padding: 40px 30px;">
                                     <h2 style="margin: 0 0 20px 0; color: white; font-size: 24px; font-weight: 800;">
-                                        Восстановление пароля
+                                        Смена пароля
                                     </h2>
                                     
                                     <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">
@@ -160,7 +160,7 @@ https://thqlabel.ru`,
                                     </p>
                                     
                                     <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">
-                                        Вы запросили восстановление пароля для вашего аккаунта.
+                                        Вы запросили смену пароля для вашего аккаунта.
                                     </p>
                                     
                                     <p style="margin: 0 0 30px 0; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">
@@ -198,7 +198,7 @@ https://thqlabel.ru`,
                                     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
                                     
                                     <p style="margin: 0; color: rgba(255, 255, 255, 0.5); font-size: 13px; line-height: 1.6;">
-                                        Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо — с вашим аккаунтом всё в порядке.
+                                        Если вы не запрашивали смену пароля, просто проигнорируйте это письмо — с вашим аккаунтом всё в порядке.
                                     </p>
                                 </td>
                             </tr>
@@ -207,7 +207,7 @@ https://thqlabel.ru`,
                             <tr>
                                 <td style="background: rgba(255, 255, 255, 0.02); padding: 30px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                                     <p style="margin: 0 0 10px 0; color: rgba(255, 255, 255, 0.4); font-size: 12px;">
-                                        © 2026 THQ Label. Все права защищены.
+                                        © 2026 thqlabel. Все права защищены.
                                     </p>
                                     <p style="margin: 0; color: rgba(255, 255, 255, 0.3); font-size: 11px;">
                                         Это автоматическое письмо, пожалуйста, не отвечайте на него.

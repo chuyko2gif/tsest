@@ -2,38 +2,31 @@
 
 import { useEffect } from 'react';
 
-// Версия автоматически обновляется при каждом билде (timestamp)
-// Если BUILD_TIME не определён, используем текущее время
-const APP_VERSION = process.env.NEXT_PUBLIC_BUILD_TIME || '2026.01.09.2';
+// Версия для инвалидации кэша (НЕ для очистки auth)
+const APP_VERSION = process.env.NEXT_PUBLIC_BUILD_TIME || '2026.01.09.3';
 
 export default function CookieCleaner() {
   useEffect(() => {
     const storedVersion = localStorage.getItem('app_version');
     
-    // Если версия изменилась или отсутствует - очищаем всё
+    // Если версия изменилась - просто логируем (НЕ очищаем auth куки!)
     if (storedVersion !== APP_VERSION) {
-      console.log(`[CookieCleaner] Обновление с ${storedVersion} до ${APP_VERSION}`);
+      console.log(`[CookieCleaner] Версия обновлена: ${storedVersion} → ${APP_VERSION}`);
       
-      // Очищаем все cookies
-      document.cookie.split(';').forEach((cookie) => {
-        const name = cookie.split('=')[0].trim();
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
-      });
-      
-      // Очищаем Supabase данные из localStorage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-') || key.includes('supabase')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      // Сохраняем новую версию
+      // Сохраняем новую версию БЕЗ очистки auth
       localStorage.setItem('app_version', APP_VERSION);
       
-      // Перезагружаем страницу для применения изменений
-      console.log('[CookieCleaner] Перезагрузка страницы...');
-      window.location.reload();
+      // Очищаем только кэш, НЕ auth данные
+      // Это нужно для обновления JS, но пользователи останутся залогинены
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            if (!name.includes('auth')) {
+              caches.delete(name);
+            }
+          });
+        });
+      }
     }
   }, []);
 
