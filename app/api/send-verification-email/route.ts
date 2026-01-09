@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
                             <tr>
                                 <td style="background: rgba(255, 255, 255, 0.02); padding: 30px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                                     <p style="margin: 0 0 10px 0; color: rgba(255, 255, 255, 0.4); font-size: 12px;">
-                                        © 2025 thqlabel. Все права защищены.
+                                        © 2026 thqlabel. Все права защищены.
                                     </p>
                                     <p style="margin: 0; color: rgba(255, 255, 255, 0.3); font-size: 11px;">
                                         Это автоматическое письмо, пожалуйста, не отвечайте на него.

@@ -4,13 +4,26 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Получаем базовый URL для редиректов
+function getBaseUrl(request: NextRequest): string {
+  // Приоритет: NEXT_PUBLIC_APP_URL > host header > request.url
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  return `${protocol}://${host}`;
+}
+
 export async function GET(request: NextRequest) {
+  const baseUrl = getBaseUrl(request);
+  
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
     
     if (!token) {
-      return NextResponse.redirect(new URL('/auth?error=invalid_token', request.url));
+      return NextResponse.redirect(new URL('/auth?error=invalid_token', baseUrl));
     }
 
     // Создаем admin клиент
@@ -27,14 +40,14 @@ export async function GET(request: NextRequest) {
     
     if (tokenError || !tokenData) {
       console.error('Токен не найден:', tokenError);
-      return NextResponse.redirect(new URL('/auth?error=token_expired', request.url));
+      return NextResponse.redirect(new URL('/auth?error=token_expired', baseUrl));
     }
 
     // Проверяем не истек ли токен
     if (new Date(tokenData.expires_at) < new Date()) {
       // Удаляем истекший токен
       await supabase.from('email_tokens').delete().eq('id', tokenData.id);
-      return NextResponse.redirect(new URL('/auth?error=token_expired', request.url));
+      return NextResponse.redirect(new URL('/auth?error=token_expired', baseUrl));
     }
 
     // Создаем пользователя в Supabase
@@ -53,7 +66,7 @@ export async function GET(request: NextRequest) {
       console.error('Ошибка создания пользователя:', authError);
       // Помечаем токен как использованный даже при ошибке
       await supabase.from('email_tokens').update({ used: true }).eq('id', tokenData.id);
-      return NextResponse.redirect(new URL('/auth?error=registration_failed', request.url));
+      return NextResponse.redirect(new URL('/auth?error=registration_failed', baseUrl));
     }
 
     // Помечаем токен как использованный
@@ -62,10 +75,10 @@ export async function GET(request: NextRequest) {
     console.log('Пользователь успешно создан:', tokenData.email);
     
     // Перенаправляем на страницу входа с сообщением об успехе
-    return NextResponse.redirect(new URL('/auth?verified=true', request.url));
+    return NextResponse.redirect(new URL('/auth?verified=true', baseUrl));
 
   } catch (error: any) {
     console.error('Ошибка верификации email:', error);
-    return NextResponse.redirect(new URL('/auth?error=verification_failed', request.url));
+    return NextResponse.redirect(new URL('/auth?error=verification_failed', baseUrl));
   }
 }
