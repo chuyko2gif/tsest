@@ -75,7 +75,13 @@ export async function POST(request: NextRequest) {
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const verificationLink = `${protocol}://${host}/api/verify-email?token=${verificationToken}`;
     
-    // Отправляем email через Brevo
+    // Проверяем наличие SMTP настроек
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('SMTP настройки не указаны');
+      return NextResponse.json({ error: 'Ошибка конфигурации email' }, { status: 500 });
+    }
+
+    // Отправляем email через SMTP
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
@@ -86,10 +92,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Email отправителя - должен быть верифицирован в SMTP провайдере (Brevo)
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+    
     const mailOptions = {
-      from: `"thqlabel" <maksbroska@gmail.com>`,
+      from: `"thqlabel" <${fromEmail}>`,
       to: email,
-      replyTo: 'maksbroska@gmail.com',
+      replyTo: fromEmail,
       subject: 'Подтвердите email для thqlabel',
       html: `
         <!DOCTYPE html>
