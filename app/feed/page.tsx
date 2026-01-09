@@ -1472,7 +1472,8 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Капибара - fixed справа внизу */}
+      {/* Капибара - fixed справа внизу (показывается только после загрузки) */}
+      {!showIntro && (
       <div 
         className="fixed bottom-0 right-4 z-[9999] cursor-pointer group"
         onMouseEnter={() => setKapibaraHovered(true)}
@@ -1503,6 +1504,7 @@ export default function FeedPage() {
           />
         </div>
       </div>
+      )}
     </main>
     </>
   );
