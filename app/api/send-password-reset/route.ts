@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
                                     <!-- Информационный блок -->
                                     <table role="presentation" style="width: 100%; border-collapse: collapse; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; margin: 0 0 20px 0;">
                                         <tr>
-                                            <td style="color: rgba(255, 255, 255, 0.6); font-size: 13px; line-height: 1.6; padding: 15px;">
+                                            <td style="color: rgba(255, 255, 255, 0.6); font-size: 13px; line-height: 1.6;">
                                                 <p style="margin: 0 0 10px 0;">
                                                     • Ссылка действительна в течение 60 минут
                                                 </p>
@@ -179,12 +179,6 @@ export async function POST(request: NextRequest) {
                                             </td>
                                         </tr>
                                     </table>
-                                    
-                                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-                                    
-                                    <p style="margin: 0; color: rgba(255, 255, 255, 0.5); font-size: 13px; line-height: 1.6;">
-                                        Если вы не запрашивали смену пароля, просто проигнорируйте это письмо — с вашим аккаунтом всё в порядке.
-                                    </p>
                                 </td>
                             </tr>
                             

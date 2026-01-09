@@ -167,13 +167,19 @@ function AuthPage() {
         userEmail = (profile && typeof profile === 'object' && 'email' in profile) ? (profile as any).email : null;
       }
 
-      // Используем встроенный Supabase для сброса пароля - у них хорошая репутация email серверов
-      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: 'https://thqlabel.ru/reset-password'
+      // Отправляем через наш серверный API
+      const response = await fetch('/api/send-password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail }),
       });
 
-      if (error) {
-        throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Не удалось отправить письмо');
       }
 
       showNotification('Письмо со ссылкой для сброса пароля отправлено на почту', 'success');
