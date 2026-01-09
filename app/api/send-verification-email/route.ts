@@ -7,8 +7,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: NextRequest) {
+  console.log('=== SEND-VERIFICATION-EMAIL API CALLED ===');
+  console.log('SMTP_HOST:', process.env.SMTP_HOST);
+  console.log('SMTP_USER:', process.env.SMTP_USER);
+  console.log('SMTP_FROM:', process.env.SMTP_FROM);
+  console.log('SMTP_PASS exists:', !!process.env.SMTP_PASS);
+  
   try {
     const { email, password, nickname } = await request.json();
+    console.log('Request data - email:', email, 'nickname:', nickname);
     
     if (!email || !password) {
       return NextResponse.json({ error: 'Email и пароль обязательны' }, { status: 400 });
